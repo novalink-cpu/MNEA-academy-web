@@ -1,0 +1,20 @@
+{
+  "rules": {
+    "inquiries": {
+      ".read": "auth != null",
+      ".write": "true"
+    },
+    "submissions": {
+      ".read": "auth != null",
+      ".write": "true"
+    },
+    "siteContent": {
+      ".read": "true",
+      ".write": "auth != null"
+    },
+    "adminNotificationRead": {
+      ".read": "auth != null",
+      ".write": "auth != null"
+    }
+  }
+}

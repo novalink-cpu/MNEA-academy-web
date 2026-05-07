@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="my">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login | Myanmar New Era Academy</title>
+  <meta name="description" content="Sign in to Myanmar New Era student and staff portal.">
+  <link rel="canonical" href="https://www.mmnea.com/public-page/login.html">
+  <meta name="robots" content="noindex, follow">
+  <meta name="theme-color" content="#9e1818">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="apple-touch-icon" href="logo.png">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="myanmarnewera">
+  <script src="../assets/js/pwa-register.js" defer></script>
+  <meta property="og:site_name" content="Myanmar New Era International Education Centre">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Login | Myanmar New Era Academy">
+  <meta property="og:description" content="Sign in to Myanmar New Era student and staff portal.">
+  <meta property="og:url" content="https://www.mmnea.com/public-page/login.html">
+  <meta property="og:image" content="https://www.mmnea.com/public-page/logo.png">
+  <meta property="og:locale" content="en_US">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Login | Myanmar New Era Academy">
+  <meta name="twitter:description" content="Sign in to Myanmar New Era student and staff portal.">
+  <link rel="stylesheet" href="../assets/css/main.css?v=20260412-programs-round">
+  <style>
+    body {
+      background: #ffffff;
+      background-attachment: scroll;
+      min-height: 100vh;
+    }
+    .auth-page { min-height: 100vh; display: grid; place-items: center; padding: 2.5rem 1.25rem; }
+    .auth-card {
+      width: min(420px, 92vw);
+      background: #ffffff;
+      border: 1px solid rgba(15,23,42,0.10);
+      border-radius: 28px;
+      padding: 2.1rem 2rem 1.6rem;
+      box-shadow: 0 8px 32px rgba(15, 23, 42, 0.08);
+      position: relative;
+      overflow: hidden;
+    }
+    .auth-card::before {
+      display: none;
+    }
+    .auth-inner { position: relative; z-index: 1; }
+    .auth-avatar {
+      width: 120px;
+      height: 120px;
+      margin: 0 auto 1.25rem;
+      border-radius: 0;
+      display: grid;
+      place-items: center;
+      background: transparent;
+      border: none;
+      box-shadow: none;
+      overflow: hidden;
+    }
+    .auth-avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      display: block;
+      filter: none;
+    }
+    .auth-title { text-align: center; color: #0f172a; font-weight: 900; letter-spacing: 0.08em; font-size: 0.95rem; margin: 0 0 1.25rem; }
+    .auth-form { display: block; }
+    .form-group { margin-bottom: 0.85rem; }
+    .field {
+      display: flex;
+      align-items: center;
+      gap: 0.65rem;
+      border-radius: 12px;
+      background: #ffffff;
+      border: 1px solid rgba(15,23,42,0.12);
+      padding: 0.65rem 0.85rem;
+    }
+    .field .ico {
+      width: 28px; height: 28px;
+      border-radius: 8px;
+      display: grid; place-items: center;
+      background: rgba(214,40,40,0.10);
+      color: #0f172a;
+      font-weight: 900;
+      flex: 0 0 auto;
+    }
+    .field input {
+      width: 100%;
+      border: none;
+      outline: none;
+      background: transparent;
+      color: #0f172a;
+      font-size: 1rem;
+      letter-spacing: 0.01em;
+      padding: 0.15rem 0;
+    }
+    .field input::placeholder { color: rgba(15,23,42,0.55); }
+    /* Username + password: same smoky-gray input block size */
+    .field-input-shell {
+      position: relative;
+      flex: 1 1 0;
+      min-width: 0;
+      min-height: 2.65rem;
+      display: flex;
+      align-items: center;
+      border-radius: 10px;
+      background: #e2e4ea;
+      box-sizing: border-box;
+    }
+    .field--text .field-input-shell input,
+    .field--password .field-input-shell input {
+      width: 100%;
+      box-sizing: border-box;
+      border: none;
+      outline: none;
+      background: transparent;
+      color: #0f172a;
+      font-size: 1rem;
+      letter-spacing: 0.01em;
+      padding: 0.5rem 0.65rem;
+    }
+    .field--password .field-input-shell input {
+      padding-right: 2.5rem;
+    }
+    .field--text .field-input-shell input:-webkit-autofill,
+    .field--text .field-input-shell input:-webkit-autofill:hover,
+    .field--text .field-input-shell input:-webkit-autofill:focus,
+    .field--password .field-input-shell input:-webkit-autofill,
+    .field--password .field-input-shell input:-webkit-autofill:hover,
+    .field--password .field-input-shell input:-webkit-autofill:focus {
+      -webkit-box-shadow: 0 0 0 1000px #e2e4ea inset;
+      box-shadow: 0 0 0 1000px #e2e4ea inset;
+    }
+    .toggle-eye {
+      position: absolute;
+      top: 50%;
+      right: 0.35rem;
+      transform: translateY(-50%);
+      border: none;
+      background: transparent;
+      cursor: pointer;
+      color: #d62828;
+      padding: 0.25rem 0.4rem;
+      border-radius: 8px;
+      line-height: 0;
+      z-index: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .toggle-eye__icon {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .toggle-eye__icon--hide {
+      display: none;
+    }
+    .toggle-eye.is-password-visible .toggle-eye__icon--show {
+      display: none;
+    }
+    .toggle-eye.is-password-visible .toggle-eye__icon--hide {
+      display: flex;
+    }
+    .toggle-eye:hover {
+      background: rgba(214, 40, 40, 0.12);
+      color: #9e1818;
+    }
+    .toggle-eye:active {
+      transform: translateY(calc(-50% + 1px));
+    }
+    .toggle-eye:focus-visible {
+      outline: 2px solid #d62828;
+      outline-offset: 2px;
+    }
+    .auth-row {
+      display: flex; align-items: center; justify-content: space-between;
+      margin: 0.8rem 0 1.05rem;
+      color: rgba(15,23,42,0.60);
+      font-size: 0.85rem;
+      gap: 0.75rem;
+    }
+    .auth-row label { display:flex; align-items:center; gap:0.5rem; user-select: none; }
+    .auth-row input[type="checkbox"] { width: 16px; height: 16px; accent-color: #d62828; }
+    .auth-row a { color: rgba(15,23,42,0.70); text-decoration: none; }
+    .auth-row a:hover { text-decoration: underline; }
+    .btn-submit:disabled { opacity: 0.7; cursor: not-allowed; }
+    .auth-msg { margin-top: 1rem; padding: 0.65rem 0.75rem; border-radius: 12px; font-size: 0.9rem; display: none; }
+    .auth-msg.error { background: rgba(239,68,68,0.10); color: #0f172a; border: 1px solid rgba(239,68,68,0.22); display: block; }
+    .auth-back { text-align: center; margin-top: 1.25rem; }
+    .auth-back a { color: rgba(15,23,42,0.70); text-decoration: none; font-weight: 700; }
+    .auth-back a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body class="site-public">
+  <div class="auth-page">
+    <div class="auth-card">
+      <div class="auth-inner">
+        <div class="auth-avatar" aria-hidden="true">
+          <img src="logo.png" data-upload-id="logo" alt="School logo" style="display:block;">
+        </div>
+        <form id="formLogin" class="auth-form">
+          <div class="form-group">
+            <div class="field field--text">
+              <span class="ico" aria-hidden="true">👤</span>
+              <div class="field-input-shell">
+                <input type="text" id="loginUser" required placeholder="Username" autocomplete="username">
+              </div>
+            </div>
+          </div>
+          <div class="form-group">
+            <div class="field field--password">
+              <span class="ico" aria-hidden="true">🔒</span>
+              <div class="field-input-shell">
+                <input type="password" id="loginPassword" required placeholder="Password" autocomplete="current-password">
+                <button type="button" class="toggle-eye" id="togglePw" aria-label="Show password">
+                  <span class="toggle-eye__icon toggle-eye__icon--show" aria-hidden="true">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                  </span>
+                  <span class="toggle-eye__icon toggle-eye__icon--hide" aria-hidden="true">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+                  </span>
+                </button>
+              </div>
+            </div>
+          </div>
+          <div class="auth-row">
+            <label><input type="checkbox" id="rememberMe" checked> Remember me</label>
+            <a href="#" id="forgotLink">Forgot Password?</a>
+          </div>
+          <button type="submit" class="btn-submit" id="btnLogin">LOGIN</button>
+          <div id="loginMsg" class="auth-msg"></div>
+        </form>
+
+      <div class="auth-back">
+        <a href="index.html" data-lang-en="← Back to Home" data-lang-my="← Back to Home">← Back to Home</a>
+      </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+  <script src="../assets/js/firebase-config.js"></script>
+  <script src="../assets/js/school-api.js"></script>
+  <script src="../assets/js/auth.js"></script>
+  <script src="../assets/js/content-firebase.js"></script>
+<script>
+    (function() {
+      if (window.AcademyContent && AcademyContent.apply) AcademyContent.apply();
+
+      var forgot = document.getElementById('forgotLink');
+      if (forgot) forgot.addEventListener('click', function(e) {
+        e.preventDefault();
+        alert('Please contact admin to reset your password.');
+      });
+
+      var pw = document.getElementById('loginPassword');
+      var toggle = document.getElementById('togglePw');
+      if (pw && toggle) {
+        toggle.addEventListener('click', function() {
+          var show = pw.type === 'password';
+          pw.type = show ? 'text' : 'password';
+          toggle.classList.toggle('is-password-visible', pw.type === 'text');
+          toggle.setAttribute('aria-label', pw.type === 'text' ? 'Hide password' : 'Show password');
+        });
+      }
+
+      document.getElementById('formLogin').addEventListener('submit', function(e) {
+        e.preventDefault();
+        var btn = document.getElementById('btnLogin');
+        var msg = document.getElementById('loginMsg');
+        msg.className = 'auth-msg';
+        var email = document.getElementById('loginUser').value.trim();
+        var password = document.getElementById('loginPassword').value;
+        if (!email || !password) { msg.textContent = 'Username and password required'; msg.classList.add('error'); return; }
+        btn.disabled = true;
+        window.AcademyAuth.signIn(email, password, function(err) {
+          btn.disabled = false;
+          if (err) {
+            msg.textContent = err;
+            msg.classList.add('error');
+            return;
+          }
+          window.AcademyAuth.redirectByRole();
+        });
+      });
+
+      if (window.AcademyAuth && AcademyAuth.currentUser()) {
+        AcademyAuth.redirectByRole();
+      }
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,12 @@
+# Myanmar New Era — default for static hosting from /website/
+# If your live site uses a different root (e.g. no /public-page/), update Sitemap and Allow paths.
+
+User-agent: *
+Allow: /public-page/
+
+# App areas (not for general search)
+Disallow: /admin/
+Disallow: /teacher/
+Disallow: /student/
+
+Sitemap: https://www.mmnea.com/sitemap.xml

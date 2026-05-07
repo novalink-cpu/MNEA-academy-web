@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="my">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="../assets/js/desktop-layout-viewport.js"></script>
+  <title>Settings | Admin</title>
+  <link rel="stylesheet" href="../assets/css/main.css">
+  <link rel="stylesheet" href="../assets/css/dashboard.css">
+  <link rel="stylesheet" href="../assets/css/account-settings.css">
+  <style>
+    .settings-intro { display: none; }
+    .settings-advanced-item { display: none !important; }
+
+    .settings-feature-cards.settings-feature-cards--admin-wide {
+      grid-template-columns: repeat(3, minmax(190px, 1fr));
+      gap: 0.9rem;
+      margin-bottom: 1.2rem;
+    }
+    .settings-feature-card {
+      background: #ffffff;
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      box-shadow: none;
+      min-height: 94px;
+      padding: 1rem 1.05rem;
+    }
+    .settings-feature-card.is-active {
+      box-shadow: none;
+      border-width: 1px;
+    }
+    .settings-feature-card[data-settings-panel="profile"] { border-color: #e9d5ff; }
+    .settings-feature-card[data-settings-panel="password"] { border-color: #fed7aa; }
+    .settings-feature-card[data-settings-panel="system"] { border-color: #bfdbfe; }
+    .settings-feature-card .settings-card-icon {
+      font-size: 1.4rem;
+      margin-bottom: 0.3rem;
+    }
+    .settings-feature-card[data-settings-panel="profile"] .settings-card-icon { color: #9333ea; }
+    .settings-feature-card[data-settings-panel="password"] .settings-card-icon { color: #ea580c; }
+    .settings-feature-card[data-settings-panel="system"] .settings-card-icon { color: #2563eb; }
+    .settings-feature-card h2 { margin-bottom: 0.22rem; font-size: 1rem; }
+    .settings-feature-card p { font-size: 0.78rem; color: #4b5563; }
+
+    .settings-pane.card {
+      background: #f8fafc;
+      border: 1px solid #e5e7eb;
+      border-radius: 14px;
+      box-shadow: none;
+      padding: 1.35rem 1.45rem;
+    }
+    .settings-pane h2 {
+      font-size: 1.9rem;
+      margin: 0 0 0.55rem;
+      letter-spacing: -0.01em;
+    }
+    #settingsPanePassword h2,
+    #settingsPaneSystem h2 {
+      font-size: 2.2rem;
+      line-height: 1.04;
+      margin-top: 0.1rem;
+    }
+    .settings-hint {
+      font-size: 0.78rem;
+      color: #6b7280;
+      max-width: 72ch;
+    }
+    .settings-mgmt-scope {
+      margin: 0 0 1rem;
+      padding: 0.65rem 0.85rem;
+      border-radius: 10px;
+      border: 1px solid #bfdbfe;
+      background: #eff6ff;
+      color: #1e3a5f;
+      font-size: 0.82rem;
+      line-height: 1.5;
+      max-width: 58rem;
+    }
+    .settings-mgmt-scope strong { color: #0f172a; }
+    .settings-form-grid { max-width: 58rem; gap: 0.8rem; }
+    .settings-field label {
+      font-size: 1rem;
+      font-weight: 700;
+      margin-bottom: 0.52rem;
+      color: #111827;
+    }
+    .settings-field select,
+    .settings-field input[type="date"],
+    .settings-field input[type="text"],
+    .settings-field input[type="password"],
+    .settings-field input[type="email"] {
+      width: 100%;
+      border: 1px solid #d1d5db;
+      border-radius: 12px;
+      font-size: 1.05rem;
+      color: #111827;
+      padding: 0.72rem 1rem;
+      line-height: 1.25;
+      min-height: 54px;
+      box-sizing: border-box;
+      background: #ffffff;
+    }
+    .settings-field input[readonly] {
+      background: #e9edf3;
+      color: #4b5563;
+    }
+    .settings-actions { margin-top: 1.15rem; }
+    .settings-actions .btn {
+      border-radius: 14px;
+      font-size: 1.18rem;
+      min-height: 54px;
+      padding: 0.75rem 1.35rem;
+      font-weight: 800;
+    }
+    #settingsSaveDisplayName {
+      background: linear-gradient(90deg, #ff2d55, #ff3b30);
+      color: #fff;
+    }
+    #settingsPasswordSubmit {
+      background: linear-gradient(90deg, #ff8a00, #ff6a00);
+      color: #fff;
+    }
+    #genSaveSchool {
+      background: linear-gradient(90deg, #3b82f6, #2563eb);
+      color: #fff;
+    }
+    #genSaveSchool::before {
+      content: "\1F4BE";
+      margin-right: 0.55rem;
+      font-size: 0.9em;
+    }
+    .settings-password-requirements {
+      margin-top: 0.5rem;
+      border: 1px solid #fde68a;
+      border-radius: 12px;
+      background: #fff7ed;
+      padding: 0.9rem 1rem;
+      color: #9a3412;
+      font-size: 0.98rem;
+      line-height: 1.45;
+    }
+    .settings-password-requirements h3 {
+      margin: 0 0 0.45rem;
+      font-size: 1.08rem;
+      font-weight: 800;
+      color: #7c2d12;
+    }
+    .settings-password-requirements ul {
+      margin: 0;
+      padding-left: 1.05rem;
+    }
+    .settings-password-requirements li { margin-bottom: 0.22rem; }
+    .settings-input-with-action {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+    .settings-input-with-action input { padding-right: 3rem; }
+    .settings-input-action-btn {
+      position: absolute;
+      right: 0.7rem;
+      border: none;
+      background: transparent;
+      color: #6b7280;
+      font-size: 0.9rem;
+      cursor: pointer;
+      padding: 0.25rem;
+      line-height: 1;
+    }
+    .settings-hidden-in-ui { display: none !important; }
+    #settingsPaneProfile .settings-msg,
+    #settingsPanePassword .settings-msg,
+    #settingsPaneSystem .settings-gen-msg {
+      font-size: 1.35rem;
+      margin-top: 0.7rem;
+    }
+    @media (max-width: 1100px) {
+      .settings-feature-cards.settings-feature-cards--admin-wide { grid-template-columns: 1fr; }
+      .settings-pane h2, #settingsPanePassword h2, #settingsPaneSystem h2 { font-size: 1.55rem; }
+      .settings-field select,
+      .settings-field input[type="date"],
+      .settings-field input[type="text"],
+      .settings-field input[type="password"],
+      .settings-field input[type="email"] {
+        font-size: 1.12rem;
+        min-height: 52px;
+      }
+      .settings-actions .btn {
+        font-size: 1.05rem;
+        min-height: 52px;
+      }
+      .settings-password-requirements,
+      .settings-password-requirements h3 {
+        font-size: 1rem;
+      }
+    }
+  </style>
+</head>
+<body class="admin-dashboard-glass" data-account-role="admin">
+  <div class="dashboard-wrap glass-dashboard">
+    <aside class="dashboard-sidebar">
+      <a href="../public-page/index.html" class="logo-link"><span class="logo-brand-row"><img src="../photo/logo.png" alt="" class="logo-mark-img" width="72" decoding="async" /><span class="logo-headlines"><span class="logo-title-line">MYANMAR</span><span class="logo-title-line">NEW ERA</span></span></span></a>
+      <nav>
+        <a href="dashboard.html">Dashboard</a>
+        <a href="admissions.html">Admission Management</a>
+        <a href="students.html">Student Management</a>
+        <a href="teachers.html">Teacher Management</a>
+        <a href="academic.html">Academic Management</a>
+        <a href="attendance.html">Attendance Management</a>
+        <a href="exams.html">Exam Management</a>
+        <a href="gpa-transcript.html">GPA & Transcript Management</a>
+        <a href="inquiries.html">Communication <span class="nav-inquiry-badge" id="navInquiryCount"></span></a>
+        <a href="content-management.html">Page Content Management</a>
+        <a href="question-bank.html">Question Bank Management</a>
+        <a href="reports.html">Reports & Analytics</a>
+        <a href="settings.html" class="active">Settings & Configuration</a>
+      </nav>
+    </aside>
+    <main class="dashboard-main">
+      <div class="dashboard-header glass-toolbar">
+        <p class="dashboard-toolbar-title" data-lang-en="Settings & Configuration" data-lang-my="ဆက်တင်နှင့်စနစ်ချိန်ညှိမှု">Settings & Configuration</p>
+        <div class="auth-info">
+          <div class="notification-wrap">
+            <button type="button" class="btn-notification" id="btnNotification" aria-haspopup="true" aria-expanded="false">
+              &#x1F514; <span id="notificationLabel">Notifications</span> (<span id="notificationCount" class="notification-count-num">0</span>)
+              <span class="notification-badge" id="notificationBadge" style="display:none;">0</span>
+            </button>
+            <div class="notification-dropdown" id="notificationDropdown" role="menu">
+              <h3>Notifications</h3>
+              <ul id="notificationList">
+                <li><a href="inquiries.html">No new notifications</a></li>
+              </ul>
+            </div>
+          </div>
+          <div class="profile-wrap">
+            <button type="button" class="btn-profile" id="btnProfile" aria-haspopup="true" aria-expanded="false">&#x1F464; <span id="profileName">Admin</span> &#x25BC;</button>
+            <div class="profile-dropdown" id="profileDropdown" role="menu">
+              <a href="settings.html">Profile</a>
+              <a href="settings.html#password">Change Password</a>
+              <a href="settings.html#system">System settings</a>
+              <a href="settings.html#backup">Backup</a>
+              <div class="divider"></div>
+              <button type="button" id="btnAdminToolbarLogout">Logout</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <p class="settings-intro">Choose a section below. Only one panel is shown at a time.</p>
+
+      <p class="settings-mgmt-scope" role="note">
+        <strong>Management system only.</strong>
+        This page configures admin / teacher / student panels and stored school preferences.
+        It does <strong>not</strong> change the public marketing website — visitors use the language controls on public pages (<code>public-page/</code>), separate from here.
+      </p>
+
+      <div class="settings-feature-cards settings-feature-cards--admin-wide" aria-label="Settings sections">
+        <div class="settings-feature-card is-active" tabindex="0" role="button" data-settings-panel="profile" aria-pressed="true" aria-labelledby="settings-card-profile-title">
+          <div class="settings-card-icon" aria-hidden="true">&#x1F464;</div>
+          <h2 id="settings-card-profile-title">Profile</h2>
+          <p>Manage name and photo</p>
+        </div>
+        <div class="settings-feature-card" tabindex="0" role="button" data-settings-panel="password" aria-pressed="false" aria-labelledby="settings-card-pw-title">
+          <div class="settings-card-icon" aria-hidden="true">&#x1F512;</div>
+          <h2 id="settings-card-pw-title">Password</h2>
+          <p>Update your password for security</p>
+        </div>
+        <div class="settings-feature-card" tabindex="0" role="button" data-settings-panel="system" aria-pressed="false" aria-labelledby="settings-card-sys-title">
+          <div class="settings-card-icon" aria-hidden="true">&#x2699;&#xFE0F;</div>
+          <h2 id="settings-card-sys-title">System settings</h2>
+          <p>Console locale &amp; records (not public website)</p>
+        </div>
+        <div class="settings-feature-card settings-advanced-item" tabindex="0" role="button" data-settings-panel="roles" aria-pressed="false" aria-labelledby="settings-card-roles-title">
+          <div class="settings-card-icon" aria-hidden="true">&#x1F465;</div>
+          <h2 id="settings-card-roles-title">User roles</h2>
+          <p>Titles and descriptions for admin, teacher, student.</p>
+        </div>
+        <div class="settings-feature-card settings-advanced-item" tabindex="0" role="button" data-settings-panel="backup" aria-pressed="false" aria-labelledby="settings-card-backup-title">
+          <div class="settings-card-icon" aria-hidden="true">&#x1F4BE;</div>
+          <h2 id="settings-card-backup-title">Backup</h2>
+          <p>SQLite backup, restore, CSV export links.</p>
+        </div>
+        <div class="settings-feature-card settings-advanced-item" tabindex="0" role="button" data-settings-panel="email" aria-pressed="false" aria-labelledby="settings-card-email-title">
+          <div class="settings-card-icon" aria-hidden="true">&#x2709;&#xFE0F;</div>
+          <h2 id="settings-card-email-title">Email config</h2>
+          <p>SMTP status, test send, optional signature.</p>
+        </div>
+        <div class="settings-feature-card settings-advanced-item" tabindex="0" role="button" data-settings-panel="permissions" aria-pressed="false" aria-labelledby="settings-card-perm-title">
+          <div class="settings-card-icon" aria-hidden="true">&#x1F510;</div>
+          <h2 id="settings-card-perm-title">Permissions</h2>
+          <p>Teacher / student access matrix (policy record).</p>
+        </div>
+      </div>
+
+      <div id="settingsPaneProfile" class="settings-pane is-active card">
+        <h2>Your profile</h2>
+        <p class="settings-hint" style="margin-top:0;">The display name is shown in the browser for the top bar. Other fields show how you will secondly login.</p>
+        <div class="settings-form-grid" style="margin-top:1rem;">
+          <div class="settings-field">
+            <label for="settingsDisplayName">Display name</label>
+            <input type="text" id="settingsDisplayName" name="displayName" autocomplete="name" maxlength="120" placeholder="Admin">
+          </div>
+          <div style="grid-column:1/-1;margin-top:0;">
+            <div class="settings-field">
+              <label for="settingsUsername">Container</label>
+              <input type="text" id="settingsUsername" readonly aria-label="Container">
+            </div>
+            <div class="settings-field">
+              <label for="settingsGender">Gender</label>
+              <select id="settingsGender" aria-label="Gender">
+                <option value="male" selected>Male</option>
+                <option value="female">Female</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
+            <div class="settings-field">
+              <label for="settingsDob">Dob ID</label>
+              <input type="date" id="settingsDob" aria-label="Dob ID" value="1990-01-01">
+            </div>
+            <div class="settings-field">
+              <label for="settingsEmail">Email</label>
+              <input type="email" id="settingsEmail" aria-label="Email" placeholder="admin@school.edu.mm">
+            </div>
+          </div>
+          <input class="settings-hidden-in-ui" type="text" id="settingsRole" aria-hidden="true" tabindex="-1">
+          <input class="settings-hidden-in-ui" type="text" id="settingsUserId" aria-hidden="true" tabindex="-1">
+          <div class="settings-actions">
+            <button type="button" class="btn btn-primary" id="settingsSaveDisplayName">Save display name</button>
+          </div>
+          <p id="settingsProfileMsg" class="settings-msg" role="status"></p>
+        </div>
+      </div>
+
+      <div id="settingsPanePassword" class="settings-pane card">
+        <h2>Change password</h2>
+        <p class="settings-hint" style="margin-top:0;">Update your password regularly for better security</p>
+        <div class="settings-form-grid" style="margin-top:1rem;">
+          <div class="settings-field">
+            <label for="settingsCurrentPassword">Current password</label>
+            <div class="settings-input-with-action">
+              <input type="password" id="settingsCurrentPassword" name="current_password" autocomplete="current-password" placeholder="Enter current password">
+              <button type="button" id="settingsShowCurrentPassword" class="settings-input-action-btn" aria-label="Show current password">&#128065;</button>
+            </div>
+          </div>
+          <div class="settings-field">
+            <label for="settingsNewPassword">New password</label>
+            <input type="password" id="settingsNewPassword" name="new_password" autocomplete="new-password" minlength="6" placeholder="Enter new password">
+          </div>
+          <div class="settings-field">
+            <label for="settingsConfirmPassword">Confirm new password</label>
+            <input type="password" id="settingsConfirmPassword" name="confirm_password" autocomplete="new-password" minlength="6" placeholder="Confirm new password">
+          </div>
+          <div class="settings-password-requirements">
+            <h3>Password Requirements:</h3>
+            <ul>
+              <li>At least 8 characters long</li>
+              <li>Include uppercase and lowercase letters</li>
+              <li>Include at least one number</li>
+              <li>Include at least one special character</li>
+            </ul>
+          </div>
+          <div class="settings-actions">
+            <button type="button" class="btn btn-primary" id="settingsPasswordSubmit">Update password</button>
+          </div>
+          <p id="settingsPasswordMsg" class="settings-msg" role="status"></p>
+        </div>
+      </div>
+
+      <div id="settingsPaneSystem" class="settings-pane card">
+        <h2>System settings</h2>
+        <p class="settings-hint" style="margin-top:0;">Defaults for management screens and stored school data. Public website wording stays under public pages / CMS.</p>
+        <p class="settings-hint settings-hidden-in-ui" id="sysSyncServerWrap" style="display:none;margin-top:0.35rem;">Configured sync URL: <code id="sysSyncServerUrl"></code></p>
+
+        <div class="settings-form-grid" style="margin-top:1rem;">
+          <div class="settings-field">
+            <label for="genLanguage">Management UI language</label>
+            <select id="genLanguage" aria-label="Management UI language (does not control public website)" title="Stored for admin/teacher/student apps only. Does not change public-page language.">
+              <option value="en">English (US)</option>
+              <option value="my">Myanmar</option>
+              <option value="both">English + Myanmar (show both)</option>
+            </select>
+            <p class="settings-hint" style="margin-top:0.35rem;"><strong>English</strong> = all EN · <strong>Myanmar</strong> = MY where translated, else EN · <strong>English + Myanmar</strong> = show both when they differ. Public marketing site uses its own toggle, not this.</p>
+          </div>
+          <div class="settings-field">
+            <label for="genTimezone">Timezone</label>
+            <select id="genTimezone" aria-label="Timezone">
+              <option value="Asia/Yangon">(GMT+6:30) Yangon, Myanmar</option>
+              <option value="Asia/Bangkok">(GMT+7:00) Bangkok</option>
+              <option value="Asia/Singapore">(GMT+8:00) Singapore</option>
+              <option value="UTC">(GMT+0:00) UTC</option>
+            </select>
+          </div>
+          <div class="settings-field">
+            <label for="genDateFormat">Date Format</label>
+            <select id="genDateFormat" aria-label="Date format">
+              <option value="DD/MM/YYYY" selected>DD/MM/YYYY</option>
+              <option value="MM/DD/YYYY">MM/DD/YYYY</option>
+              <option value="YYYY-MM-DD">YYYY-MM-DD</option>
+            </select>
+          </div>
+          <div class="settings-field">
+            <label for="genTimeFormat">Time Format</label>
+            <select id="genTimeFormat" aria-label="Time format">
+              <option value="12h" selected>12-hour (AM/PM)</option>
+              <option value="24h">24-hour</option>
+            </select>
+          </div>
+          <div class="settings-field">
+            <label for="genAcademicStart">Academic Year Start</label>
+            <select id="genAcademicStart" aria-label="Academic year start">
+              <option value="June" selected>June</option>
+              <option value="April">April</option>
+              <option value="May">May</option>
+              <option value="July">July</option>
+              <option value="August">August</option>
+            </select>
+          </div>
+          <div class="settings-hidden-in-ui">
+            <input type="text" id="genSchoolName" value="MNEA" maxlength="200" autocomplete="organization">
+            <input type="text" id="genSchoolId" readonly aria-readonly="true">
+            <select id="genAcademicYear" aria-label="Academic year"></select>
+            <button type="button" class="btn btn-secondary" id="genClearLocalBtn">Clear notification caches</button>
+            <p id="genClearMsg" class="settings-gen-msg" role="status"></p>
+          </div>
+          <div class="settings-actions">
+            <button type="button" class="btn btn-primary" id="genSaveSchool">Save System Settings</button>
+          </div>
+          <p id="genSchoolMsg" class="settings-gen-msg" role="status"></p>
+        </div>
+      </div>
+
+      <div id="settingsPaneRoles" class="settings-pane card settings-advanced-item">
+        <h2>User roles</h2>
+        <p class="settings-hint" style="margin-top:0;">Define how each role is described for your school. Login still assigns <strong>admin</strong>, <strong>teacher</strong>, or <strong>student</strong> from accounts and data; this page does not create accounts. Manage people from <a href="teachers.html">Teachers</a>, <a href="students.html">Students</a>, and <a href="admissions.html">Admissions</a>.</p>
+        <div class="settings-role-block">
+          <h3 class="settings-role-heading">Administrator</h3>
+          <div class="settings-field">
+            <label for="roleTitle_admin">Display title</label>
+            <input type="text" id="roleTitle_admin" maxlength="120" autocomplete="off">
+          </div>
+          <div class="settings-field" style="margin-top:0.65rem;">
+            <label for="roleDesc_admin">Description</label>
+            <textarea id="roleDesc_admin" class="settings-textarea" rows="3" maxlength="2000" aria-label="Administrator role description"></textarea>
+          </div>
+        </div>
+        <div class="settings-role-block">
+          <h3 class="settings-role-heading">Teacher</h3>
+          <div class="settings-field">
+            <label for="roleTitle_teacher">Display title</label>
+            <input type="text" id="roleTitle_teacher" maxlength="120" autocomplete="off">
+          </div>
+          <div class="settings-field" style="margin-top:0.65rem;">
+            <label for="roleDesc_teacher">Description</label>
+            <textarea id="roleDesc_teacher" class="settings-textarea" rows="3" maxlength="2000" aria-label="Teacher role description"></textarea>
+          </div>
+        </div>
+        <div class="settings-role-block">
+          <h3 class="settings-role-heading">Student</h3>
+          <div class="settings-field">
+            <label for="roleTitle_student">Display title</label>
+            <input type="text" id="roleTitle_student" maxlength="120" autocomplete="off">
+          </div>
+          <div class="settings-field" style="margin-top:0.65rem;">
+            <label for="roleDesc_student">Description</label>
+            <textarea id="roleDesc_student" class="settings-textarea" rows="3" maxlength="2000" aria-label="Student role description"></textarea>
+          </div>
+        </div>
+        <div class="settings-gen-actions">
+          <button type="button" class="btn btn-primary" id="rolesSaveBtn">Save role descriptions</button>
+        </div>
+        <p id="rolesSaveMsg" class="settings-gen-msg" role="status"></p>
+      </div>
+
+      <div id="settingsPaneBackup" class="settings-pane card settings-advanced-item">
+        <h2>Backup</h2>
+        <p class="settings-hint" style="margin-top:0;">Copies the <strong>current academic year</strong> SQLite web database to the server’s <code>data/backups</code> folder. Restore overwrites the live file for that year. <strong>MySQL-only</strong> deployments do not use this file.</p>
+        <div class="settings-gen-actions">
+          <button type="button" class="btn btn-primary" id="genBackupBtn">Create backup</button>
+          <input type="file" id="genRestoreFile" accept=".db,.sqlite,.sqlite3,application/octet-stream" style="position:absolute;width:0;height:0;opacity:0;" aria-hidden="true" tabindex="-1">
+          <button type="button" class="btn btn-secondary" id="genRestorePick">Choose .db backup…</button>
+          <button type="button" class="btn btn-danger" id="genRestoreBtn" disabled>Restore (overwrite)</button>
+        </div>
+        <p id="genRestoreName" class="settings-hint" style="margin-top:0.35rem;">No file selected.</p>
+        <p id="genBackupMsg" class="settings-gen-msg" role="status"></p>
+        <div class="settings-gen-section">
+          <h3>Export &amp; user tools</h3>
+          <ul class="settings-gen-ul">
+            <li><strong>CSV:</strong> <strong>Export CSV</strong> on <a href="students.html">Students</a> and <a href="teachers.html">Teachers</a>.</li>
+            <li><strong>MySQL auth console:</strong> <a id="genAuthConsoleLink" href="/auth/">/auth/</a> (if enabled on this server).</li>
+          </ul>
+        </div>
+      </div>
+
+      <div id="settingsPaneEmail" class="settings-pane card settings-advanced-item">
+        <h2>Email configuration</h2>
+        <p class="settings-hint" style="margin-top:0;">Outbound mail for placement results and tests uses <strong>server environment variables</strong> (<code>SMTP_HOST</code>, <code>SMTP_PORT</code>, <code>SMTP_USER</code>, <code>SMTP_PASS</code>, <code>SMTP_FROM</code>, <code>SMTP_USE_TLS</code>). Passwords are not stored in the school database.</p>
+        <p id="emailConfigStatus" class="settings-hint settings-email-status" style="margin-top:0.65rem;">Loading…</p>
+        <div class="settings-gen-section">
+          <h3>Test message</h3>
+          <div class="settings-gen-grid" style="max-width:28rem;">
+            <div class="settings-field">
+              <label for="emailTestTo">Send test to</label>
+              <input type="email" id="emailTestTo" autocomplete="email" placeholder="you@school.org">
+            </div>
+          </div>
+          <div class="settings-gen-actions">
+            <button type="button" class="btn btn-primary" id="emailTestSend">Send test email</button>
+          </div>
+        </div>
+        <div class="settings-gen-section">
+          <h3>Optional email signature (stored)</h3>
+          <p class="settings-hint" style="margin-top:0;">Saved in <code>app_config</code> as <code>email_signature</code> for future templates.</p>
+          <div class="settings-field" style="max-width:42rem;">
+            <label for="emailSignature">Signature / footer text</label>
+            <textarea id="emailSignature" class="settings-textarea" rows="4" maxlength="4000"></textarea>
+          </div>
+          <div class="settings-gen-actions">
+            <button type="button" class="btn btn-secondary" id="emailSignatureSave">Save signature</button>
+          </div>
+        </div>
+        <p id="emailConfigMsg" class="settings-gen-msg" role="status"></p>
+      </div>
+
+      <div id="settingsPanePermissions" class="settings-pane card settings-advanced-item">
+        <h2>Permission management</h2>
+        <p class="settings-hint" style="margin-top:0;">Record which areas teachers and students may use. <strong>Administrators</strong> always have full access. Fine-grained API enforcement can be wired later; this matrix is your school’s policy reference.</p>
+        <div class="settings-perm-scroll">
+          <table class="settings-perm-table" aria-label="Role permissions">
+            <thead>
+              <tr>
+                <th scope="col">Area</th>
+                <th scope="col">Teacher</th>
+                <th scope="col">Student</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>Student management</td><td class="settings-perm-cell"><input type="checkbox" id="perm_teacher_student_mgmt" data-perm-who="teacher" data-perm-key="student_mgmt" aria-label="Teacher: student management"></td><td class="settings-perm-cell"><input type="checkbox" id="perm_student_student_mgmt" data-perm-who="student" data-perm-key="student_mgmt" aria-label="Student: student management"></td></tr>
+              <tr><td>Teacher management</td><td class="settings-perm-cell"><input type="checkbox" id="perm_teacher_teacher_mgmt" data-perm-who="teacher" data-perm-key="teacher_mgmt" aria-label="Teacher: teacher management"></td><td class="settings-perm-cell"><input type="checkbox" id="perm_student_teacher_mgmt" data-perm-who="student" data-perm-key="teacher_mgmt" aria-label="Student: teacher management"></td></tr>
+              <tr><td>Admissions</td><td class="settings-perm-cell"><input type="checkbox" id="perm_teacher_admissions" data-perm-who="teacher" data-perm-key="admissions" aria-label="Teacher: admissions"></td><td class="settings-perm-cell"><input type="checkbox" id="perm_student_admissions" data-perm-who="student" data-perm-key="admissions" aria-label="Student: admissions"></td></tr>
+              <tr><td>Academic &amp; courses</td><td class="settings-perm-cell"><input type="checkbox" id="perm_teacher_academic" data-perm-who="teacher" data-perm-key="academic" aria-label="Teacher: academic"></td><td class="settings-perm-cell"><input type="checkbox" id="perm_student_academic" data-perm-who="student" data-perm-key="academic" aria-label="Student: academic"></td></tr>
+              <tr><td>Attendance</td><td class="settings-perm-cell"><input type="checkbox" id="perm_teacher_attendance" data-perm-who="teacher" data-perm-key="attendance" aria-label="Teacher: attendance"></td><td class="settings-perm-cell"><input type="checkbox" id="perm_student_attendance" data-perm-who="student" data-perm-key="attendance" aria-label="Student: attendance"></td></tr>
+              <tr><td>Exams &amp; placement</td><td class="settings-perm-cell"><input type="checkbox" id="perm_teacher_exams" data-perm-who="teacher" data-perm-key="exams" aria-label="Teacher: exams"></td><td class="settings-perm-cell"><input type="checkbox" id="perm_student_exams" data-perm-who="student" data-perm-key="exams" aria-label="Student: exams"></td></tr>
+              <tr><td>Communication &amp; inquiries</td><td class="settings-perm-cell"><input type="checkbox" id="perm_teacher_communication" data-perm-who="teacher" data-perm-key="communication" aria-label="Teacher: communication"></td><td class="settings-perm-cell"><input type="checkbox" id="perm_student_communication" data-perm-who="student" data-perm-key="communication" aria-label="Student: communication"></td></tr>
+              <tr><td>Page content &amp; CMS</td><td class="settings-perm-cell"><input type="checkbox" id="perm_teacher_content" data-perm-who="teacher" data-perm-key="content" aria-label="Teacher: content"></td><td class="settings-perm-cell"><input type="checkbox" id="perm_student_content" data-perm-who="student" data-perm-key="content" aria-label="Student: content"></td></tr>
+              <tr><td>Reports &amp; analytics</td><td class="settings-perm-cell"><input type="checkbox" id="perm_teacher_reports" data-perm-who="teacher" data-perm-key="reports" aria-label="Teacher: reports"></td><td class="settings-perm-cell"><input type="checkbox" id="perm_student_reports" data-perm-who="student" data-perm-key="reports" aria-label="Student: reports"></td></tr>
+              <tr><td>Settings &amp; configuration</td><td class="settings-perm-cell"><input type="checkbox" id="perm_teacher_settings" data-perm-who="teacher" data-perm-key="settings" aria-label="Teacher: settings"></td><td class="settings-perm-cell"><input type="checkbox" id="perm_student_settings" data-perm-who="student" data-perm-key="settings" aria-label="Student: settings"></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="settings-gen-actions" style="margin-top:1rem;">
+          <button type="button" class="btn btn-primary" id="permSaveBtn">Save permission matrix</button>
+        </div>
+        <p id="permSaveMsg" class="settings-gen-msg" role="status"></p>
+      </div>
+    </main>
+  </div>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+  <script src="../assets/js/firebase-config.js"></script>
+  <script src="../assets/js/auth.js"></script>
+  <script src="../assets/js/school-api.js"></script>
+  <script src="../assets/js/lang-switcher.js"></script>
+  <script src="../assets/js/content-firebase.js"></script>
+  <script src="../assets/js/admin-top-toolbar.js"></script>
+  <script>
+    var u = window.AcademyAuth && AcademyAuth.currentUser();
+    if (!u) window.location.href = '../public-page/login.html';
+    else {
+      AcademyAuth.getUserProfile(u.uid, function(p) { if ((p && p.role) !== 'admin') window.location.href = '../student/dashboard.html'; });
+      if (window.AdminTopToolbar) AdminTopToolbar.init();
+    }
+  </script>
+  <script src="../assets/js/admin-badge.js"></script>
+  <script>
+    (function () {
+      var btn = document.getElementById('settingsShowCurrentPassword');
+      var input = document.getElementById('settingsCurrentPassword');
+      if (!btn || !input) return;
+      btn.addEventListener('click', function () {
+        var showing = input.type === 'text';
+        input.type = showing ? 'password' : 'text';
+        btn.setAttribute('aria-label', showing ? 'Show current password' : 'Hide current password');
+      });
+    })();
+  </script>
+  <script src="../assets/js/account-settings.js"></script>
+  <script src="../assets/js/settings-general.js"></script>
+  <script src="../assets/js/settings-advanced.js"></script>
+  <script src="../assets/js/dashboard-sidebar.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="my">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="../assets/js/desktop-layout-viewport.js"></script>
+  <title>Profile | Student | Myanmar New Era Academy</title>
+  <link rel="stylesheet" href="../assets/css/main.css">
+  <link rel="stylesheet" href="../assets/css/dashboard.css">
+  <link rel="stylesheet" href="../assets/css/teacher-portal.css">
+  <link rel="stylesheet" href="../assets/css/account-settings.css">
+</head>
+<body class="admin-dashboard-glass" data-toolbar="student" data-notif-admin-base="../admin/" data-account-role="student">
+  <div class="dashboard-wrap glass-dashboard">
+    <aside class="dashboard-sidebar">
+      <a href="../public-page/index.html" class="logo-link"><span class="logo-brand-row"><img src="../photo/logo.png" alt="" class="logo-mark-img" width="72" decoding="async" /><span class="logo-headlines"><span class="logo-title-line">MYANMAR</span><span class="logo-title-line">NEW ERA</span></span></span></a>
+      <nav>
+        <a href="dashboard.html">Dashboard</a>
+        <a href="courses.html">My Courses</a>
+        <a href="attendance.html">Attendance</a>
+        <a href="exam-results.html">Exam Results</a>
+        <a href="notice-board.html">Notice Board</a>
+        <a href="../public-page/placement-test.html">Placement Test</a>
+        <a href="progress.html">Progress Report</a>
+        <a href="profile.html" class="active">Profile</a>
+      </nav>
+    </aside>
+    <main class="dashboard-main">
+      <div class="dashboard-header glass-toolbar">
+        <div>
+          <p class="dashboard-toolbar-title">Profile &amp; account</p>
+          <p class="teacher-toolbar-sub">Personal &amp; academic info · <span id="teacherToolbarRole">Student</span></p>
+        </div>
+        <div class="auth-info">
+          <div class="notification-wrap">
+            <button type="button" class="btn-notification" id="btnNotification" aria-haspopup="true" aria-expanded="false">
+              &#x1F514; <span id="notificationLabel">Notifications</span> (<span id="notificationCount" class="notification-count-num">0</span>)
+              <span class="notification-badge" id="notificationBadge" style="display:none;">0</span>
+            </button>
+            <div class="notification-dropdown" id="notificationDropdown" role="menu">
+              <h3>Notifications</h3>
+              <ul id="notificationList"><li class="notif-empty">Loading…</li></ul>
+            </div>
+          </div>
+          <div class="profile-wrap">
+            <button type="button" class="btn-profile" id="btnProfile" aria-haspopup="true" aria-expanded="false">&#x1F464; <span id="profileName">Student</span> &#x25BC;</button>
+            <div class="profile-dropdown" id="profileDropdown" role="menu">
+              <span class="profile-dropdown-label" style="display:block;padding:0.5rem 1rem;font-size:0.78rem;color:var(--text-muted);font-weight:700;text-transform:uppercase;">Student menu</span>
+              <a href="profile.html">Profile</a>
+              <a href="profile.html#password">Change password</a>
+              <a href="notice-board.html">Notice board</a>
+              <div class="divider"></div>
+              <button type="button" id="btnAdminToolbarLogout">Logout</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="teacher-analytics-grid">
+        <div class="card teacher-analytics-card">
+          <h3>Academic info</h3>
+          <p class="text-muted" style="font-size:0.85rem;margin:0 0 0.75rem;">From school student record (read-only).</p>
+          <dl style="margin:0;font-size:0.88rem;line-height:1.6;">
+            <dt style="font-weight:700;">Student ID</dt><dd id="stuAcadId" style="margin:0 0 0.5rem;">—</dd>
+            <dt style="font-weight:700;">Name</dt><dd id="stuAcadName" style="margin:0 0 0.5rem;">—</dd>
+            <dt style="font-weight:700;">Batch</dt><dd id="stuAcadBatch" style="margin:0 0 0.5rem;">—</dd>
+            <dt style="font-weight:700;">Grade / class</dt><dd id="stuAcadGrade" style="margin:0 0 0.5rem;">—</dd>
+          </dl>
+        </div>
+        <div class="card teacher-analytics-card">
+          <h3>Profile picture</h3>
+          <p class="text-muted" style="font-size:0.85rem;margin:0 0 0.75rem;">Small image stored with your student profile (demo size limit).</p>
+          <div style="display:flex;flex-wrap:wrap;gap:1rem;align-items:flex-start;">
+            <div id="stuPhotoPreview" style="width:96px;height:96px;border-radius:12px;border:1px solid var(--border);background:rgba(255,255,255,0.5);background-size:cover;background-position:center;"></div>
+            <div>
+              <input type="file" id="stuPhotoFile" accept="image/*" style="font-size:0.85rem;">
+              <div style="margin-top:0.5rem;">
+                <button type="button" class="btn-primary" id="stuPhotoSave" style="padding:0.45rem 0.9rem;border-radius:8px;border:none;cursor:pointer;font-weight:700;">Save photo</button>
+                <span id="stuPhotoMsg" class="text-muted" style="margin-left:0.5rem;font-size:0.82rem;"></span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <p class="settings-intro">Display name, password, and notification preferences. School-wide settings are admin-only.</p>
+
+      <div class="settings-feature-cards" aria-label="Account sections">
+        <div class="settings-feature-card is-active" tabindex="0" role="button" data-settings-panel="profile" aria-pressed="true" aria-labelledby="settings-card-profile-title">
+          <div class="settings-card-icon" aria-hidden="true">&#x1F464;</div>
+          <h2 id="settings-card-profile-title">Profile</h2>
+          <p>Display name and session details.</p>
+        </div>
+        <div class="settings-feature-card" tabindex="0" role="button" data-settings-panel="password" aria-pressed="false" aria-labelledby="settings-card-pw-title">
+          <div class="settings-card-icon" aria-hidden="true">&#x1F512;</div>
+          <h2 id="settings-card-pw-title">Change password</h2>
+          <p>Update password on the school server when available.</p>
+        </div>
+        <div class="settings-feature-card" tabindex="0" role="button" data-settings-panel="notifications" aria-pressed="false" aria-labelledby="settings-card-notif-title">
+          <div class="settings-card-icon" aria-hidden="true">&#x1F514;</div>
+          <h2 id="settings-card-notif-title">Notifications</h2>
+          <p>Browser preferences for alert sounds.</p>
+        </div>
+      </div>
+
+      <div id="settingsPaneProfile" class="settings-pane is-active card">
+        <h2>Your profile</h2>
+        <p class="settings-hint" style="margin-top:0;">Display name is stored in this browser. Other fields come from your last login.</p>
+        <div class="settings-form-grid" style="margin-top:1rem;">
+          <div class="settings-field">
+            <label for="settingsDisplayName">Display name</label>
+            <input type="text" id="settingsDisplayName" name="displayName" autocomplete="name" maxlength="120" placeholder="Your name">
+          </div>
+          <div style="grid-column:1/-1;margin-top:0.35rem;">
+            <div class="settings-field">
+              <label for="settingsUsername">Username</label>
+              <input type="text" id="settingsUsername" readonly aria-label="Username">
+            </div>
+            <div class="settings-field">
+              <label for="settingsRole">Role</label>
+              <input type="text" id="settingsRole" readonly aria-label="Role">
+            </div>
+            <div class="settings-field">
+              <label for="settingsUserId">Student ID</label>
+              <input type="text" id="settingsUserId" readonly aria-label="Student ID">
+            </div>
+            <div class="settings-field">
+              <label for="settingsEmail">Email</label>
+              <input type="text" id="settingsEmail" readonly aria-label="Email" placeholder="Not provided for this account">
+            </div>
+          </div>
+          <div class="settings-actions">
+            <button type="button" class="btn btn-primary" id="settingsSaveDisplayName">Save display name</button>
+          </div>
+          <p id="settingsProfileMsg" class="settings-msg" role="status"></p>
+        </div>
+      </div>
+
+      <div id="settingsPanePassword" class="settings-pane card">
+        <h2>Change password</h2>
+        <p class="settings-hint" style="margin-top:0;">Requires the school API. Enter your <strong>current</strong> password, then a new one (at least 6 characters).</p>
+        <div class="settings-form-grid" style="margin-top:1rem;">
+          <div class="settings-field">
+            <label for="settingsCurrentPassword">Current password</label>
+            <input type="password" id="settingsCurrentPassword" name="current_password" autocomplete="current-password">
+          </div>
+          <div class="settings-field">
+            <label for="settingsNewPassword">New password</label>
+            <input type="password" id="settingsNewPassword" name="new_password" autocomplete="new-password" minlength="6">
+          </div>
+          <div class="settings-field">
+            <label for="settingsConfirmPassword">Confirm new password</label>
+            <input type="password" id="settingsConfirmPassword" name="confirm_password" autocomplete="new-password" minlength="6">
+          </div>
+          <div class="settings-actions">
+            <button type="button" class="btn btn-primary" id="settingsPasswordSubmit">Update password</button>
+          </div>
+          <p id="settingsPasswordMsg" class="settings-msg" role="status"></p>
+        </div>
+        <ul class="settings-tips">
+          <li>After a successful change, sign in with the new password next time.</li>
+        </ul>
+      </div>
+
+      <div id="settingsPaneNotifications" class="settings-pane card">
+        <h2>Notification settings</h2>
+        <p class="settings-hint" style="margin-top:0;">Saved in <strong>this browser</strong>. Matches the admin / teacher notification sound toggle.</p>
+        <div class="settings-check-row" style="margin-top:1rem;">
+          <input type="checkbox" id="settingsNotifSound" checked aria-describedby="settingsNotifSoundHelpS">
+          <div>
+            <label for="settingsNotifSound" style="font-weight:700;margin:0;">Allow notification sounds (when supported)</label>
+            <p id="settingsNotifSoundHelpS" class="settings-hint" style="margin-top:0.35rem;">Uncheck to silence beeps on pages that support them.</p>
+          </div>
+        </div>
+        <p id="settingsNotifPrefsMsg" class="settings-msg" role="status"></p>
+      </div>
+    </main>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+  <script src="../assets/js/firebase-config.js"></script>
+  <script src="../assets/js/auth.js"></script>
+  <script src="../assets/js/school-api.js"></script>
+  <script src="../assets/js/content-firebase.js"></script>
+  <script src="../assets/js/student-context.js"></script>
+  <script src="../assets/js/student-profile-store.js"></script>
+  <script src="../assets/js/admin-top-toolbar.js"></script>
+  <script>
+    (function () {
+      var user = window.AcademyAuth && AcademyAuth.currentUser();
+      if (!user) {
+        window.location.href = '../public-page/login.html?redirect=student/profile.html';
+        return;
+      }
+      AcademyAuth.getUserProfile(user.uid, function (profile) {
+        var role = (profile && profile.role) || 'student';
+        if (role === 'admin') {
+          window.location.href = '../admin/dashboard.html';
+          return;
+        }
+        if (role === 'teacher') {
+          window.location.href = '../teacher/dashboard.html';
+          return;
+        }
+      });
+      if (window.AdminTopToolbar) AdminTopToolbar.init();
+
+      var MAX_B64 = 450000;
+
+      function loadAcademic() {
+        StudentContext.resolve(function(sid) {
+          document.getElementById('stuAcadId').textContent = sid || '—';
+          if (!sid || !window.SchoolAPI) return;
+          SchoolAPI.getStudent(sid).then(function(r) {
+            if (!r || !r.ok) {
+              document.getElementById('stuAcadName').textContent = '—';
+              document.getElementById('stuAcadBatch').textContent = '—';
+              document.getElementById('stuAcadGrade').textContent = '—';
+              return;
+            }
+            var st = r.student || {};
+            document.getElementById('stuAcadName').textContent = st.name || st.student_name || '—';
+            document.getElementById('stuAcadGrade').textContent = st.grade || st.class_name || st.section || '—';
+            var bid = st.batch_id;
+            if (bid == null || bid === '') {
+              document.getElementById('stuAcadBatch').textContent = '—';
+              return;
+            }
+            return SchoolAPI.getBatches().then(function(br) {
+              var batches = br && br.ok && br.batches ? br.batches : [];
+              var b = batches.find(function(x) { return Number(x.id) === Number(bid); });
+              document.getElementById('stuAcadBatch').textContent = b ? String(b.name || bid) : String(bid);
+            });
+          }).catch(function() {});
+        });
+      }
+
+      function syncPhotoPreview(url) {
+        var el = document.getElementById('stuPhotoPreview');
+        if (!el) return;
+        if (url) el.style.backgroundImage = 'url("' + url.replace(/"/g, '%22') + '")';
+        else el.style.backgroundImage = '';
+      }
+
+      function loadPhoto() {
+        StudentContext.resolve(function(sid) {
+          if (!sid || !window.StudentProfileStore) return;
+          StudentProfileStore.load(sid, function(row) {
+            syncPhotoPreview(row && row.photo_data_url);
+          });
+        });
+      }
+
+      document.getElementById('stuPhotoSave').addEventListener('click', function() {
+        var msg = document.getElementById('stuPhotoMsg');
+        msg.textContent = '';
+        var inp = document.getElementById('stuPhotoFile');
+        var file = inp && inp.files && inp.files[0];
+        if (!file) {
+          msg.textContent = 'Choose an image.';
+          return;
+        }
+        var reader = new FileReader();
+        reader.onload = function() {
+          var dataUrl = reader.result;
+          if (String(dataUrl).length > MAX_B64) {
+            msg.textContent = 'Image too large for demo storage.';
+            return;
+          }
+          StudentContext.resolve(function(sid) {
+            if (!sid) {
+              msg.textContent = 'No student ID.';
+              return;
+            }
+            StudentProfileStore.save(sid, { photo_data_url: dataUrl }, function(ok) {
+              msg.textContent = ok ? 'Saved.' : 'Save failed.';
+              if (ok) syncPhotoPreview(dataUrl);
+            });
+          });
+        };
+        reader.readAsDataURL(file);
+      });
+
+      loadAcademic();
+      loadPhoto();
+    })();
+  </script>
+  <script src="../assets/js/account-settings.js"></script>
+  <script src="../assets/js/dashboard-sidebar.js" defer></script>
+</body>
+</html>

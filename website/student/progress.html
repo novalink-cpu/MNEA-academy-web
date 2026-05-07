@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="my">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="../assets/js/desktop-layout-viewport.js"></script>
+  <title>Progress Report | Student | Myanmar New Era Academy</title>
+  <link rel="stylesheet" href="../assets/css/main.css">
+  <link rel="stylesheet" href="../assets/css/dashboard.css">
+  <link rel="stylesheet" href="../assets/css/teacher-portal.css">
+</head>
+<body class="admin-dashboard-glass" data-toolbar="student" data-notif-admin-base="../admin/">
+  <div class="dashboard-wrap glass-dashboard">
+    <aside class="dashboard-sidebar">
+      <a href="../public-page/index.html" class="logo-link"><span class="logo-brand-row"><img src="../photo/logo.png" alt="" class="logo-mark-img" width="72" decoding="async" /><span class="logo-headlines"><span class="logo-title-line">MYANMAR</span><span class="logo-title-line">NEW ERA</span></span></span></a>
+      <nav>
+        <a href="dashboard.html">Dashboard</a>
+        <a href="courses.html">My Courses</a>
+        <a href="attendance.html">Attendance</a>
+        <a href="exam-results.html">Exam Results</a>
+        <a href="notice-board.html">Notice Board</a>
+        <a href="../public-page/placement-test.html">Placement Test</a>
+        <a href="progress.html" class="active">Progress Report</a>
+        <a href="profile.html">Profile</a>
+      </nav>
+    </aside>
+    <main class="dashboard-main">
+      <div class="dashboard-header glass-toolbar">
+        <div>
+          <p class="dashboard-toolbar-title">Progress Report</p>
+          <p class="teacher-toolbar-sub">Placement &amp; learning snapshot · <span id="teacherToolbarRole">Student</span></p>
+        </div>
+        <div class="auth-info">
+          <div class="notification-wrap">
+            <button type="button" class="btn-notification" id="btnNotification" aria-haspopup="true" aria-expanded="false">
+              &#x1F514; <span id="notificationLabel">Notifications</span> (<span id="notificationCount" class="notification-count-num">0</span>)
+              <span class="notification-badge" id="notificationBadge" style="display:none;">0</span>
+            </button>
+            <div class="notification-dropdown" id="notificationDropdown" role="menu">
+              <h3>Notifications</h3>
+              <ul id="notificationList"><li class="notif-empty">Loading…</li></ul>
+            </div>
+          </div>
+          <div class="profile-wrap">
+            <button type="button" class="btn-profile" id="btnProfile" aria-haspopup="true" aria-expanded="false">&#x1F464; <span id="profileName">Student</span> &#x25BC;</button>
+            <div class="profile-dropdown" id="profileDropdown" role="menu">
+              <span class="profile-dropdown-label" style="display:block;padding:0.5rem 1rem;font-size:0.78rem;color:var(--text-muted);font-weight:700;text-transform:uppercase;">Student menu</span>
+              <a href="profile.html">Profile</a>
+              <a href="profile.html#password">Change password</a>
+              <a href="dashboard.html">Dashboard</a>
+              <div class="divider"></div>
+              <button type="button" id="btnAdminToolbarLogout">Logout</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <p class="text-muted" style="line-height:1.55;">Your placement scores and CEFR estimate are summarised on the <a href="dashboard.html">Student Dashboard</a>. Retake the test anytime from <a href="../public-page/placement-test.html">Placement Test</a>.</p>
+      </div>
+    </main>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+  <script src="../assets/js/firebase-config.js"></script>
+  <script src="../assets/js/auth.js"></script>
+  <script src="../assets/js/school-api.js"></script>
+  <script src="../assets/js/content-firebase.js"></script>
+  <script src="../assets/js/admin-top-toolbar.js"></script>
+  <script>
+    (function() {
+      var u = window.AcademyAuth && AcademyAuth.currentUser();
+      if (!u) window.location.href = '../public-page/login.html?redirect=student/progress.html';
+      else if (window.AdminTopToolbar) AdminTopToolbar.init();
+    })();
+  </script>
+  <script src="../assets/js/dashboard-sidebar.js" defer></script>
+</body>
+</html>

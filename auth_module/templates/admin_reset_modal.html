@@ -1,0 +1,20 @@
+{# Reusable modal markup — included from admin_users.html #}
+<div class="modal-backdrop" id="adminResetModal" role="dialog" aria-modal="true" aria-labelledby="armTitle">
+  <div class="modal">
+    <h2 id="armTitle">Temporary password (copy now)</h2>
+    <p class="hint">This value is shown once. The user must log in and set a new password.</p>
+    <div class="field">
+      <label>Username</label>
+      <input type="text" id="armUser" readonly>
+    </div>
+    <div class="field">
+      <label>Temporary password</label>
+      <div class="row-eye">
+        <input type="text" id="armPw" readonly>
+        <button type="button" class="btn-eye" id="armCopy" title="Copy">📋</button>
+      </div>
+      <span id="armCopyStatus" class="hint"></span>
+    </div>
+    <button type="button" class="btn btn-primary" id="armClose" style="width:100%;">Done</button>
+  </div>
+</div>

@@ -1,0 +1,1573 @@
+<!DOCTYPE html>
+<html lang="my">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="../assets/js/desktop-layout-viewport.js"></script>
+  <title>Reports | Admin</title>
+  <link rel="stylesheet" href="../assets/css/main.css">
+  <link rel="stylesheet" href="../assets/css/dashboard.css">
+  <style>
+    .analytics-shell {
+      margin-top: 0.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      padding-inline: 0.35rem;
+      box-sizing: border-box;
+    }
+    /* Place filters toolbar between KPI stat cards and report tables */
+    .analytics-stat-grid { order: 1; }
+    .analytics-toolbar { order: 2; }
+    #raLoading { order: 3; }
+    #reportView { order: 4; }
+    .analytics-toolbar {
+      display: flex; flex-direction: column; flex-wrap: nowrap; gap: 0.75rem; align-items: stretch; margin-bottom: 1rem;
+      background: rgba(255,255,255,0.35); border: 1px solid rgba(255,255,255,0.55);
+      border-radius: 18px; padding: 1rem; backdrop-filter: blur(14px) saturate(1.1);
+    }
+    /* label + control side-by-side */
+    .analytics-toolbar .grp { display:flex; flex-direction:row; gap:0.6rem; align-items:center; }
+    .analytics-toolbar label {
+      font-size:0.85rem;
+      font-weight:700;
+      color: var(--text-muted);
+      display:flex;
+      align-items:center;
+      flex: 0 0 120px;     /* fixed label column width */
+      width: 120px;
+      line-height: 42px;  /* match control height */
+    }
+    .analytics-toolbar input, .analytics-toolbar select {
+      padding: 0.5rem 0.65rem; border-radius: 10px; border: 1px solid var(--border); background: #fff;
+      min-width: 0;
+      width: 100%;
+      flex: 1;
+      box-sizing: border-box;
+      height: 42px; /* make inputs/selects visually align */
+      min-height: 42px;
+    }
+    .analytics-range-row {
+      display: flex;
+      gap: 0.6rem;
+      align-items: center;
+      flex: 1;
+      height: 42px;
+    }
+    .analytics-range-row > div { display: flex; align-items: center; }
+    .analytics-range-row input {
+      min-width: 8.5rem;
+      width: 100%;
+    }
+    .analytics-actions {
+      width: 100%;
+      display:flex;
+      gap:0.6rem;
+      flex-wrap: wrap;
+      align-items:center;
+      justify-content: flex-end; /* keep PDF/CSV at right */
+    }
+    .btn-ghost {
+      background: transparent; border: 1px solid var(--border); border-radius: 12px;
+      padding: 0.55rem 0.85rem; cursor: pointer; color: var(--text);
+      font-weight: 800;
+    }
+    .btn-ghost:hover { background: var(--surface-hover); }
+    /* Primary action */
+    #raApply.btn-ghost {
+      background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 55%, #0ea5e9 120%);
+      color: #fff;
+      border-color: rgba(255,255,255,0.28);
+      box-shadow: 0 12px 26px rgba(37, 99, 235, 0.22);
+    }
+    #raApply.btn-ghost:hover {
+      filter: brightness(1.03);
+      box-shadow: 0 16px 34px rgba(37, 99, 235, 0.28);
+    }
+    #raApply.btn-ghost:active { transform: translateY(1px); }
+
+    /* Export buttons are defined globally in dashboard.css (.btn-export) */
+    .analytics-tabs { display:flex; gap:0.5rem; flex-wrap:wrap; margin: 1rem 0 0.75rem; }
+    .analytics-tabs button {
+      padding: 0.6rem 1rem; border-radius: 12px; border: 1px solid var(--border);
+      cursor: pointer; background: rgba(255,255,255,0.4);
+      font-weight: 800;
+    }
+    .analytics-tabs button.active { border-color: rgba(5,150,105,0.6); box-shadow: 0 10px 24px rgba(16,185,129,0.15); }
+    .analytics-stat-grid { display:grid; grid-template-columns: repeat(3, minmax(220px, 1fr)); gap: 1rem; margin-bottom: 1rem; width:100%; box-sizing:border-box; }
+    @media (max-width: 900px) {
+      .analytics-stat-grid { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+    }
+    .analytics-stat-card {
+      background: transparent !important;
+      border: 1px solid rgba(255,255,255,0.72) !important;
+      border-radius: 18px;
+      padding: 1rem;
+      box-shadow:
+        0 16px 34px rgba(15, 23, 42, 0.10),
+        inset 0 1px 0 rgba(255,255,255,0.82) !important;
+      backdrop-filter: none !important;
+      -webkit-backdrop-filter: none !important;
+      position: relative;
+      overflow: hidden;
+      min-width: 0;
+      transform: translate3d(0, 0, 0);
+      transition:
+        box-shadow 0.32s cubic-bezier(0.22, 1, 0.36, 1),
+        transform 0.32s cubic-bezier(0.22, 1, 0.36, 1),
+        border-color 0.2s ease;
+    }
+    .analytics-stat-card:hover {
+      box-shadow:
+        0 22px 46px rgba(15, 23, 42, 0.16),
+        0 10px 22px rgba(15, 23, 42, 0.10),
+        inset 0 1px 0 rgba(255,255,255,0.92) !important;
+      transform: translate3d(4px, -6px, 0) scale(1.02);
+      border-color: rgba(255,255,255,0.86) !important;
+    }
+    .analytics-stat-card .k { color: var(--text-muted); font-weight: 800; font-size: 0.9rem; margin-bottom: 0.3rem; }
+    .analytics-stat-card .v { color: var(--text); font-weight: 900; font-size: 1.35rem; }
+    /* KPI stat-card gradients (match other dashboard stat feel) */
+    /* Gradients follow the KPI layout order:
+       1) Total Students  2) Total Teachers  3) Active Batches
+       4) Attendance Rate 5) Pass Rate      6) Completion */
+    .analytics-stat-grid .analytics-stat-card:nth-child(1) {
+      background: linear-gradient(135deg, #93c5fd 0%, #60a5fa 45%, #a78bfa 120%) !important;
+      border-color: rgba(255,255,255,0.65) !important;
+    }
+    .analytics-stat-grid .analytics-stat-card:nth-child(2) {
+      background: linear-gradient(135deg, #e0f2fe 0%, #60a5fa 45%, #34d399 120%) !important;
+      border-color: rgba(255,255,255,0.65) !important;
+    }
+    .analytics-stat-grid .analytics-stat-card:nth-child(3) {
+      background: linear-gradient(135deg, #86efac 0%, #34d399 45%, #22c55e 120%) !important;
+      border-color: rgba(255,255,255,0.65) !important;
+    }
+    .analytics-stat-grid .analytics-stat-card:nth-child(4) {
+      background: linear-gradient(135deg, #fef3c7 0%, #fbbf24 45%, #60a5fa 120%) !important;
+      border-color: rgba(255,255,255,0.65) !important;
+    }
+    .analytics-stat-grid .analytics-stat-card:nth-child(5) {
+      background: linear-gradient(135deg, #fbcfe8 0%, #fb7185 45%, #a78bfa 120%) !important;
+      border-color: rgba(255,255,255,0.65) !important;
+    }
+    .analytics-stat-grid .analytics-stat-card:nth-child(6) {
+      background: linear-gradient(135deg, #fce7f3 0%, #fb7185 45%, #60a5fa 120%) !important;
+      border-color: rgba(255,255,255,0.65) !important;
+    }
+    .analytics-note { color: var(--text-muted); font-size: 0.9rem; margin-top: 0.75rem; }
+    .pre-ascii {
+      white-space: pre; overflow:auto; max-height: 520px;
+      background: rgba(255,255,255,0.55); border: 1px solid var(--border);
+      border-radius: 16px; padding: 1rem;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      font-size: 0.78rem; line-height: 1.35;
+    }
+    .hidden { display:none !important; }
+    @media print {
+      #raPdfBanner.hidden { display: block !important; }
+      body.admin-dashboard-glass { background: #fff !important; }
+      .dashboard-sidebar,
+      .dashboard-header,
+      .analytics-toolbar,
+      .auth-info,
+      .notification-wrap,
+      .profile-wrap { display: none !important; }
+      .dashboard-wrap.glass-dashboard,
+      .dashboard-main {
+        display: block !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        max-width: 100% !important;
+      }
+      .dashboard-main { padding: 0.75rem !important; }
+      .analytics-shell { gap: 0.5rem; margin-top: 0 !important; }
+      #raLoading { display: none !important; }
+      .analytics-stat-grid {
+        break-inside: avoid;
+        page-break-inside: avoid;
+      }
+      .analytics-stat-card {
+        box-shadow: none !important;
+        border: 1px solid #ddd !important;
+        break-inside: avoid;
+      }
+      #reportView section.card {
+        break-inside: auto;
+        page-break-inside: auto;
+        box-shadow: none !important;
+        border: 1px solid #ddd !important;
+      }
+      .table-wrap { overflow: visible !important; }
+      .dashboard-table { font-size: 0.75rem; }
+    }
+  </style>
+</head>
+<body class="admin-dashboard-glass">
+  <div class="dashboard-wrap glass-dashboard">
+    <aside class="dashboard-sidebar">
+      <a href="../public-page/index.html" class="logo-link"><span class="logo-brand-row"><img src="../photo/logo.png" alt="" class="logo-mark-img" width="72" decoding="async" /><span class="logo-headlines"><span class="logo-title-line">MYANMAR</span><span class="logo-title-line">NEW ERA</span></span></span></a>
+      <nav>
+        <a href="dashboard.html">Dashboard</a>
+        <a href="admissions.html">Admission Management</a>
+        <a href="students.html">Student Management</a>
+        <a href="teachers.html">Teacher Management</a>
+        <a href="academic.html">Academic Management</a>
+        <a href="attendance.html">Attendance Management</a>
+        <a href="exams.html">Exam Management</a>
+        <a href="gpa-transcript.html">GPA & Transcript Management</a>
+        <a href="inquiries.html">Communication <span class="nav-inquiry-badge" id="navInquiryCount"></span></a>
+        <a href="content-management.html">Page Content Management</a>
+        <a href="question-bank.html">Question Bank Management</a>
+        <a href="reports.html" class="active">Reports & Analytics</a>
+        <a href="settings.html">Settings & Configuration</a>
+      </nav>
+    </aside>
+    <main class="dashboard-main">
+      <div class="dashboard-header glass-toolbar">
+        <p class="dashboard-toolbar-title" data-lang-en="Reports & Analytics" data-lang-my="Reports & Analytics">Reports & Analytics</p>
+        <div class="auth-info">
+          <div class="notification-wrap">
+            <button type="button" class="btn-notification" id="btnNotification" aria-haspopup="true" aria-expanded="false">
+              &#x1F514; <span id="notificationLabel">Notifications</span> (<span id="notificationCount" class="notification-count-num">0</span>)
+              <span class="notification-badge" id="notificationBadge" style="display:none;">0</span>
+            </button>
+            <div class="notification-dropdown" id="notificationDropdown" role="menu">
+              <h3>Notifications</h3>
+              <ul id="notificationList">
+                <li><a href="inquiries.html">No new notifications</a></li>
+              </ul>
+            </div>
+          </div>
+          <div class="profile-wrap">
+            <button type="button" class="btn-profile" id="btnProfile" aria-haspopup="true" aria-expanded="false">&#x1F464; <span id="profileName">Admin</span> &#x25BC;</button>
+            <div class="profile-dropdown" id="profileDropdown" role="menu">
+              <a href="settings.html">Profile</a>
+              <a href="settings.html#password">Change Password</a>
+              <div class="divider"></div>
+              <button type="button" id="btnAdminToolbarLogout">Logout</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="analytics-shell">
+        <div id="raPdfBanner" class="hidden" style="margin-bottom:0.75rem;padding:0.65rem 0.85rem;border:1px solid var(--border);border-radius:12px;background:rgba(255,255,255,0.85);font-size:0.9rem;line-height:1.45;">
+          <strong>Reports &amp; Analytics</strong> — <span id="raPdfBannerText"></span>
+        </div>
+        <div class="analytics-toolbar">
+          <div class="grp">
+            <label>Date Range</label>
+            <div class="analytics-range-row">
+              <div style="flex:1;">
+                <label for="raFrom" style="display:none;">Date Range From</label>
+                <input type="date" id="raFrom" lang="en-GB" placeholder="dd/mm/yyyy">
+              </div>
+              <div style="width: 0.75rem; text-align:center; color: var(--text-muted); font-weight: 900;">→</div>
+              <div style="flex:1;">
+                <label for="raTo" style="display:none;">To</label>
+                <input type="date" id="raTo" lang="en-GB" placeholder="dd/mm/yyyy">
+              </div>
+              <div style="flex: 0 0 auto;">
+                <button type="button" class="btn-ghost" id="raApply">🔁 Apply Filters</button>
+              </div>
+            </div>
+          </div>
+          <div class="grp">
+            <label for="raBatch">Batch</label>
+            <select id="raBatch">
+              <option value="">All Batches</option>
+            </select>
+          </div>
+          <div class="grp">
+            <label for="raReportType">Report Type</label>
+            <select id="raReportType">
+              <option value="">-</option>
+              <option value="all">All</option>
+              <option value="student">Student Reports</option>
+              <option value="attendance">Attendance Reports</option>
+              <option value="academic">Academic / Exam Reports</option>
+              <option value="batch">Batch / Class Reports</option>
+            </select>
+          </div>
+          <div class="analytics-actions">
+            <button type="button" class="btn-export" id="raExportPdf">Export PDF</button>
+            <button type="button" class="btn-export" id="raExportCsv">Export CSV</button>
+          </div>
+        </div>
+
+        <div id="raLoading" class="card" style="padding: 1rem; display:none;">
+          <p class="text-muted">Loading real data… please wait.</p>
+        </div>
+
+        <div class="analytics-stat-grid" id="raSummary">
+          <div class="analytics-stat-card"><div class="k">Total Students</div><div class="v" id="raTotStudents">—</div></div>
+          <div class="analytics-stat-card"><div class="k">Total Teachers</div><div class="v" id="raTotTeachers">—</div></div>
+          <div class="analytics-stat-card"><div class="k">Active Batches</div><div class="v" id="raActiveBatches">—</div></div>
+          <div class="analytics-stat-card"><div class="k">Attendance Rate</div><div class="v" id="raAttendanceRate">—</div></div>
+          <div class="analytics-stat-card"><div class="k">Pass Rate</div><div class="v" id="raPassRate">—</div></div>
+          <div class="analytics-stat-card"><div class="k">Completion</div><div class="v" id="raCompletion">—</div></div>
+        </div>
+
+        <div id="reportView">
+          <section id="studentReports" class="card" style="padding: 1.1rem; margin-bottom: 1rem;">
+            <h2 style="margin:0 0 0.75rem; color: var(--primary); font-size: 1.1rem;">1️⃣ Student Reports</h2>
+            <div class="table-wrap">
+              <table class="dashboard-table">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Student Name</th>
+                    <th>Student ID</th>
+                    <th>Batch</th>
+                    <th>Attendance</th>
+                    <th>Level</th>
+                  </tr>
+                </thead>
+                <tbody id="stReportBody"></tbody>
+              </table>
+            </div>
+
+            <h3 style="margin: 1rem 0 0.65rem; color: var(--primary); font-size: 1rem;">📌 Placement Test Result Summary</h3>
+            <div class="table-wrap">
+              <table class="dashboard-table">
+                <thead>
+                  <tr>
+                    <th>Level</th>
+                    <th>Students</th>
+                    <th>Percentage</th>
+                  </tr>
+                </thead>
+                <tbody id="ptSummaryBody"></tbody>
+              </table>
+            </div>
+
+            <h3 style="margin: 1rem 0 0.65rem; color: var(--primary); font-size: 1rem;">📌 Level Progress (inferred)</h3>
+            <div class="table-wrap">
+              <table class="dashboard-table">
+                <thead>
+                  <tr>
+                    <th>Student Name</th>
+                    <th>Start Level</th>
+                    <th>Current Level</th>
+                    <th>Progress</th>
+                    <th>Completed</th>
+                  </tr>
+                </thead>
+                <tbody id="levelProgressBody"></tbody>
+              </table>
+            </div>
+          </section>
+
+          <section id="attendanceReports" class="card" style="padding: 1.1rem; margin-bottom: 1rem;">
+            <h2 style="margin:0 0 0.75rem; color: var(--primary); font-size: 1.1rem;">2️⃣ Attendance Reports</h2>
+            <h3 style="margin: 0 0 0.65rem; color: var(--primary); font-size: 1rem;">Monthly Attendance Summary (range)</h3>
+            <div class="table-wrap">
+              <table class="dashboard-table">
+                <thead>
+                  <tr>
+                    <th>Batch Name</th>
+                    <th>Present</th>
+                    <th>Absent</th>
+                    <th>Late</th>
+                    <th>Rate</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody id="attBatchSummaryBody"></tbody>
+              </table>
+            </div>
+
+            <h3 style="margin: 1rem 0 0.65rem; color: var(--primary); font-size: 1rem;">📌 Low Attendance Students (&lt; 75%)</h3>
+            <div class="table-wrap">
+              <table class="dashboard-table">
+                <thead>
+                  <tr>
+                    <th>Student Name</th>
+                    <th>Student ID</th>
+                    <th>Batch</th>
+                    <th>Attendance</th>
+                    <th>Warning</th>
+                  </tr>
+                </thead>
+                <tbody id="lowAttBody"></tbody>
+              </table>
+            </div>
+          </section>
+
+          <section id="academicReports" class="card" style="padding: 1.1rem; margin-bottom: 1rem;">
+            <h2 style="margin:0 0 0.75rem; color: var(--primary); font-size: 1.1rem;">3️⃣ Academic / Exam Reports</h2>
+            <h3 style="margin: 0 0 0.65rem; color: var(--primary); font-size: 1rem;">Placement Test Results (overall)</h3>
+            <div class="table-wrap">
+              <table class="dashboard-table">
+                <thead>
+                  <tr>
+                    <th>Skill</th>
+                    <th>Average Score</th>
+                    <th>Weak Level</th>
+                    <th>Strong Level</th>
+                  </tr>
+                </thead>
+                <tbody id="ptOverallBody"></tbody>
+              </table>
+            </div>
+
+            <h3 style="margin: 1rem 0 0.65rem; color: var(--primary); font-size: 1rem;">📌 Pass / Fail Rate (by Batch)</h3>
+            <div class="table-wrap">
+              <table class="dashboard-table">
+                <thead>
+                  <tr>
+                    <th>Batch Name</th>
+                    <th>Pass</th>
+                    <th>Fail</th>
+                    <th>Pass Rate</th>
+                    <th>Top Student</th>
+                  </tr>
+                </thead>
+                <tbody id="passFailBody"></tbody>
+              </table>
+            </div>
+          </section>
+
+          <section id="batchReports" class="card" style="padding: 1.1rem; margin-bottom: 1rem;">
+            <h2 style="margin:0 0 0.75rem; color: var(--primary); font-size: 1.1rem;">4️⃣ Batch / Class Reports</h2>
+            <div class="table-wrap">
+              <table class="dashboard-table">
+                <thead>
+                  <tr>
+                    <th>Batch Name</th>
+                    <th>Capacity</th>
+                    <th>Enrolled</th>
+                    <th>Available</th>
+                    <th>Status</th>
+                    <th>Avg Score</th>
+                  </tr>
+                </thead>
+                <tbody id="batchSummaryBody"></tbody>
+              </table>
+            </div>
+
+            <h3 style="margin: 1rem 0 0.65rem; color: var(--primary); font-size: 1rem;">📌 Recent / Completed Batches (last 3 months)</h3>
+            <div class="table-wrap">
+              <table class="dashboard-table">
+                <thead>
+                  <tr>
+                    <th>Batch Name</th>
+                    <th>End Date (max enrollment)</th>
+                    <th>Total Students</th>
+                    <th>Completion (approx)</th>
+                  </tr>
+                </thead>
+                <tbody id="completedBody"></tbody>
+              </table>
+            </div>
+          </section>
+
+          <p class="analytics-note">⚠️ Read-only: Reports are auto-generated from stored attendance, placement test results and accepted student data. Use filters to customize view.</p>
+        </div>
+
+      </div>
+    </main>
+  </div>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+  <script src="../assets/js/firebase-config.js"></script>
+  <script src="../assets/js/auth.js"></script>
+  <script src="../assets/js/school-api.js"></script>
+  <script src="../assets/js/lang-switcher.js"></script>
+  <script src="../assets/js/content-firebase.js"></script>
+  <script src="../assets/js/admin-top-toolbar.js"></script>
+  <script>
+    (function() {
+      function esc(s) {
+        if (s == null) return '';
+        return String(s)
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;');
+      }
+
+      function safeNum(n) {
+        var x = (typeof n === 'number') ? n : parseFloat(n);
+        return isNaN(x) ? 0 : x;
+      }
+
+      function toISODate(d) {
+        if (!(d instanceof Date)) d = new Date(d);
+        if (isNaN(d.getTime())) return '';
+        return d.toISOString().slice(0, 10);
+      }
+
+      // Level mapping (match admissions rules)
+      var SCORE_LEVELS = [
+        { max: 20, level: 'Pre-Foundation' },
+        { max: 30, level: 'Foundation 1' },
+        { max: 40, level: 'Foundation 2' },
+        { max: 50, level: 'Pre-Elementary' },
+        { max: 65, level: 'Elementary' },
+        { max: 75, level: 'Pre-Intermediate' },
+        { max: 85, level: 'Intermediate' },
+        { max: 100, level: 'Upper Intermediate' }
+      ];
+
+      var academicLevels = [];
+
+      function getLevelRules() {
+        if (academicLevels && academicLevels.length) {
+          return academicLevels.slice().sort(function(a, b) {
+            return (parseInt(a.min_score, 10) || 0) - (parseInt(b.min_score, 10) || 0);
+          }).map(function(level) {
+            return {
+              min: parseInt(level.min_score, 10) || 0,
+              max: parseInt(level.max_score, 10) || 0,
+              level: level.name || level.level_name || level.level || ''
+            };
+          });
+        }
+        return SCORE_LEVELS.map(function(item, idx) {
+          return {
+            min: idx === 0 ? 0 : ((SCORE_LEVELS[idx - 1].max || 0) + 1),
+            max: item.max,
+            level: item.level
+          };
+        });
+      }
+
+      function scoreToLevel(score) {
+        var n = Math.min(100, Math.max(0, parseInt(score, 10) || 0));
+        var rules = getLevelRules();
+        for (var i = 0; i < rules.length; i++) {
+          if (n >= rules[i].min && n <= rules[i].max) return rules[i].level;
+        }
+        return rules.length ? rules[rules.length - 1].level : 'Upper Intermediate';
+      }
+
+      function levelRank(levelName) {
+        var t = String(levelName || '').trim();
+        var rules = getLevelRules();
+        var idx = -1;
+        for (var i = 0; i < rules.length; i++) {
+          if (String(rules[i].level || '').trim() === t) { idx = i; break; }
+        }
+        return idx >= 0 ? idx : 0;
+      }
+
+      function downloadText(filename, text) {
+        var blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+        var a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = filename;
+        a.click();
+        setTimeout(function() { URL.revokeObjectURL(a.href); }, 1000);
+      }
+
+      async function loadListWebExtra(key, def) {
+        def = def || [];
+        if (!window.SchoolAPI || !SchoolAPI.getWebExtra) return def;
+        try {
+          var r = await SchoolAPI.getWebExtra(key);
+          return (r && r.ok && Array.isArray(r.data)) ? r.data : def;
+        } catch (e) {
+          return def;
+        }
+      }
+
+      async function loadDashboard() {
+        if (!window.SchoolAPI || !SchoolAPI.getDashboard) return {};
+        try {
+          var r = await SchoolAPI.getDashboard();
+          if (r && r.ok && r.data) return r.data;
+          return r && r.ok ? r : r.data || {};
+        } catch (e) {
+          return {};
+        }
+      }
+
+      async function loadBatches() {
+        if (!window.SchoolAPI || !SchoolAPI.getBatches) return [];
+        try {
+          var r = await SchoolAPI.getBatches();
+          if (r && r.ok && Array.isArray(r.batches)) return r.batches;
+          if (Array.isArray(r)) return r;
+          return [];
+        } catch (e) {
+          return [];
+        }
+      }
+
+      async function loadStudentsApi() {
+        if (!window.SchoolAPI || !SchoolAPI.getStudents) return [];
+        try {
+          var r = await SchoolAPI.getStudents();
+          if (r && r.ok && Array.isArray(r.students)) return r.students;
+          if (Array.isArray(r)) return r;
+          return [];
+        } catch (e) {
+          return [];
+        }
+      }
+
+      function showLoading(show) {
+        var el = document.getElementById('raLoading');
+        if (!el) return;
+        el.style.display = show ? 'block' : 'none';
+      }
+
+      function applyModuleVisibility(moduleKey) {
+        // moduleKey: student | attendance | academic | batch | all | none
+        var map = {
+          student: 'studentReports',
+          attendance: 'attendanceReports',
+          academic: 'academicReports',
+          batch: 'batchReports'
+        };
+
+        var selected = moduleKey || 'none';
+        Object.keys(map).forEach(function(key) {
+          var el = document.getElementById(map[key]);
+          if (!el) return;
+          el.style.display = (selected === 'all' || selected === key) ? '' : 'none';
+        });
+      }
+
+      function syncModuleFromSelect() {
+        var sel = document.getElementById('raReportType');
+        if (!sel) return;
+        var v = sel.value;
+        if (!v) { applyModuleVisibility('none'); return; }
+        applyModuleVisibility(v === 'all' ? 'all' : v);
+      }
+
+      function statusFromRate(rate) {
+        rate = safeNum(rate);
+        if (rate >= 85) return '✅ Good';
+        if (rate >= 70) return '⚠️ Average';
+        return '🔴 Needs Review';
+      }
+
+      function formatPct(n) {
+        var x = safeNum(n);
+        return Math.round(x * 10) / 10;
+      }
+
+      function buildAsciiReport(ctx) {
+        var W = 132;
+
+        function rep(ch, n) {
+          return new Array(n + 1).join(ch);
+        }
+
+        function safeStr(v) {
+          return v == null ? '' : String(v);
+        }
+
+        function cap(s, max) {
+          s = safeStr(s);
+          if (s.length <= max) return s;
+          return s.slice(0, Math.max(0, max - 1)) + '…';
+        }
+
+        function padRight(s, n) {
+          s = safeStr(s);
+          if (s.length >= n) return s.slice(0, n);
+          return s + rep(' ', n - s.length);
+        }
+
+        function row(text) {
+          text = safeStr(text);
+          if (text.length > W) text = text.slice(0, W);
+          return '│' + padRight(text, W) + '│';
+        }
+
+        function center(text) {
+          text = safeStr(text);
+          var pad = W - text.length;
+          if (pad < 0) pad = 0;
+          var left = Math.floor(pad / 2);
+          var right = pad - left;
+          return '│' + rep(' ', left) + text + rep(' ', right) + '│';
+        }
+
+        function outerTop() {
+          return '╔' + rep('═', W + 2) + '╗';
+        }
+
+        function outerMid() {
+          return '╠' + rep('═', W + 2) + '╣';
+        }
+
+        function outerBottom() {
+          return '╚' + rep('═', W + 2) + '╝';
+        }
+
+        function subSectionTitle(title) {
+          s.push(row(''));
+          s.push(row(title));
+        }
+
+        // Simple ascii table builder with pipes.
+        function makeTable(headers, rows) {
+          rows = Array.isArray(rows) ? rows : [];
+          var colCount = headers.length;
+          var maxColWidth = 22;
+          var widths = [];
+          for (var i = 0; i < colCount; i++) {
+            var hLen = safeStr(headers[i]).length;
+            var m = hLen;
+            for (var r = 0; r < rows.length; r++) {
+              m = Math.max(m, safeStr(rows[r][i]).length);
+            }
+            widths[i] = Math.min(maxColWidth, m);
+          }
+
+          function makeSep() {
+            var parts = [];
+            for (var c = 0; c < colCount; c++) {
+              parts.push(rep('-', widths[c] + 2));
+            }
+            return parts.join('+');
+          }
+
+          function makeHeaderLine() {
+            var parts = [];
+            for (var c = 0; c < colCount; c++) {
+              parts.push(' ' + padRight(cap(headers[c], widths[c]), widths[c]) + ' ');
+            }
+            return '|' + parts.join('|') + '|';
+          }
+
+          function makeRowLine(rowArr) {
+            var parts = [];
+            for (var c = 0; c < colCount; c++) {
+              parts.push(' ' + padRight(cap(rowArr[c], widths[c]), widths[c]) + ' ');
+            }
+            return '|' + parts.join('|') + '|';
+          }
+
+          // Ensure it doesn't exceed W too much; if it does, the browser will wrap/scroll in pre.
+          var out = [];
+          out.push(makeHeaderLine());
+          out.push(makeSep());
+          for (var r = 0; r < rows.length; r++) {
+            out.push(makeRowLine(rows[r]));
+          }
+          return out;
+        }
+
+        // Format ISO date as DD/MM/YYYY
+        function fmtDate(iso) {
+          if (!iso) return '—';
+          var d = new Date(iso);
+          if (isNaN(d.getTime())) return String(iso);
+          return d.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' });
+        }
+
+        // Grouping to match the sample style: Foundation/Elementary/Intermediate/Advanced
+        var groupOrder = ['Foundation', 'Elementary', 'Intermediate', 'Advanced'];
+        function groupLevelFromRaw(rawLevelName) {
+          var name = safeStr(rawLevelName || '').toLowerCase();
+
+          // Keyword-based fallback (more robust than exact level-name matching).
+          if (name.indexOf('elementary') >= 0) return 'Elementary';
+          if (name.indexOf('advanced') >= 0 || name.indexOf('upper') >= 0) return 'Advanced';
+          if (name.indexOf('intermediate') >= 0) return 'Intermediate';
+          if (name.indexOf('foundation') >= 0) return 'Foundation';
+
+          // Use levelRank when possible (for exact matching setups).
+          var rulesCount = getLevelRules().length || 6;
+          if (rulesCount < 6) return rawLevelName || '—';
+          var rnk = levelRank(rawLevelName);
+          if (rnk <= 1) return 'Foundation';
+          if (rnk === 2) return 'Elementary';
+          if (rnk === 3 || rnk === 4) return 'Intermediate';
+          return 'Advanced';
+        }
+
+        var s = [];
+        s.push(outerTop());
+        s.push(center('MYANMAR NEW ERA EDUCATION CENTER'));
+        s.push(center('REPORTS & ANALYTICS'));
+        s.push(outerMid());
+
+        // KPI Summary
+        s.push(row(''));
+        s.push(row('📌 KPI SUMMARY'));
+        s.push(row('👥 Total Students: ' + (ctx.totalStudents || 0) + ' | 📚 Active Batches: ' + (ctx.activeBatches || 0) + ' | 📈 Attendance Rate: ' + (ctx.attRate != null ? ctx.attRate + '%' : '—') + ' | 🎯 Pass Rate: ' + (ctx.passRate != null ? ctx.passRate + '%' : '—')));
+        s.push(row('👨‍🏫 Total Teachers: ' + (ctx.totalTeachers != null ? ctx.totalTeachers : '—') + ' | ✅ Completion: ' + (ctx.completion != null ? ctx.completion + '%' : '—')));
+
+        // Filters
+        s.push(row(''));
+        s.push(row('🔎 FILTERS'));
+        var fromText = ctx.fromISO ? fmtDate(ctx.fromISO) : '—';
+        var toText = ctx.toISO ? fmtDate(ctx.toISO) : '—';
+        var batchLabel = safeStr(ctx.batchLabel || 'All Batches').trim();
+        var reportTypeLabel = safeStr(ctx.reportTypeLabel || 'All').trim();
+        s.push(row('Date Range : [' + fromText + ']  →  [' + toText + ']'));
+        s.push(row('Batch       : [' + batchLabel + ']'));
+        s.push(row('Report Type : [' + reportTypeLabel + ']'));
+        s.push(row(''));
+        s.push(row('[ APPLY FILTERS ]    [ PDF ]    [ CSV ]    [ EXPORT ]'));
+
+        // Student reports table
+        s.push(row(''));
+        s.push(row('📋 STUDENT REPORTS'));
+        var studentRows = Array.isArray(ctx.studentRows) ? ctx.studentRows : [];
+        var studentTable = [];
+        for (var i = 0; i < studentRows.length; i++) {
+          var st = studentRows[i] || {};
+          studentTable.push([
+            i + 1,
+            st.name || '—',
+            st.id || '—',
+            st.batch || '—',
+            (st.att == null ? '—' : Math.round(st.att) + '%'),
+            st.level ? st.level : '—'
+          ]);
+        }
+
+        var studentHeaders = ['#', 'Student Name', 'Student ID', 'Batch', 'Attendance', 'Level'];
+        var studentTableLines = makeTable(studentHeaders, studentTable);
+        studentTableLines.forEach(function(l) { s.push(row(l)); });
+
+        // Placement test result summary (grouped)
+        s.push(row(''));
+        s.push(row('📝 PLACEMENT TEST RESULT SUMMARY'));
+        var placementTotal = studentTable.length || 0;
+        var placementCounts = { Foundation: 0, Elementary: 0, Intermediate: 0, Advanced: 0 };
+        for (var p = 0; p < studentRows.length; p++) {
+          var ps = studentRows[p] || {};
+          var lvRaw = ps.startLevelRaw || ps.startLevel || ps.levelRaw || ps.level || '';
+          var grp = groupLevelFromRaw(lvRaw);
+          if (!placementCounts.hasOwnProperty(grp)) placementCounts[grp] = 0;
+          placementCounts[grp] += 1;
+        }
+
+        var placementRows = [
+          [
+            'Students',
+            placementCounts.Foundation,
+            placementCounts.Elementary,
+            placementCounts.Intermediate,
+            placementCounts.Advanced,
+            placementTotal
+          ],
+          [
+            'Percentage',
+            placementTotal ? Math.round(placementCounts.Foundation * 100 / placementTotal) + '%' : '0%',
+            placementTotal ? Math.round(placementCounts.Elementary * 100 / placementTotal) + '%' : '0%',
+            placementTotal ? Math.round(placementCounts.Intermediate * 100 / placementTotal) + '%' : '0%',
+            placementTotal ? Math.round(placementCounts.Advanced * 100 / placementTotal) + '%' : '0%',
+            '100%'
+          ]
+        ];
+
+        var placementHeaders = ['Level', 'Foundation', 'Elementary', 'Intermediate', 'Advanced', 'Total'];
+        var placementLines = makeTable(placementHeaders, placementRows);
+        placementLines.forEach(function(l) { s.push(row(l)); });
+
+        // Level progress (grouped)
+        s.push(row(''));
+        s.push(row('📌 LEVEL PROGRESS'));
+        var lpRows = [];
+        for (var j = 0; j < studentRows.length; j++) {
+          var stp = studentRows[j] || {};
+          var startGrp = groupLevelFromRaw(stp.startLevelRaw || stp.startLevel || stp.levelRaw || stp.level || '');
+          var currGrp = groupLevelFromRaw(stp.currentLevelRaw || stp.currentLevel || stp.currLevel || stp.level || '');
+          var startRank = groupOrder.indexOf(startGrp);
+          var currRank = groupOrder.indexOf(currGrp);
+          if (startRank < 0) startRank = 0;
+          if (currRank < 0) currRank = 0;
+          var diff = currRank - startRank;
+          var completedLevels = diff > 0 ? diff : 0;
+          var maxPossible = Math.max(1, (groupOrder.length - 1) - startRank);
+          var progressPct = diff > 0 ? Math.round(diff * 100 / maxPossible) : 0;
+
+          lpRows.push([
+            stp.name || '—',
+            startGrp || '—',
+            currGrp || '—',
+            progressPct + '%',
+            diff > 0 ? completedLevels + ' level(s)' : '0 level(s)'
+          ]);
+        }
+
+        var lpHeaders = ['Student Name', 'Start Level', 'Current Level', 'Progress', 'Completed'];
+        var lpLines = makeTable(lpHeaders, lpRows);
+        lpLines.forEach(function(l) { s.push(row(l)); });
+
+        s.push(row(''));
+        s.push(row('⚠️ Read-only: Reports are auto-generated from stored attendance, placement test results and accepted student data.'));
+        s.push(row(''));
+        s.push(outerBottom());
+        return s.join('\n');
+      }
+
+      var state = {
+        batches: [],
+        accepted: [],
+        placements: [],
+        from: '',
+        to: '',
+        batchId: '',
+        reportType: 'all',
+        lastAscii: ''
+      };
+
+      function normalizeAcceptedStudent(s) {
+        s = s || {};
+        var out = Object.assign({}, s);
+
+        out.student_id = (s.student_id != null ? s.student_id : (s.studentId != null ? s.studentId : (s.id != null ? s.id : null)));
+        out.student_name = (s.student_name != null ? s.student_name : (s.studentName != null ? s.studentName : (s.name != null ? s.name : null)));
+
+        out.batch_id = (s.batch_id != null ? s.batch_id : (s.batchId != null ? s.batchId : null));
+        out.batch_name = (s.batch_name != null ? s.batch_name : (s.batchName != null ? s.batchName : (s.batch != null ? s.batch : (s.class != null ? s.class : (s.class_name != null ? s.class_name : null)))));
+
+        out.level = (s.level != null ? s.level : (s.current_level != null ? s.current_level : (s.final_level != null ? s.final_level : (s.level_name != null ? s.level_name : null))));
+
+        // Placement score / total score fields differ by source
+        var ps = (s.placement_score != null ? s.placement_score
+          : (s.placementScore != null ? s.placementScore
+            : (s.total_score != null ? s.total_score
+              : (s.totalScore != null ? s.totalScore
+                : (s.placement != null ? s.placement : null)))));
+        out.placement_score = ps != null ? safeNum(ps) : null;
+
+        return out;
+      }
+
+      function normalizeBatchCapacity(b) {
+        b = b || {};
+        if (b.capacity != null) return safeNum(b.capacity);
+        if (b.Capacity != null) return safeNum(b.Capacity);
+        if (b.max_students != null) return safeNum(b.max_students);
+        if (b.maxStudents != null) return safeNum(b.maxStudents);
+        if (b.enrollment_capacity != null) return safeNum(b.enrollment_capacity);
+        if (b.max_capacity != null) return safeNum(b.max_capacity);
+        if (b.capacity_limit != null) return safeNum(b.capacity_limit);
+        return null;
+      }
+
+      async function computeAttendanceBatchSummary(from, to, batchFilter) {
+        var res = [];
+        var list = (state.batches || []);
+        if (batchFilter) {
+          list = list.filter(function(b) { return String(b.id) === String(batchFilter); });
+        }
+        for (var i = 0; i < list.length; i++) {
+          var b = list[i] || {};
+          var bid = b.id != null ? b.id : b.batch_id;
+          if (bid == null || bid === '') continue;
+          // eslint-disable-next-line no-await-in-loop
+          var r = await SchoolAPI.getAttendanceRecords(bid, from, to, {});
+          if (!r || !r.ok) continue;
+          var days = Array.isArray(r.days) ? r.days : [];
+          var present = 0, absent = 0, late = 0;
+          days.forEach(function(d) {
+            present += safeNum(d.present);
+            absent += safeNum(d.absent);
+            late += safeNum(d.late);
+          });
+          var total = present + absent + late;
+          var rate = total ? ((present + late) * 100 / total) : 0;
+          res.push({ name: b.name || String(b.id), present: present, absent: absent, late: late, total: total, rate: Math.round(rate * 10) / 10 });
+        }
+        return res;
+      }
+
+      async function computeStudentAttendance(acceptedList, from, to) {
+        var out = [];
+        var list = Array.isArray(acceptedList) ? acceptedList : [];
+        for (var i = 0; i < list.length; i++) {
+          var s = list[i] || {};
+          var sid = s.student_id != null ? s.student_id : s.id;
+          if (sid == null || String(sid).trim() === '') continue;
+          // eslint-disable-next-line no-await-in-loop
+          var r = await SchoolAPI.getStudentAttendanceReport(sid, null, { from: from || undefined, to: to || undefined });
+          var pct = 0;
+          if (r) {
+            // Prefer direct percentage fields if present
+            if (r.attendance_percentage != null) pct = safeNum(r.attendance_percentage);
+            else if (r.attendancePercentage != null) pct = safeNum(r.attendancePercentage);
+            else if (r.attendance_pct != null) pct = safeNum(r.attendance_pct);
+            else if (r.attendancePct != null) pct = safeNum(r.attendancePct);
+            else {
+              // Fallback: compute from present/absent/late fields if API provides them
+              var p = r.present != null ? safeNum(r.present) : null;
+              var a = r.absent != null ? safeNum(r.absent) : null;
+              var l = r.late != null ? safeNum(r.late) : null;
+              if (p != null || a != null || l != null) {
+                p = p != null ? p : 0;
+                a = a != null ? a : 0;
+                l = l != null ? l : 0;
+                var total = p + a + l;
+                pct = total ? ((p + l) * 100 / total) : 0;
+              }
+            }
+          }
+          out.push(Object.assign({}, s, { attendance_percentage: pct }));
+          if (i % 5 === 4) await new Promise(function(resolve) { setTimeout(resolve, 0); });
+        }
+        return out;
+      }
+
+      function renderTables() {
+        var accepted = state.accepted || [];
+        var stBody = document.getElementById('stReportBody');
+        if (stBody) {
+          stBody.innerHTML = accepted.map(function(s, i) {
+            return '<tr>' +
+              '<td>' + (i + 1) + '</td>' +
+              '<td>' + esc(s.student_name || s.name || '—') + '</td>' +
+              '<td>' + esc(s.student_id || '—') + '</td>' +
+              '<td>' + esc(s.batch_name || s.batch || '—') + '</td>' +
+              '<td>' + formatPct(s.attendance_percentage) + '%</td>' +
+              '<td>' + esc(s.level || '—') + '</td>' +
+              '</tr>';
+          }).join('') || '<tr><td colspan="6" class="text-muted">No data</td></tr>';
+        }
+
+        var attBatchBody = document.getElementById('attBatchSummaryBody');
+        if (attBatchBody) {
+          var att = state._attBatchSummary || [];
+          attBatchBody.innerHTML = att.map(function(b) {
+            return '<tr>' +
+              '<td>' + esc(b.name) + '</td>' +
+              '<td>' + b.present + '</td>' +
+              '<td>' + b.absent + '</td>' +
+              '<td>' + b.late + '</td>' +
+              '<td>' + b.rate + '%</td>' +
+              '<td>' + statusFromRate(b.rate) + '</td>' +
+              '</tr>';
+          }).join('') || '<tr><td colspan="6" class="text-muted">No attendance records.</td></tr>';
+        }
+
+        var lowAttBody = document.getElementById('lowAttBody');
+        if (lowAttBody) {
+          var low = accepted.filter(function(s) { return safeNum(s.attendance_percentage) < 75; }).slice(0, 20);
+          lowAttBody.innerHTML = (low.length ? low.map(function(s) {
+            return '<tr>' +
+              '<td>' + esc(s.student_name || s.name || '—') + '</td>' +
+              '<td>' + esc(s.student_id || '—') + '</td>' +
+              '<td>' + esc(s.batch_name || s.batch || '—') + '</td>' +
+              '<td>' + formatPct(s.attendance_percentage) + '%</td>' +
+              '<td>⚠️ Below 75%</td>' +
+              '</tr>';
+          }).join('') : '<tr><td colspan="5" class="text-muted">No low attendance students.</td></tr>');
+        }
+
+        // placement summary
+        var ptSummaryBody = document.getElementById('ptSummaryBody');
+        if (ptSummaryBody) {
+          // Use accepted students + score->level mapping (reliable even if placement_test_results is missing)
+          var total = accepted.length || 0;
+          var by = {};
+          accepted.forEach(function(s) {
+            var sc = s.placement_score != null ? s.placement_score : (s.total_score || s.totalScore || 0);
+            var lv = scoreToLevel(sc);
+            by[lv] = (by[lv] || 0) + 1;
+          });
+          var levels = Object.keys(by).sort(function(a, b) { return levelRank(a) - levelRank(b); });
+          ptSummaryBody.innerHTML = (levels.length ? levels.map(function(lv) {
+            var cnt = by[lv] || 0;
+            var pct = total ? Math.round(cnt * 100 / total) : 0;
+            return '<tr><td>' + esc(lv) + '</td><td>' + cnt + '</td><td>' + pct + '%</td></tr>';
+          }).join('') : '<tr><td colspan="3" class="text-muted">No placement results.</td></tr>');
+        }
+
+        // level progress inferred
+        var levelProgressBody = document.getElementById('levelProgressBody');
+        if (levelProgressBody) {
+          levelProgressBody.innerHTML = accepted.slice(0, 20).map(function(s) {
+            var start = scoreToLevel(s.placement_score != null ? s.placement_score : (s.total_score || 0));
+            var curr = s.level || start;
+            var r0 = levelRank(start), r1 = levelRank(curr);
+            var diff = r1 - r0;
+            var completed = diff > 0 ? diff : 0;
+            var rulesCount = getLevelRules().length || 1;
+            var maxPossible = Math.max(1, (rulesCount - 1) - r0);
+            var progress = diff > 0 ? Math.round(diff * 100 / maxPossible) : 0;
+            return '<tr>' +
+              '<td>' + esc(s.student_name || s.name || '—') + '</td>' +
+              '<td>' + esc(start) + '</td>' +
+              '<td>' + esc(curr) + '</td>' +
+              '<td>' + progress + '%</td>' +
+              '<td>' + completed + ' level(s)</td>' +
+              '</tr>';
+          }).join('') || '<tr><td colspan="5" class="text-muted">No students.</td></tr>';
+        }
+
+        // Pass/fail by batch (accepted students)
+        var passFailBody = document.getElementById('passFailBody');
+        if (passFailBody) {
+          var threshold = 50;
+          var byBatch = {};
+          var batchesById = {};
+          (state.batches || []).forEach(function(b) {
+            if (b && b.id != null) batchesById[String(b.id)] = b.name || b.batch_name || String(b.id);
+          });
+          accepted.forEach(function(s) {
+            var key = (s.batch_id != null ? String(s.batch_id) : (s.batch_name || s.batch || '—'));
+            byBatch[key] = byBatch[key] || [];
+            byBatch[key].push(s);
+          });
+          passFailBody.innerHTML = Object.keys(byBatch).map(function(bn) {
+            var list = byBatch[bn] || [];
+            var pass = list.filter(function(s) { return safeNum(s.placement_score) >= threshold; }).length;
+            var fail = list.length - pass;
+            var rate = list.length ? (pass * 100 / list.length) : 0;
+            var top = list.slice().sort(function(a, b) { return safeNum(b.placement_score) - safeNum(a.placement_score); })[0] || {};
+            return '<tr>' +
+              '<td>' + esc(batchesById[bn] || bn) + '</td>' +
+              '<td>' + pass + '</td>' +
+              '<td>' + fail + '</td>' +
+              '<td>' + Math.round(rate) + '%</td>' +
+              '<td>' + esc(top.student_name || top.name || '—') + ' (' + safeNum(top.placement_score) + ')</td>' +
+              '</tr>';
+          }).join('') || '<tr><td colspan="5" class="text-muted">No accepted students.</td></tr>';
+        }
+
+        // Batch summary
+        var batchSummaryBody = document.getElementById('batchSummaryBody');
+        if (batchSummaryBody) {
+          batchSummaryBody.innerHTML = (state.batches || []).map(function(b) {
+            var name = b.name || String(b.id);
+            var list = accepted.filter(function(s) {
+              if (s.batch_id != null) return String(s.batch_id) === String(b.id);
+              return String(s.batch_name || s.batch || '').trim() === String(name).trim();
+            });
+            var enrolled = list.length;
+            var capacity = normalizeBatchCapacity(b);
+            var available = capacity != null ? capacity - enrolled : null;
+            var status = enrolled ? 'Active' : 'Inactive';
+            var avgScore = list.length ? (list.reduce(function(acc, s) { return acc + safeNum(s.placement_score); }, 0) / list.length) : 0;
+            return '<tr>' +
+              '<td>' + esc(name) + '</td>' +
+              '<td>' + (capacity != null ? Math.round(capacity) : '—') + '</td>' +
+              '<td>' + enrolled + '</td>' +
+              '<td>' + (available != null ? Math.round(available) : '—') + '</td>' +
+              '<td>' + esc(status) + '</td>' +
+              '<td>' + Math.round(avgScore) + '%</td>' +
+              '</tr>';
+          }).join('') || '<tr><td colspan="6" class="text-muted">No batches.</td></tr>';
+        }
+
+        // Placement overall skill averages (min/max weak/strong inferred)
+        var ptOverallBody = document.getElementById('ptOverallBody');
+        if (ptOverallBody) {
+          var placements = state.placements || [];
+          var skills = ['listening_score', 'reading_score', 'writing_score', 'speaking_score'];
+          var names = { listening_score: 'Listening', reading_score: 'Reading', writing_score: 'Writing', speaking_score: 'Speaking' };
+          var sums = {}, counts = {};
+          skills.forEach(function(k) { sums[k] = 0; counts[k] = 0; });
+          placements.forEach(function(p) {
+            skills.forEach(function(k) {
+              var v = p[k];
+              if (v == null || v === '') return;
+              sums[k] += safeNum(v);
+              counts[k] += 1;
+            });
+          });
+          var avg = {};
+          skills.forEach(function(k) { avg[k] = counts[k] ? (sums[k] / counts[k]) : 0; });
+          function scaledLevel(avgScore25) { return scoreToLevel((avgScore25 / 25) * 100); }
+          var skillLevels = skills.map(function(k) {
+            return { k: k, avg: avg[k], level: scaledLevel(avg[k]) };
+          }).sort(function(a, b) { return a.avg - b.avg; });
+          var weakLevel = skillLevels[0] ? skillLevels[0].level : '—';
+          var strongLevel = skillLevels[skillLevels.length - 1] ? skillLevels[skillLevels.length - 1].level : '—';
+          ptOverallBody.innerHTML = (skills.length ? skillLevels.map(function(it) {
+            return '<tr>' +
+              '<td>' + esc(names[it.k] || it.k) + '</td>' +
+              '<td>' + Math.round((it.avg / 25) * 100) + '%</td>' +
+              '<td>' + esc(weakLevel) + '</td>' +
+              '<td>' + esc(strongLevel) + '</td>' +
+              '</tr>';
+          }).join('') : '<tr><td colspan="4" class="text-muted">No placement data.</td></tr>');
+        }
+
+        // Recent batches (last 3 months) based on enrollment_date and pass threshold
+        var completedBody = document.getElementById('completedBody');
+        if (completedBody) {
+          var threeMonthsAgo = new Date();
+          threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
+          var by = {};
+          var batchesById = {};
+          (state.batches || []).forEach(function(b) {
+            if (b && b.id != null) batchesById[String(b.id)] = b.name || b.batch_name || String(b.id);
+          });
+          accepted.forEach(function(s) {
+            var key = (s.batch_id != null ? String(s.batch_id) : (s.batch_name || s.batch || '—'));
+            by[key] = by[key] || [];
+            by[key].push(s);
+          });
+          var passThreshold = 50;
+          var rows = Object.keys(by).map(function(bn) {
+            var list = by[bn] || [];
+            var dates = list.map(function(s) { return (s.enrollment_date || '').slice(0, 10); }).filter(Boolean).sort();
+            var maxDate = dates.length ? dates[dates.length - 1] : '';
+            var maxD = maxDate ? new Date(maxDate + 'T12:00:00') : null;
+            if (!maxD || maxD < threeMonthsAgo) return null;
+            var pass = list.filter(function(s) { return safeNum(s.placement_score) >= passThreshold; }).length;
+            var completion = list.length ? Math.round(pass * 100 / list.length) : 0;
+            return { bn: batchesById[bn] || bn, endDate: maxDate || '—', total: list.length, completion: completion };
+          }).filter(Boolean).sort(function(a, b) { return String(b.endDate).localeCompare(String(a.endDate)); });
+          completedBody.innerHTML = rows.length ? rows.map(function(r) {
+            return '<tr>' +
+              '<td>' + esc(r.bn) + '</td>' +
+              '<td>' + esc(r.endDate) + '</td>' +
+              '<td>' + r.total + '</td>' +
+              '<td>' + r.completion + '%</td>' +
+              '</tr>';
+          }).join('') : '<tr><td colspan="4" class="text-muted">No recent activity in the last 3 months.</td></tr>';
+        }
+      }
+
+      async function computeAndRender() {
+        state.from = document.getElementById('raFrom').value;
+        state.to = document.getElementById('raTo').value;
+        state.batchId = (document.getElementById('raBatch') && document.getElementById('raBatch').value) ? String(document.getElementById('raBatch').value).trim() : '';
+        state.reportType = (document.getElementById('raReportType') && document.getElementById('raReportType').value != null)
+          ? String(document.getElementById('raReportType').value)
+          : '';
+
+        showLoading(true);
+        try {
+          state.batches = await loadBatches();
+          // Load level rules (for accurate score->level mapping)
+          if (SchoolAPI && SchoolAPI.getLevels) {
+            try {
+              var levelsRes = await SchoolAPI.getLevels();
+              academicLevels = (levelsRes && levelsRes.ok && Array.isArray(levelsRes.levels)) ? levelsRes.levels : [];
+            } catch (e) {
+              academicLevels = [];
+            }
+          }
+
+          var acceptedRaw = await loadListWebExtra('accepted_students', []);
+          state.accepted = (Array.isArray(acceptedRaw) ? acceptedRaw : []).map(normalizeAcceptedStudent);
+          state.placements = await loadListWebExtra('placement_test_results', []);
+
+          // If accepted_students is empty, fall back to the real students list API
+          if (!state.accepted.length) {
+            var studentsApi = await loadStudentsApi();
+            state.accepted = (Array.isArray(studentsApi) ? studentsApi : []).map(normalizeAcceptedStudent);
+          }
+
+          // If a batch is selected AND we can resolve it, filter accepted students to match the module KPI.
+          // (If the batchId can't be resolved, filtering would incorrectly wipe out data.)
+          if (state.batchId) {
+            var selectedBatch = (state.batches || []).find(function(b) { return String(b.id) === String(state.batchId); });
+            if (selectedBatch) {
+              var selectedBatchName = selectedBatch.name || selectedBatch.batch_name || '';
+              var selectedPrimaryName = selectedBatchName ? String(selectedBatchName).split('|')[0].trim() : '';
+              state.accepted = state.accepted.filter(function(s) {
+                var bid = (s.batch_id != null ? s.batch_id : (s.batchId != null ? s.batchId : null));
+                if (bid != null && String(bid) === String(state.batchId)) return true;
+                var an = (s.batch_name || s.batch || '');
+                var acceptedPrimaryName = an ? String(an).split('|')[0].trim() : '';
+                if (selectedPrimaryName && acceptedPrimaryName && acceptedPrimaryName === selectedPrimaryName) return true;
+                if (selectedBatchName && String(s.batch_name || '').trim() === String(selectedBatchName).trim()) return true;
+                return false;
+              });
+            }
+          }
+
+          // Enrich accepted students with placement scores (for Pass Rate / Placement Summary / Level Progress).
+          // accepted_students may not contain placement_score, so we join with placement_test_results.
+          var placementBySid = {};
+          var placementByName = {};
+          (state.placements || []).forEach(function(p) {
+            if (!p) return;
+            var sid = (p.student_id != null ? p.student_id : (p.studentId != null ? p.studentId : null));
+            var total = safeNum(p.total_score != null ? p.total_score : (p.totalScore != null ? p.totalScore : null));
+            var name = (p.student_name != null ? p.student_name : (p.name != null ? p.name : null));
+            if (sid != null && String(sid).trim() !== '') {
+              var k = String(sid);
+              if (!placementBySid[k] || safeNum(placementBySid[k].__score) < total) {
+                placementBySid[k] = Object.assign({}, p, { __score: total });
+              }
+            }
+            if (name != null && String(name).trim() !== '') {
+              var nk = String(name).trim().toLowerCase();
+              if (!placementByName[nk] || safeNum(placementByName[nk].__score) < total) {
+                placementByName[nk] = Object.assign({}, p, { __score: total });
+              }
+            }
+          });
+          state.accepted = (state.accepted || []).map(function(s) {
+            s = s || {};
+            var sid = (s.student_id != null ? s.student_id : (s.studentId != null ? s.studentId : (s.id != null ? s.id : null)));
+            var name = (s.student_name != null ? s.student_name : (s.name != null ? s.name : null));
+            var p = null;
+            if (sid != null && String(sid).trim() !== '') p = placementBySid[String(sid)];
+            if (!p && name != null && String(name).trim() !== '') p = placementByName[String(name).trim().toLowerCase()];
+            if (p) {
+              var score = safeNum(p.total_score != null ? p.total_score : (p.totalScore != null ? p.totalScore : p.__score));
+              s.placement_score = score;
+              // If current level is missing, fall back to suggested level.
+              if (!s.level && p.suggested_level) s.level = p.suggested_level;
+            }
+            return s;
+          });
+
+          // ensure dropdown
+          var batchSel = document.getElementById('raBatch');
+          if (batchSel && state.batches && state.batches.length && batchSel.options.length <= 1) {
+            state.batches.forEach(function(b) {
+              var o = document.createElement('option');
+              o.value = String(b.id);
+              o.textContent = b.name || ('Batch ' + b.id);
+              batchSel.appendChild(o);
+            });
+          }
+
+          // Attendance for students (real %)
+          var acceptedWithAttendance = await computeStudentAttendance(state.accepted, state.from, state.to);
+          state.accepted = acceptedWithAttendance;
+
+          // Attendance summary by batch
+          state._attBatchSummary = await computeAttendanceBatchSummary(state.from, state.to, state.batchId);
+
+          // Summary metrics
+          var totalStudents = state.accepted.length;
+          // Active batches are derived from attendance summaries (more reliable than batch-name matching).
+          var activeBatches = (state._attBatchSummary || []).filter(function(b) { return safeNum(b.total) > 0; }).length;
+
+          var presentSum = 0, absentSum = 0, lateSum = 0, totalSum = 0;
+          (state._attBatchSummary || []).forEach(function(b) {
+            presentSum += safeNum(b.present);
+            absentSum += safeNum(b.absent);
+            lateSum += safeNum(b.late);
+            totalSum += safeNum(b.total || (b.present + b.absent + b.late));
+          });
+          var attRate = totalSum ? ((presentSum + lateSum) * 100 / totalSum) : 0;
+
+          var passThreshold = 50;
+          var passCount = state.accepted.filter(function(s) { return safeNum(s.placement_score) >= passThreshold; }).length;
+          var passRate = totalStudents ? (passCount * 100 / totalStudents) : 0;
+
+          var dash = await loadDashboard();
+          var totalTeachers = safeNum(dash.total_teachers || dash.totalTeachers || dash.teachers || 0);
+
+          document.getElementById('raTotStudents').textContent = totalStudents;
+          document.getElementById('raActiveBatches').textContent = activeBatches;
+          document.getElementById('raAttendanceRate').textContent = state._attBatchSummary.length ? (Math.round(attRate * 10) / 10) + '%' : '—';
+          document.getElementById('raPassRate').textContent = totalStudents ? (Math.round(passRate) + '%') : '—';
+          var raTotTeachers = document.getElementById('raTotTeachers');
+          if (raTotTeachers) raTotTeachers.textContent = totalTeachers || '—';
+          var raCompletion = document.getElementById('raCompletion');
+          if (raCompletion) raCompletion.textContent = totalStudents ? (Math.round(passRate) + '%') : '—';
+
+          renderTables();
+
+          // Analysis ASCII + insights
+          var ptSkills = ['listening_score', 'reading_score', 'writing_score', 'speaking_score'];
+          var sums = {}, counts = {};
+          ptSkills.forEach(function(k) { sums[k] = 0; counts[k] = 0; });
+          state.placements.forEach(function(p) {
+            ptSkills.forEach(function(k) {
+              if (p[k] == null || p[k] === '') return;
+              sums[k] += safeNum(p[k]);
+              counts[k] += 1;
+            });
+          });
+          var avg = {};
+          ptSkills.forEach(function(k) { avg[k] = counts[k] ? sums[k] / counts[k] : 0; });
+          function scaledLevel25(avgScore25) { return scoreToLevel((avgScore25 / 25) * 100); }
+          var skillLevels = ptSkills.map(function(k) {
+            return { k: k, avg: avg[k], level: scaledLevel25(avg[k]) };
+          }).sort(function(a, b) { return a.avg - b.avg; });
+          var weakLevel = skillLevels[0] ? skillLevels[0].level : '—';
+          var strongLevel = skillLevels[skillLevels.length - 1] ? skillLevels[skillLevels.length - 1].level : '—';
+
+          var studentTop = state.accepted.slice().sort(function(a, b) {
+            return safeNum(a.attendance_percentage) - safeNum(b.attendance_percentage);
+          }).slice(0, 5).map(function(s) {
+            return {
+              name: s.student_name || s.name || '—',
+              id: s.student_id || '—',
+              batch: s.batch_name || s.batch || '—',
+              att: formatPct(s.attendance_percentage),
+              level: s.level || '—'
+            };
+          });
+
+          var attTop = (state._attBatchSummary || []).slice().sort(function(a, b) { return safeNum(b.rate) - safeNum(a.rate); }).slice(0, 5);
+
+          // Build ASCII preview content from the real computed state
+          var batchLabel = 'All Batches';
+          if (state.batchId) {
+            var bSel = (state.batches || []).find(function(b) { return String(b.id) === String(state.batchId); });
+            if (bSel) batchLabel = bSel.name || bSel.batch_name || ('Batch ' + bSel.id);
+          }
+          var reportTypeLabel = 'All';
+          var rt = state.reportType || 'all';
+          if (rt === 'student') reportTypeLabel = 'Student Reports';
+          else if (rt === 'attendance') reportTypeLabel = 'Attendance Reports';
+          else if (rt === 'academic') reportTypeLabel = 'Academic / Exam Reports';
+          else if (rt === 'batch') reportTypeLabel = 'Batch / Class Reports';
+
+          var studentRows = (state.accepted || []).map(function(s) {
+            var start = scoreToLevel(s.placement_score != null ? s.placement_score : (s.total_score || s.totalScore || 0));
+            var curr = s.level || start;
+            return {
+              name: s.student_name || s.name || '—',
+              id: s.student_id || s.id || '—',
+              batch: s.batch_name || s.batch || '—',
+              att: safeNum(s.attendance_percentage),
+              level: curr,
+              startLevelRaw: start,
+              currentLevelRaw: curr
+            };
+          });
+
+          var completion = Math.round(passRate);
+
+          var ascii = buildAsciiReport({
+            totalStudents: totalStudents,
+            activeBatches: activeBatches,
+            attRate: Math.round(attRate * 10) / 10,
+            passRate: Math.round(passRate),
+            completion: completion,
+            totalTeachers: totalTeachers,
+            fromISO: state.from,
+            toISO: state.to,
+            batchLabel: batchLabel,
+            reportTypeLabel: reportTypeLabel,
+            studentRows: studentRows,
+
+            // legacy fields (kept for possible future extensions)
+            studentTop: studentTop,
+            attTop: attTop,
+            skillAvg: {
+              listening: Math.round((avg.listening_score / 25) * 100),
+              reading: Math.round((avg.reading_score / 25) * 100),
+              writing: Math.round((avg.writing_score / 25) * 100),
+              speaking: Math.round((avg.speaking_score / 25) * 100)
+            },
+            weakLevel: weakLevel,
+            strongLevel: strongLevel
+          });
+
+          state.lastAscii = ascii;
+          var asciiEl = document.getElementById('asciiOutput');
+          if (asciiEl) asciiEl.textContent = ascii;
+
+          var insights = document.getElementById('analysisInsights');
+          if (insights) {
+            var topBatch = attTop[0] ? (attTop[0].name + ' (' + attTop[0].rate + '%)') : '—';
+            insights.innerHTML = ''
+              + '<div style="font-weight:900; margin-bottom:0.35rem; color: var(--primary);">Key Insights</div>'
+              + '<div style="color: var(--text-muted); line-height:1.6;">'
+              + '<div>Weak Level (by lowest skill average): <strong>' + esc(weakLevel) + '</strong></div>'
+              + '<div>Strong Level (by highest skill average): <strong>' + esc(strongLevel) + '</strong></div>'
+              + '<div>Top Attendance Batch in range: <strong>' + esc(topBatch) + '</strong></div>'
+              + '<div>Low attendance threshold is &lt; 75%. Check the warnings table.</div>'
+              + '</div>';
+          }
+
+          syncModuleFromSelect();
+        } catch (e) {
+          // eslint-disable-next-line no-console
+          console.error(e);
+          alert('Failed to generate reports: ' + (e && (e.message || e.toString())));
+        } finally {
+          showLoading(false);
+        }
+      }
+
+      // Auth gate
+      (function authInit() {
+        var u = window.AcademyAuth && AcademyAuth.currentUser();
+        if (!u) { window.location.href = '../public-page/login.html'; return; }
+        AcademyAuth.getUserProfile(u.uid, function(p) {
+          if ((p && p.role) !== 'admin') window.location.href = '../student/dashboard.html';
+          else if (window.AdminTopToolbar) AdminTopToolbar.init();
+        });
+      })();
+
+      // init date defaults
+      (function initDefaults() {
+        var now = new Date();
+        var from = new Date(now.getFullYear(), now.getMonth(), 1);
+        var to = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+        document.getElementById('raFrom').value = toISODate(from);
+        document.getElementById('raTo').value = toISODate(to);
+        var raReportType = document.getElementById('raReportType');
+        if (raReportType) {
+          raReportType.value = 'all';
+          applyModuleVisibility('all');
+        }
+      })();
+
+      document.getElementById('raReportType').addEventListener('change', function() { syncModuleFromSelect(); });
+      document.getElementById('raApply').addEventListener('click', function() { computeAndRender(); });
+
+      var btnExportTxt = document.getElementById('raExportTxt');
+      if (btnExportTxt) {
+        btnExportTxt.addEventListener('click', function() {
+          var txt = state.lastAscii || (document.getElementById('asciiOutput') && document.getElementById('asciiOutput').textContent) || '';
+          if (!txt) return alert('No ASCII output yet. Load reports first.');
+          downloadText('reports_ascii_' + (state.from || 'from') + '_to_' + (state.to || 'to') + '.txt', txt);
+        });
+      }
+
+      function buildPdfBannerText() {
+        var from = (document.getElementById('raFrom') && document.getElementById('raFrom').value) || '—';
+        var to = (document.getElementById('raTo') && document.getElementById('raTo').value) || '—';
+        var batchSel = document.getElementById('raBatch');
+        var batchLabel = 'All batches';
+        if (batchSel && batchSel.value) {
+          var opt = batchSel.options[batchSel.selectedIndex];
+          batchLabel = opt ? opt.text : batchSel.value;
+        }
+        var rtEl = document.getElementById('raReportType');
+        var rv = rtEl ? rtEl.value : 'all';
+        var rtLabel = 'All report sections';
+        if (rv === 'student') rtLabel = 'Student Reports';
+        else if (rv === 'attendance') rtLabel = 'Attendance Reports';
+        else if (rv === 'academic') rtLabel = 'Academic / Exam Reports';
+        else if (rv === 'batch') rtLabel = 'Batch / Class Reports';
+        else if (!rv) rtLabel = 'All report sections';
+        return 'Date range: ' + from + ' → ' + to + ' · Batch: ' + batchLabel + ' · View: ' + rtLabel;
+      }
+
+      document.getElementById('raExportPdf').addEventListener('click', function() {
+        var rt = document.getElementById('raReportType');
+        var savedVis = rt ? rt.value : '';
+        var hadNone = !savedVis;
+        if (hadNone) applyModuleVisibility('all');
+        var bannerText = document.getElementById('raPdfBannerText');
+        if (bannerText) bannerText.textContent = buildPdfBannerText();
+        window.addEventListener('afterprint', function onAfterPdf() {
+          window.removeEventListener('afterprint', onAfterPdf);
+          if (hadNone) syncModuleFromSelect();
+        });
+        window.print();
+      });
+
+      document.getElementById('raExportCsv').addEventListener('click', async function() {
+        var rows = state._attBatchSummary || [];
+        if (!rows.length) return alert('No attendance summary yet.');
+        var header = ['batch_name', 'present', 'absent', 'late', 'rate'];
+        var csv = [header].concat(rows.map(function(r) {
+          return [r.name, r.present, r.absent, r.late, r.rate];
+        })).map(function(line) {
+          return line.map(function(c) {
+            return '"' + String(c).replace(/"/g, '""') + '"';
+          }).join(',');
+        }).join('\n');
+        downloadText('attendance_batch_summary_' + (state.from || 'from') + '_' + (state.to || 'to') + '.csv', csv);
+      });
+
+      // initial load (slight delay for auth/render)
+      setTimeout(function() { computeAndRender(); }, 80);
+    })();
+  </script>
+  <script src="../assets/js/admin-badge.js"></script>
+  <script src="../assets/js/dashboard-sidebar.js" defer></script>
+</body>
+</html>

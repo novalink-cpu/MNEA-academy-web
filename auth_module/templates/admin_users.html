@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+{# Demo admin page: list users and trigger password reset (AJAX + modal). #}
+{% block title %}Users (admin){% endblock %}
+{% block body %}
+<div class="container wide">
+  <div class="top-nav">
+    <h1 style="margin:0;">School users</h1>
+    <div>
+      <a class="btn btn-ghost" href="{{ url_for('auth.audit_log') }}">Audit log</a>
+      <a class="btn btn-ghost" href="{{ url_for('auth.logout') }}">Logout</a>
+    </div>
+  </div>
+
+  {% include "admin_reset_modal.html" %}
+
+  <div class="card" style="overflow:auto;">
+    <table class="audit">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Role</th>
+          <th>Login (username)</th>
+          <th>Name</th>
+          <th>Email</th>
+          <th>Must change PW</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for u in users %}
+        <tr>
+          <td>{{ u.id }}</td>
+          <td>{{ u.role }}</td>
+          <td>{{ u.username }}</td>
+          <td>{{ u.full_name }}</td>
+          <td>{{ u.email or '—' }}</td>
+          <td>{{ 'yes' if u.must_change_password else 'no' }}</td>
+          <td>
+            {% if u.role != 'admin' %}
+            <button type="button" class="btn btn-ghost js-reset-pw" data-user-id="{{ u.id }}">Reset password</button>
+            {% else %}
+            —
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+<script>
+(function(){
+  var modal = document.getElementById('adminResetModal');
+  var inpUser = document.getElementById('armUser');
+  var inpPw = document.getElementById('armPw');
+  var st = document.getElementById('armCopyStatus');
+  document.querySelectorAll('.js-reset-pw').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var uid = btn.getAttribute('data-user-id');
+      var csrf = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+      fetch('/admin/reset-password/' + encodeURIComponent(uid), {
+        method: 'POST',
+        headers: {
+          'X-CSRFToken': csrf,
+          'Accept': 'application/json'
+        },
+        body: new FormData()
+      }).then(function(r){ return r.json(); }).then(function(data){
+        if (!data.ok) { alert(data.message || 'Error'); return; }
+        inpUser.value = data.username || '';
+        inpPw.value = data.temporary_password || '';
+        modal.classList.add('open');
+      }).catch(function(){ alert('Request failed'); });
+    });
+  });
+  document.getElementById('armCopy').addEventListener('click', function(){
+    window.copyToClipboard(inpPw.value, st);
+  });
+  document.getElementById('armClose').addEventListener('click', function(){
+    modal.classList.remove('open');
+    inpPw.value = '';
+  });
+  modal.addEventListener('click', function(e){ if (e.target === modal) modal.classList.remove('open'); });
+})();
+</script>
+{% endblock %}

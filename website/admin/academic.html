@@ -1,0 +1,3820 @@
+<!DOCTYPE html>
+<html lang="my">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="../assets/js/desktop-layout-viewport.js"></script>
+  <title>Academic Management | Admin</title>
+  <link rel="stylesheet" href="../assets/css/main.css">
+  <link rel="stylesheet" href="../assets/css/dashboard.css">
+  <style>
+    .academic-mgmt-cards { display:grid; grid-template-columns:repeat(4, 1fr); gap:1rem; margin:1.25rem 0; }
+    .academic-mgmt-card {
+      position: relative;
+      overflow: hidden;
+      border-radius: 22px;
+      padding: 1.15rem 1.1rem;
+      cursor: pointer;
+      border: 1px solid rgba(255,255,255,.36);
+      box-shadow: 0 12px 26px rgba(15,23,42,.15);
+      transition: box-shadow .25s ease, transform .25s ease, border-color .2s;
+    }
+    .academic-mgmt-card::before {
+      content: "";
+      position: absolute;
+      inset: -55% -15% auto auto;
+      width: 160px;
+      height: 160px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(255,255,255,.24), transparent 68%);
+      pointer-events: none;
+    }
+    .academic-mgmt-card:nth-child(1) { background:linear-gradient(135deg, #f7a45c 0%, #ef9a57 45%, #edbc96 120%); }
+    .academic-mgmt-card:nth-child(2) { background:linear-gradient(135deg, #6e6bdf 0%, #7f7bdc 45%, #9a97e8 120%); }
+    .academic-mgmt-card:nth-child(3) { background:linear-gradient(135deg, #27b6b3 0%, #3fc7b2 45%, #84dcca 120%); }
+    .academic-mgmt-card:nth-child(4) { background:linear-gradient(135deg, #f26f8c 0%, #f27faa 45%, #f5a4c3 120%); }
+    .academic-mgmt-card:hover { box-shadow:0 16px 30px rgba(0,0,0,.16); transform:translateY(-4px); }
+    .academic-mgmt-card.active { border-color:rgba(17,24,39,.45); box-shadow:0 18px 34px rgba(15,23,42,.2); transform: translateY(-4px); }
+    .academic-mgmt-card .card-row {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: .8rem;
+    }
+    .academic-mgmt-card .card-copy { display:flex; flex-direction:column; gap:.25rem; }
+    .academic-mgmt-card h3 { margin:0; font-size:1rem; color:#111827; font-weight:700; }
+    .academic-mgmt-card .count { font-size:1.9rem; line-height:1.05; font-weight:800; color:#111827; margin:0; }
+    .academic-mgmt-card .icon {
+      width: 62px;
+      height: 62px;
+      border-radius: 999px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(255,255,255,.9);
+      color: #6f6f7c;
+      font-size: 1.6rem;
+      box-shadow: 0 8px 18px rgba(0,0,0,.12);
+      flex-shrink: 0;
+      margin: 0;
+    }
+    .academic-mgmt-card p { margin:0; color:var(--text-muted); font-size:.88rem; }
+    .section-grid { display:grid; grid-template-columns:minmax(0, 1fr); gap:1rem; align-items:start; }
+    .section-stack { display:flex; flex-direction:column; gap:1rem; }
+    .academic-view { display:none; }
+    .academic-view.show { display:flex; }
+    .section-title { display:flex; justify-content:space-between; gap:1rem; align-items:center; margin-bottom:.85rem; }
+    .section-title h2 { margin:0; }
+    .form-grid { display:grid; gap:.85rem; }
+    .form-group label { display:block; font-size:.88rem; font-weight:600; margin-bottom:.3rem; color:#0f172a; }
+    .form-group input, .form-group textarea, .form-group select { width:100%; padding:.6rem .7rem; border:1px solid var(--border); border-radius:8px; box-sizing:border-box; }
+    .form-group textarea { min-height:96px; resize:vertical; }
+    .inline-grid { display:grid; grid-template-columns:1fr 1fr; gap:.85rem; }
+    .form-actions { display:flex; gap:.6rem; flex-wrap:wrap; }
+    .btn-primary { background:#16a34a; color:#fff; border:none; }
+    .btn-secondary { background:#fff; border:1px solid var(--border); }
+    .btn-danger { background:#fee2e2; color:#991b1b; border:none; }
+    .table-wrap { overflow:auto; }
+    .dashboard-table { width:100%; border-collapse:collapse; }
+    .dashboard-table th, .dashboard-table td { padding:.7rem .8rem; text-align:left; border-bottom:1px solid var(--border); vertical-align:top; }
+    .dashboard-table th { background:var(--table-header-bg,#efe6db); color:var(--table-header-text,#3d2914); font-weight:700; white-space:nowrap; text-align:center; }
+    .dashboard-table td small { color:var(--text-muted); display:block; margin-top:.25rem; }
+    .chip { display:inline-block; padding:.18rem .55rem; border-radius:999px; background:#ecfeff; color:#155e75; font-size:.78rem; font-weight:600; }
+    .status-box { margin-top:.75rem; padding:.75rem .9rem; border-radius:10px; display:none; }
+    .status-box.show { display:block; }
+    .status-box.error { background:#fef2f2; border:1px solid #fecaca; color:#991b1b; }
+    .status-box.success { background:#ecfdf5; border:1px solid #bbf7d0; color:#166534; }
+    .list-card-header { display:flex; align-items:center; justify-content:space-between; gap:1rem; margin-bottom:.9rem; }
+    .list-card-header h3 { margin:0; }
+    .programs-panel { padding: 0; overflow: hidden; border-radius: 16px; }
+    .programs-panel-header { display:flex; align-items:center; justify-content:space-between; gap:1rem; padding:1.05rem 1.1rem 0.85rem; }
+    .programs-title { display:flex; align-items:center; gap:.55rem; margin:0; font-size:1.15rem; color:#0f172a; }
+    .programs-title .title-icon { font-size:1.2rem; }
+    .programs-toolbar { display:grid; grid-template-columns:minmax(220px, 1fr) 120px auto; gap:.7rem; padding:0 1.1rem 1rem; align-items:center; }
+    .programs-search, .programs-filter { width:100%; border:1px solid #dbe2ea; background:#fff; border-radius:10px; padding:.72rem .8rem; box-sizing:border-box; }
+    .programs-search:focus, .programs-filter:focus { outline:2px solid rgba(37, 99, 235, .18); border-color:#2563eb; }
+    .programs-add-btn { background:#2563eb; color:#fff; border:none; border-radius:10px; padding:.72rem 1rem; font-weight:700; box-shadow:0 8px 18px rgba(37,99,235,.2); }
+    /* dashboard.css .admin-dashboard-glass .btn uses white bg !important — force primary blue */
+    .admin-dashboard-glass .programs-add-btn {
+      background: #2563eb !important;
+      color: #fff !important;
+      border: none !important;
+    }
+    .admin-dashboard-glass .programs-add-btn:hover {
+      background: #1d4ed8 !important;
+      color: #fff !important;
+    }
+    .programs-table { width:100%; border-collapse:separate; border-spacing:0; min-width:900px; }
+    .programs-table th, .programs-table td { padding:.78rem .85rem; text-align:left; border-bottom:1px solid #edf1f5; vertical-align:middle; }
+    .programs-table th { background:var(--table-header-bg,#efe6db); color:var(--table-header-text,#3d2914); font-size:.86rem; font-weight:700; white-space:nowrap; border-bottom:1px solid var(--table-header-border,#c4a882); text-align:center; }
+    .programs-table tbody tr:hover { background:#fbfdff; }
+    .programs-table td { color:#1f2937; }
+    .programs-table .program-index { color:#0f172a; font-weight:700; width:44px; }
+    .program-name-cell strong { display:block; color:#111827; }
+    .program-name-cell small { display:block; margin-top:.22rem; color:#64748b; max-width:290px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .program-enrollment { min-width:120px; }
+    .program-enrollment-text { display:block; font-size:.8rem; color:#334155; margin-bottom:.32rem; }
+    .program-progress { width:86px; height:7px; background:#e5e7eb; border-radius:999px; overflow:hidden; box-shadow: inset 0 1px 2px rgba(15,23,42,.08); }
+    .program-progress span { display:block; height:100%; border-radius:999px; }
+    .program-status { display:inline-flex; align-items:center; gap:.4rem; color:#0f172a; font-size:.86rem; }
+    .program-status-dot { width:12px; height:12px; border-radius:999px; display:inline-block; box-shadow:0 0 0 3px rgba(34,197,94,.12); }
+    .program-status.is-active .program-status-dot { background:#22c55e; }
+    .program-status.is-inactive { color:#b91c1c; font-weight:600; }
+    .program-status.is-inactive .program-status-dot { background:#ef4444; box-shadow:0 0 0 3px rgba(239,68,68,.14); }
+    .program-actions { display:flex; gap:.45rem; flex-wrap:nowrap; }
+    .program-actions .btn { border-radius:6px; font-weight:700; padding:.45rem .7rem; }
+    .program-actions .btn-secondary { background:#eaf2ff; color:#1d4ed8; border:none; }
+    .program-actions .btn-danger { background:#fee2e2; color:#b91c1c; }
+    .program-actions .btn:disabled { opacity:.45; cursor:not-allowed; }
+    .program-detail-grid { display:grid; grid-template-columns:1fr 1fr; gap:1rem 2rem; margin-top:1rem; }
+    .program-detail-item span { display:block; color:#64748b; font-size:.82rem; margin-bottom:.28rem; }
+    .program-detail-item strong, .program-detail-item p { margin:0; color:#111827; line-height:1.45; }
+    .program-detail-wide { grid-column:1 / -1; }
+    .program-detail-stack { margin-top:1rem; display:flex; flex-direction:column; gap:1rem; }
+    .program-modal-actions { display:flex; justify-content:flex-end; gap:.65rem; margin-top:1.2rem; flex-wrap:wrap; align-items:center; }
+    .programs-table tbody tr.program-table-row { cursor:pointer; }
+    .programs-table tbody tr.program-table-row:focus { outline:2px solid rgba(37,99,235,.35); outline-offset:-2px; }
+    #courseDetailModal .modal-card-academic {
+      box-shadow:0 25px 50px -12px rgba(15,23,42,.25);
+      border-radius:16px;
+    }
+    .program-enrollment--detail { margin-top:.15rem; }
+    .program-enrollment--detail .program-progress--detail {
+      width:100%;
+      max-width:320px;
+      height:8px;
+      margin-top:.35rem;
+    }
+    .admin-dashboard-glass #courseDetailModal .program-detail-close {
+      background:#e5e7eb !important;
+      color:#374151 !important;
+      border:none !important;
+      border-radius:10px;
+      padding:0.65rem 1.45rem;
+      font-weight:600;
+    }
+    .admin-dashboard-glass #courseDetailModal .program-detail-close:hover {
+      background:#d1d5db !important;
+      color:#1f2937 !important;
+    }
+    .levels-panel .levels-toolbar {
+      display:flex;
+      flex-wrap:wrap;
+      align-items:center;
+      justify-content:space-between;
+      gap:0.85rem;
+      padding:0 1.1rem 1rem;
+    }
+    .levels-toolbar-left {
+      display:flex;
+      flex-wrap:wrap;
+      align-items:center;
+      gap:0.75rem 1rem;
+    }
+    .levels-filter-label { font-size:0.88rem; font-weight:600; color:#0f172a; white-space:nowrap; margin:0; }
+    .levels-program-filter {
+      min-width:180px;
+      border:1px solid #dbe2ea;
+      background:#fff;
+      border-radius:10px;
+      padding:0.65rem 0.8rem;
+      box-sizing:border-box;
+    }
+    .levels-select-all {
+      display:inline-flex;
+      align-items:center;
+      gap:0.45rem;
+      font-size:0.88rem;
+      font-weight:600;
+      color:#0f172a;
+      cursor:pointer;
+      user-select:none;
+    }
+    .levels-select-row {
+      display:inline-flex;
+      align-items:center;
+      flex-wrap:wrap;
+      gap:0.65rem 0.85rem;
+    }
+    .levels-bulk-delete-btn:disabled {
+      opacity:0.45;
+      cursor:not-allowed;
+    }
+    .levels-table { width:100%; border-collapse:separate; border-spacing:0; min-width:720px; }
+    .levels-table th, .levels-table td { padding:0.78rem 0.85rem; text-align:left; border-bottom:1px solid #edf1f5; vertical-align:middle; }
+    .levels-table th { background:var(--table-header-bg,#efe6db); color:var(--table-header-text,#3d2914); font-size:0.86rem; font-weight:700; white-space:nowrap; border-bottom:1px solid var(--table-header-border,#c4a882); text-align:center; }
+    .levels-table tbody tr:hover { background:#fbfdff; }
+    .levels-table td { color:#1f2937; }
+    .levels-col-check { width:44px; text-align:center; }
+    .levels-col-check input { width:1rem; height:1rem; cursor:pointer; }
+    .levels-col-actions { text-align:center; width:110px; }
+    .level-cefr-tag {
+      display:inline-block;
+      padding:0.2rem 0.6rem;
+      border-radius:999px;
+      background:#ede9fe;
+      color:#5b21b6;
+      font-size:0.78rem;
+      font-weight:700;
+    }
+    .admin-dashboard-glass .levels-table .level-btn-edit {
+      background:#eaf2ff !important;
+      color:#1d4ed8 !important;
+      border:none !important;
+      border-radius:8px;
+      font-weight:700;
+      padding:0.45rem 0.9rem;
+    }
+    .admin-dashboard-glass .levels-table .level-btn-edit:hover {
+      background:#dbeafe !important;
+      color:#1e40af !important;
+    }
+    .levels-footer {
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      flex-wrap:wrap;
+      gap:0.75rem;
+      padding:0.75rem 1.1rem 1rem;
+      border-top:1px solid #edf1f5;
+    }
+    .levels-showing { margin:0; font-size:0.86rem; color:var(--text-muted); }
+    .levels-pagination { display:flex; align-items:center; gap:0.4rem; }
+    .levels-page-btn {
+      background:#f1f5f9;
+      border:1px solid #e2e8f0;
+      border-radius:8px;
+      padding:0.4rem 0.7rem;
+      cursor:pointer;
+      font-weight:700;
+      color:#334155;
+      line-height:1;
+    }
+    .levels-page-btn:disabled { opacity:0.45; cursor:not-allowed; }
+    .levels-page-current {
+      min-width:2.1rem;
+      text-align:center;
+      background:#2563eb;
+      color:#fff;
+      border-radius:8px;
+      padding:0.4rem 0.55rem;
+      font-weight:800;
+      font-size:0.88rem;
+    }
+    .batches-panel .programs-panel-header { padding:0 1.1rem; margin-top:0.35rem; }
+    .batches-panel .batches-toolbar {
+      display:flex;
+      flex-wrap:wrap;
+      align-items:center;
+      justify-content:space-between;
+      gap:0.85rem;
+      padding:0 1.1rem 1rem;
+    }
+    .batches-toolbar-actions { display:flex; flex-wrap:wrap; align-items:center; gap:0.65rem; }
+    .batches-panel .btn-batch-export {
+      background:#16a34a !important;
+      color:#fff !important;
+      border:none !important;
+      border-radius:10px;
+      font-weight:700;
+      padding:0.62rem 1.2rem;
+      box-shadow:0 4px 12px rgba(22,163,74,0.25);
+    }
+    .batches-panel .btn-batch-export:hover { background:#15803d !important; color:#fff !important; }
+    .batches-filters-row {
+      display:flex;
+      flex-wrap:wrap;
+      align-items:center;
+      gap:0.65rem 1rem;
+      padding:0 1.1rem 1rem;
+      border-bottom:1px solid #edf1f5;
+    }
+    .batches-filter-label { font-size:0.88rem; font-weight:600; color:#0f172a; margin:0; white-space:nowrap; }
+    .batches-filter-select, .batches-search-input {
+      min-width:140px;
+      border:1px solid #dbe2ea;
+      background:#fff;
+      border-radius:10px;
+      padding:0.55rem 0.75rem;
+      font-size:0.88rem;
+      box-sizing:border-box;
+    }
+    .batches-search-input { min-width:200px; flex:1; max-width:280px; }
+    .batches-table { width:100%; border-collapse:separate; border-spacing:0; min-width:960px; }
+    .batches-table th, .batches-table td {
+      padding:0.72rem 0.8rem;
+      text-align:left;
+      border-bottom:1px solid #edf1f5;
+      vertical-align:middle;
+      font-size:0.88rem;
+    }
+    .batches-table th { background:var(--table-header-bg,#efe6db); color:var(--table-header-text,#3d2914); font-size:0.82rem; font-weight:700; white-space:nowrap; border-bottom:1px solid var(--table-header-border,#c4a882); text-align:center; }
+    .batches-table tbody tr:nth-child(even) { background:#f8fafc; }
+    .batches-table tbody tr:hover { background:#eff6ff; }
+    .batches-table tbody tr.batch-row-selected { background:#dbeafe !important; outline:1px solid #93c5fd; }
+    .batches-table .batch-table-row { cursor:pointer; }
+    .batches-table .batch-col-cap, .batches-table .batch-col-enrl { text-align:center; font-variant-numeric:tabular-nums; font-weight:700; }
+    .batches-table .batch-col-actions {
+      text-align:right;
+      white-space:nowrap;
+      width:auto;
+      vertical-align:middle;
+    }
+    .batches-table .batch-col-actions .batch-actions-inner {
+      display:inline-flex;
+      align-items:center;
+      justify-content:flex-end;
+      gap:0.35rem;
+    }
+    .batches-table .btn-batch-icon {
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      width:2.35rem;
+      height:2.35rem;
+      min-width:2.35rem;
+      padding:0;
+      border:none;
+      border-radius:10px;
+      font-size:0.95rem;
+      line-height:1;
+      cursor:pointer;
+      text-decoration:none;
+      box-sizing:border-box;
+      flex-shrink:0;
+    }
+    .batches-table .btn-batch-icon .batch-ico-svg { display:block; width:16px; height:16px; }
+    .batches-table .btn-batch-view {
+      background:#e0f2fe;
+      color:#0369a1;
+      box-shadow:0 1px 2px rgba(3,105,161,0.12);
+    }
+    .batches-table .btn-batch-view:hover { background:#bae6fd; color:#0c4a6e; }
+    .batches-table .btn-batch-edit {
+      background:#7c3aed;
+      color:#fff;
+      box-shadow:0 2px 6px rgba(124,58,237,0.35);
+    }
+    .batches-table .btn-batch-edit:hover { filter:brightness(1.06); color:#fff; }
+    .batches-table .btn-batch-delete {
+      background:#dc2626;
+      color:#fff;
+      box-shadow:0 2px 6px rgba(220,38,38,0.35);
+    }
+    .batches-table .btn-batch-delete:hover { filter:brightness(1.06); color:#fff; }
+    .batch-status { display:inline-flex; align-items:center; gap:0.4rem; font-size:0.86rem; font-weight:600; }
+    .batch-status-dot { width:10px; height:10px; border-radius:999px; display:inline-block; }
+    .batch-status.is-open { color:#15803d; }
+    .batch-status.is-open .batch-status-dot { background:#22c55e; box-shadow:0 0 0 3px rgba(34,197,94,0.2); }
+    .batch-status.is-closed { color:#b91c1c; }
+    .batch-status.is-closed .batch-status-dot { background:#ef4444; }
+    .batch-status.is-full { color:#b45309; }
+    .batch-status.is-full .batch-status-dot { background:#f59e0b; box-shadow:0 0 0 3px rgba(245,158,11,0.22); }
+    .batches-footer {
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      flex-wrap:wrap;
+      gap:0.75rem;
+      padding:0.75rem 1.1rem 1rem;
+      border-top:1px solid #edf1f5;
+    }
+    .batches-showing { margin:0; font-size:0.86rem; color:var(--text-muted); }
+    .batches-pagination { display:flex; align-items:center; gap:0.45rem; flex-wrap:wrap; }
+    .batches-page-btn {
+      background:#f1f5f9;
+      border:1px solid #e2e8f0;
+      border-radius:8px;
+      padding:0.45rem 0.85rem;
+      cursor:pointer;
+      font-weight:600;
+      font-size:0.82rem;
+      color:#334155;
+    }
+    .batches-page-btn:disabled { opacity:0.45; cursor:not-allowed; }
+    .batches-page-num {
+      min-width:2rem;
+      text-align:center;
+      background:#2563eb;
+      color:#fff;
+      border-radius:8px;
+      padding:0.4rem 0.55rem;
+      font-weight:800;
+      font-size:0.86rem;
+      border:none;
+      cursor:pointer;
+      font:inherit;
+    }
+    .batches-page-num.is-muted { background:#e2e8f0; color:#475569; }
+    .batch-students-wrap { margin-top:1.25rem; }
+    .batch-students-header {
+      background:linear-gradient(90deg, #e0f2fe 0%, #f0f9ff 100%);
+      border:1px solid #bae6fd;
+      border-radius:12px 12px 0 0;
+      padding:0.85rem 1.1rem;
+      margin:0 1.1rem;
+    }
+    .batch-students-header h3 { margin:0; font-size:1rem; font-weight:800; color:#0c4a6e; display:flex; align-items:center; gap:0.5rem; }
+    .batch-students-table-wrap { margin:0 1.1rem 1rem; border:1px solid #edf1f5; border-top:none; border-radius:0 0 12px 12px; overflow:hidden; background:#fff; }
+    .batch-students-table { width:100%; border-collapse:collapse; min-width:640px; }
+    .batch-students-table th, .batch-students-table td { padding:0.65rem 0.85rem; text-align:left; border-bottom:1px solid #f1f5f9; font-size:0.88rem; }
+    .batch-students-table th { background:var(--table-header-bg,#efe6db); font-weight:700; font-size:0.8rem; color:var(--table-header-text,#3d2914); border-bottom:1px solid var(--table-header-border,#c4a882); text-align:center; }
+    .batch-students-table .col-fee { text-align:right; font-variant-numeric:tabular-nums; }
+    .student-balance-zero { color:#16a34a; font-weight:700; }
+    .student-balance-due { color:#dc2626; font-weight:700; }
+    .batch-students-footer { margin:0 1.1rem 1rem; font-size:0.9rem; font-weight:600; color:#334155; }
+    .timetables-panel .timetables-toolbar {
+      display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:0.75rem;
+      padding:0 1.1rem 1rem;
+    }
+    .timetables-toolbar-left { display:flex; flex-wrap:wrap; align-items:center; gap:0.65rem 1rem; }
+    .timetable-view-toggle { display:inline-flex; border:1px solid #dbe2ea; border-radius:10px; overflow:hidden; background:#f8fafc; }
+    .timetable-view-toggle button {
+      border:none; background:transparent; padding:0.5rem 0.95rem; font-weight:700; font-size:0.86rem; cursor:pointer; color:#475569;
+    }
+    .timetable-view-toggle button.is-active { background:#2563eb; color:#fff; }
+    .timetables-toolbar-actions { display:flex; flex-wrap:wrap; align-items:center; gap:0.55rem; }
+    .timetables-table { width:100%; border-collapse:separate; border-spacing:0; min-width:920px; }
+    .timetables-table th, .timetables-table td { padding:0.65rem 0.75rem; text-align:left; border-bottom:1px solid #edf1f5; font-size:0.86rem; vertical-align:middle; }
+    .timetables-table th { background:var(--table-header-bg,#efe6db); color:var(--table-header-text,#3d2914); font-weight:700; font-size:0.8rem; border-bottom:1px solid var(--table-header-border,#c4a882); text-align:center; }
+    .timetables-table tbody tr:nth-child(even) { background:#fafbfc; }
+    .timetables-footer { display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.75rem; padding:0.75rem 1.1rem 1rem; border-top:1px solid #edf1f5; }
+    .timetables-showing { margin:0; font-size:0.86rem; color:var(--text-muted); }
+    .timetables-page-nums { display:flex; align-items:center; gap:0.35rem; flex-wrap:wrap; }
+    .timetables-page-num { min-width:2rem; text-align:center; border:none; cursor:pointer; font:inherit; border-radius:8px; padding:0.35rem 0.5rem; font-weight:800; font-size:0.84rem; background:#2563eb; color:#fff; }
+    .timetables-page-num.is-muted { background:#e2e8f0; color:#475569; }
+    .tt-weekly-banner {
+      margin:0 1.1rem 0.75rem; padding:0.85rem 1.1rem; border-radius:12px;
+      background:linear-gradient(90deg,#1d4ed8,#2563eb); color:#fff; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.75rem;
+    }
+    .tt-weekly-banner h4 { margin:0; font-size:1.05rem; font-weight:800; }
+    .tt-weekly-banner p { margin:0.2rem 0 0; font-size:0.88rem; opacity:0.95; }
+    .tt-weekly-grid-wrap { margin:0 1.1rem 1rem; overflow:auto; border:1px solid #e5e7eb; border-radius:12px; background:#fff; }
+    .tt-weekly-grid { width:100%; border-collapse:collapse; min-width:720px; font-size:0.82rem; }
+    .tt-weekly-grid th, .tt-weekly-grid td { border:1px solid #eef2f7; padding:0.45rem; vertical-align:top; }
+    .tt-weekly-grid th { background:var(--table-header-bg,#efe6db); font-weight:700; color:var(--table-header-text,#3d2914); border:1px solid var(--table-header-border,#c4a882); text-align:center; }
+    .tt-weekly-grid .tt-time-cell { background:#f8fafc; font-weight:700; color:#475569; white-space:nowrap; width:4.5rem; }
+    .tt-session-card {
+      background:#eff6ff; border-left:4px solid #2563eb; border-radius:8px; padding:0.45rem 0.55rem; margin:0.25rem 0;
+      box-shadow:0 1px 2px rgba(15,23,42,0.06);
+    }
+    .tt-session-card strong { display:block; color:#1d4ed8; font-size:0.84rem; margin-bottom:0.25rem; }
+    .tt-session-card .tt-line { font-size:0.78rem; color:#334155; margin:0.12rem 0; line-height:1.35; }
+    .tt-weekly-nav { display:flex; align-items:center; gap:0.5rem; flex-wrap:wrap; }
+    .tt-weekly-nav button { border:1px solid #dbe2ea; background:#fff; border-radius:8px; padding:0.45rem 0.85rem; font-weight:600; cursor:pointer; font-size:0.82rem; }
+    .tt-weekly-nav button.tt-prog-current { background:#dc2626; color:#fff; border-color:#b91c1c; }
+    .tt-weekly-nav button.tt-prog-current:disabled { opacity:1; cursor:default; color:#fff; }
+    #timetableModal .modal-card-academic { width:min(520px,100%); }
+    #timetableModal .form-actions { justify-content:flex-end; gap:0.75rem; margin-top:0.35rem; padding-top:1rem; border-top:1px solid #edf1f5; }
+    #timetableModal .timetable-modal-cancel { background:#e5e7eb; color:#374151; border:none; border-radius:8px; padding:0.65rem 1.35rem; font-weight:600; }
+    #timetableModal .programs-add-btn { border-radius:8px; padding:0.65rem 1.35rem; font-weight:600; background:#2563eb !important; color:#fff !important; border:none !important; }
+    .modal-overlay-academic { position:fixed; inset:0; background:rgba(15, 23, 42, .42); z-index:1200; display:none; align-items:center; justify-content:center; padding:1rem; }
+    .modal-overlay-academic.show { display:flex; }
+    .modal-card-academic { width:min(760px, 100%); max-height:90vh; overflow:auto; }
+    #courseModal .modal-card-academic { width:min(980px, 100%); }
+    #courseModal .form-actions {
+      justify-content: center;
+      align-items: center;
+      flex-wrap: nowrap;
+      gap: 0.75rem;
+      margin-top: 0.35rem;
+      padding-top: 1rem;
+      border-top: 1px solid #edf1f5;
+    }
+    #courseModal .form-actions .course-modal-cancel {
+      background: #e5e7eb;
+      color: #374151;
+      border: none;
+      border-radius: 999px;
+      padding: 0.72rem 1.85rem;
+      font-weight: 600;
+      font-size: 0.95rem;
+      box-shadow: none;
+    }
+    #courseModal .form-actions .course-modal-cancel:hover {
+      background: #d1d5db;
+      color: #1f2937;
+    }
+    #courseModal .form-actions .programs-add-btn {
+      border-radius: 999px;
+      padding: 0.72rem 1.85rem;
+      font-weight: 600;
+      font-size: 0.95rem;
+      background: #2563eb !important;
+      color: #fff !important;
+      border: none !important;
+      box-shadow: 0 6px 16px rgba(37, 99, 235, 0.28);
+    }
+    #courseModal .form-actions .programs-add-btn:hover {
+      background: #1d4ed8 !important;
+      color: #fff !important;
+    }
+    #levelModal .modal-card-academic { width: min(560px, 100%); }
+    #levelModal .form-actions {
+      justify-content: flex-end;
+      align-items: center;
+      flex-wrap: nowrap;
+      gap: 0.75rem;
+      margin-top: 0.35rem;
+      padding-top: 1rem;
+      border-top: 1px solid #edf1f5;
+    }
+    #levelModal .form-actions .level-modal-cancel {
+      background: #e5e7eb;
+      color: #374151;
+      border: none;
+      border-radius: 8px;
+      padding: 0.65rem 1.35rem;
+      font-weight: 600;
+      font-size: 0.95rem;
+      box-shadow: none;
+    }
+    #levelModal .form-actions .level-modal-cancel:hover {
+      background: #d1d5db;
+      color: #1f2937;
+    }
+    #levelModal .form-actions .programs-add-btn {
+      border-radius: 8px;
+      padding: 0.65rem 1.35rem;
+      font-weight: 600;
+      font-size: 0.95rem;
+      background: #2563eb !important;
+      color: #fff !important;
+      border: none !important;
+      box-shadow: 0 6px 16px rgba(37, 99, 235, 0.28);
+    }
+    #levelModal .form-actions .programs-add-btn:hover {
+      background: #1d4ed8 !important;
+      color: #fff !important;
+    }
+    #batchModal .modal-card-academic { width: min(520px, 100%); }
+    #batchModal .form-actions {
+      justify-content: flex-end;
+      align-items: center;
+      flex-wrap: nowrap;
+      gap: 0.75rem;
+      margin-top: 0.35rem;
+      padding-top: 1rem;
+      border-top: 1px solid #edf1f5;
+    }
+    #batchModal .form-actions .batch-modal-cancel {
+      background: #e5e7eb;
+      color: #374151;
+      border: none;
+      border-radius: 8px;
+      padding: 0.65rem 1.35rem;
+      font-weight: 600;
+      font-size: 0.95rem;
+      box-shadow: none;
+    }
+    #batchModal .form-actions .batch-modal-cancel:hover {
+      background: #d1d5db;
+      color: #1f2937;
+    }
+    #batchModal .form-actions .programs-add-btn {
+      border-radius: 8px;
+      padding: 0.65rem 1.35rem;
+      font-weight: 600;
+      font-size: 0.95rem;
+      background: #2563eb !important;
+      color: #fff !important;
+      border: none !important;
+      box-shadow: 0 6px 16px rgba(37, 99, 235, 0.28);
+    }
+    #batchModal .form-actions .programs-add-btn:hover {
+      background: #1d4ed8 !important;
+      color: #fff !important;
+    }
+    #batchModal .batch-optional-login { margin-top: 0.25rem; }
+    #batchModal .batch-optional-login summary {
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 0.88rem;
+      color: #475569;
+    }
+    .modal-header-academic { display:flex; align-items:center; justify-content:space-between; gap:1rem; margin-bottom:1rem; }
+    .modal-header-academic h3 { margin:0; }
+    .modal-close-academic { background:none; border:none; font-size:1.6rem; line-height:1; cursor:pointer; color:var(--text-muted); }
+    .muted-panel { padding:1rem; border:1px dashed var(--border); border-radius:12px; color:var(--text-muted); background:#fafafa; }
+    .batch-students { min-height:220px; }
+    .student-list { display:grid; gap:.75rem; }
+    .student-item { border:1px solid var(--border); border-radius:10px; padding:.8rem .9rem; background:#fff; display:flex; justify-content:space-between; gap:1rem; }
+    .student-item strong { display:block; color:#0f172a; }
+    .student-item span { color:var(--text-muted); font-size:.88rem; }
+    @media (max-width: 1100px) { .academic-mgmt-cards { grid-template-columns:1fr; } }
+    @media (max-width: 760px) { .programs-toolbar { grid-template-columns:1fr; } .program-detail-grid { grid-template-columns:1fr; } }
+    @media (max-width: 640px) { .inline-grid { grid-template-columns:1fr; } .section-title { flex-direction:column; align-items:flex-start; } }
+    /* Reference panel: matches flyer structure */
+    .academic-brand-ref { margin-bottom: 1.25rem; }
+    .academic-brand-ref .ref-head { margin: 0 0 0.65rem; font-size: 1.05rem; color: #0f172a; }
+    .academic-brand-ref .ref-sub { margin: 0 0 0.85rem; font-size: 0.88rem; line-height: 1.45; color: var(--text-muted); }
+    .academic-ref-grid { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 1rem; align-items: start; }
+    @media (max-width: 900px) { .academic-ref-grid { grid-template-columns: 1fr; } }
+    .academic-ref-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+    .academic-ref-table th, .academic-ref-table td { padding: 0.45rem 0.5rem; border: 1px solid var(--border); text-align: left; vertical-align: top; }
+    .academic-ref-table th { background: var(--table-header-bg, #efe6db); font-weight: 700; color: var(--table-header-text, #3d2914); border-color: var(--table-header-border, #c4a882); text-align: center; }
+    .academic-ref-table td { color: var(--text); }
+    .academic-ref-note { margin: 0; padding: 0.75rem 0.9rem; border-radius: 10px; background: rgba(214, 40, 40, 0.08); border: 1px solid rgba(214, 40, 40, 0.2); font-size: 0.86rem; line-height: 1.5; color: var(--text); }
+    .academic-ref-note-navy { margin-top: 0.65rem; background: rgba(30, 58, 95, 0.08); border-color: rgba(30, 58, 95, 0.25); color: var(--text); }
+    .academic-ref-contact { margin-top: 0.65rem; font-size: 0.85rem; font-weight: 600; color: #1e3a5f; }
+    .form-hint { margin: 0.35rem 0 0; font-size: 0.8rem; color: var(--text-muted); line-height: 1.4; }
+  </style>
+</head>
+<body class="admin-dashboard-glass">
+  <div class="dashboard-wrap glass-dashboard">
+    <aside class="dashboard-sidebar">
+      <a href="../public-page/index.html" class="logo-link"><span class="logo-brand-row"><img src="../photo/logo.png" alt="" class="logo-mark-img" width="72" decoding="async" /><span class="logo-headlines"><span class="logo-title-line">MYANMAR</span><span class="logo-title-line">NEW ERA</span></span></span></a>
+      <nav>
+        <a href="dashboard.html">Dashboard</a>
+        <a href="admissions.html">Admission Management</a>
+        <a href="students.html">Student Management</a>
+        <a href="teachers.html">Teacher Management</a>
+        <a href="academic.html" class="active">Academic Management</a>
+        <a href="attendance.html">Attendance Management</a>
+        <a href="exams.html">Exam Management</a>
+        <a href="gpa-transcript.html">GPA & Transcript Management</a>
+        <a href="inquiries.html">Communication <span class="nav-inquiry-badge" id="navInquiryCount"></span></a>
+        <a href="content-management.html">Page Content Management</a>
+        <a href="question-bank.html">Question Bank Management</a>
+        <a href="reports.html">Reports & Analytics</a>
+        <a href="settings.html">Settings & Configuration</a>
+      </nav>
+    </aside>
+    <main class="dashboard-main">
+      <div class="dashboard-header glass-toolbar">
+        <p class="dashboard-toolbar-title" data-lang-en="Academic Management" data-lang-my="Academic Management">Academic Management</p>
+        <div class="auth-info">
+          <div class="notification-wrap">
+            <button type="button" class="btn-notification" id="btnNotification" aria-haspopup="true" aria-expanded="false">
+              &#x1F514; <span id="notificationLabel">Notifications</span> (<span id="notificationCount" class="notification-count-num">0</span>)
+              <span class="notification-badge" id="notificationBadge" style="display:none;">0</span>
+            </button>
+            <div class="notification-dropdown" id="notificationDropdown" role="menu">
+              <h3>Notifications</h3>
+              <ul id="notificationList">
+                <li><a href="inquiries.html">No new notifications</a></li>
+              </ul>
+            </div>
+          </div>
+          <div class="profile-wrap">
+            <button type="button" class="btn-profile" id="btnProfile" aria-haspopup="true" aria-expanded="false">&#x1F464; <span id="profileName">Admin</span> &#x25BC;</button>
+            <div class="profile-dropdown" id="profileDropdown" role="menu">
+              <a href="settings.html">Profile</a>
+              <a href="settings.html#password">Change Password</a>
+              <div class="divider"></div>
+              <button type="button" id="btnAdminToolbarLogout">Logout</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="academic-mgmt-cards">
+        <div class="academic-mgmt-card active" data-view="courses" title="Programs">
+          <div class="card-row">
+            <div class="card-copy">
+              <div class="count" id="summaryCourses">0</div>
+              <h3>Programs</h3>
+            </div>
+            <div class="icon">📚</div>
+          </div>
+        </div>
+        <div class="academic-mgmt-card" data-view="levels" title="Levels">
+          <div class="card-row">
+            <div class="card-copy">
+              <div class="count" id="summaryLevels">0</div>
+              <h3>Levels</h3>
+            </div>
+            <div class="icon">📊</div>
+          </div>
+        </div>
+        <div class="academic-mgmt-card" data-view="batches" title="Batches">
+          <div class="card-row">
+            <div class="card-copy">
+              <div class="count"><span id="summaryBatches">0</span> / <span id="summaryAssigned">0</span></div>
+              <h3>Batches</h3>
+            </div>
+            <div class="icon">👥</div>
+          </div>
+        </div>
+        <div class="academic-mgmt-card" data-view="timetables" title="Batch Timetable">
+          <div class="card-row">
+            <div class="card-copy">
+              <div class="count" id="summaryTimetables">0</div>
+              <h3>Batch Timetable</h3>
+            </div>
+            <div class="icon">🗓</div>
+          </div>
+        </div>
+      </div>
+
+      <section id="coursesSection" class="section-stack academic-view show">
+        <div class="section-grid">
+          <div id="courseModal" class="modal-overlay-academic">
+            <div class="modal-card-academic card">
+              <div class="modal-header-academic">
+                <h3 id="courseFormTitle">Add New Program</h3>
+                <button type="button" class="modal-close-academic" data-close-modal="courseModal" aria-label="Close">&times;</button>
+              </div>
+              <form id="courseForm" class="form-grid">
+                <input type="hidden" id="courseId">
+                <div class="form-group">
+                  <label for="courseName">Program Name *</label>
+                  <select id="courseName" required></select>
+                </div>
+                <div class="form-group">
+                  <label for="courseDescription">Description *</label>
+                  <textarea id="courseDescription" placeholder="Program description" required></textarea>
+                </div>
+                <div class="inline-grid">
+                  <div class="form-group">
+                    <label for="courseDuration">Duration *</label>
+                    <input type="text" id="courseDuration" placeholder="e.g. 12 Mar – 31 May 2026  3 months" required>
+                    <p class="form-hint">:  100–120 hrs · B2 weekend 200 hrs · Basic 3 months</p>
+                  </div>
+                  <div class="form-group">
+                    <label for="courseFee">Fee (MMK) *</label>
+                    <input type="number" id="courseFee" min="0" step="0.01" required>
+                  </div>
+                </div>
+                <div class="inline-grid">
+                  <div class="form-group">
+                    <label for="courseStartDate">Start Date *</label>
+                    <input type="date" id="courseStartDate" required lang="en-GB" placeholder="dd/mm/yyyy">
+                  </div>
+                  <div class="form-group">
+                    <label for="courseEndDate">End Date *</label>
+                    <input type="date" id="courseEndDate" required lang="en-GB" placeholder="dd/mm/yyyy">
+                  </div>
+                </div>
+                <div class="inline-grid">
+                  <div class="form-group">
+                    <label for="courseCapacity">Capacity *</label>
+                    <input type="number" id="courseCapacity" min="0" required>
+                  </div>
+                  <div class="form-group">
+                    <label for="courseCurrentEnrollment">Current Enrollment *</label>
+                    <input type="number" id="courseCurrentEnrollment" min="0" value="0" required>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label for="courseLocations">Locations *</label>
+                  <input type="text" id="courseLocations" placeholder="e.g. Rm101, Rm102" required>
+                </div>
+                <div class="form-group">
+                  <label for="courseAgeGroup">Age Group *</label>
+                  <input type="text" id="courseAgeGroup" placeholder="e.g. 14-16 years" required>
+                </div>
+                <div class="form-group">
+                  <label for="courseSchedule">Schedule *</label>
+                  <input type="text" id="courseSchedule" placeholder="e.g. Mon-Fri, 9:00 AM - 12:00 PM" required>
+                </div>
+                <div class="form-group">
+                  <label for="courseInstructor">Instructor *</label>
+                  <input type="text" id="courseInstructor" placeholder="e.g. Dr. John Smith" required>
+                </div>
+                <div class="form-group">
+                  <label for="courseStatus">Status *</label>
+                  <select id="courseStatus" required>
+                    <option value="active">Active</option>
+                    <option value="inactive">Inactive</option>
+                  </select>
+                </div>
+                <div class="form-actions">
+                  <button type="button" class="btn course-modal-cancel" id="resetCourseBtn">Cancel</button>
+                  <button type="submit" class="btn programs-add-btn" id="courseSubmitBtn">Add Program</button>
+                </div>
+              </form>
+            </div>
+          </div>
+          <div id="courseDetailModal" class="modal-overlay-academic">
+            <div class="modal-card-academic card">
+              <div class="modal-header-academic">
+                <h3 id="courseDetailTitle">Program Details</h3>
+                <button type="button" class="modal-close-academic" data-close-modal="courseDetailModal" aria-label="Close">&times;</button>
+              </div>
+              <div id="courseDetailBody"></div>
+            </div>
+          </div>
+          <div class="card programs-panel">
+            <div class="programs-panel-header">
+              <h3 class="programs-title"><span class="title-icon">📚</span> Programs (<span id="programsTotal">0</span> total)</h3>
+            </div>
+            <div class="programs-toolbar">
+              <input type="search" id="programSearch" class="programs-search" placeholder="Search...">
+              <select id="programStatusFilter" class="programs-filter" aria-label="Filter programs by status">
+                <option value="all">All</option>
+                <option value="active">Active</option>
+                <option value="inactive">Inactive</option>
+              </select>
+              <button type="button" class="btn programs-add-btn" id="addCourseBtn">+ Add Program</button>
+            </div>
+            <div class="table-wrap">
+              <table class="programs-table">
+                <thead>
+                  <tr><th>No</th><th>Program Name ↑</th><th>Duration</th><th>Fee (MMK)</th><th>Locations</th><th>Enrollment</th><th>Status</th><th>Actions</th></tr>
+                </thead>
+                <tbody id="coursesBody"></tbody>
+              </table>
+            </div>
+            <p class="text-muted" id="coursesHint" style="margin:.85rem 1.1rem 1rem;">No programs yet.</p>
+          </div>
+        </div>
+      </section>
+
+      <section id="levelsSection" class="section-stack academic-view">
+        <div class="section-grid">
+          <div id="levelModal" class="modal-overlay-academic">
+            <div class="modal-card-academic card">
+              <div class="modal-header-academic">
+                <h3 id="levelFormTitle">Add New Level</h3>
+                <button type="button" class="modal-close-academic" data-close-modal="levelModal" aria-label="Close">&times;</button>
+              </div>
+              <form id="levelForm" class="form-grid">
+                <input type="hidden" id="levelId">
+                <div class="form-group">
+                  <label for="levelCourse">Program Name *</label>
+                  <select id="levelCourse" required></select>
+                </div>
+                <div class="form-group">
+                  <label for="levelName">Level Name *</label>
+                  <input type="text" id="levelName" required placeholder="e.g., Foundation 1" autocomplete="off">
+                </div>
+                <div class="form-group">
+                  <label for="levelCefr">CEFR Level *</label>
+                  <select id="levelCefr" required></select>
+                </div>
+                <div class="form-group">
+                  <label for="levelLocations">Locations *</label>
+                  <input type="text" id="levelLocations" required placeholder="e.g., Rm101, Rm102" autocomplete="off">
+                </div>
+                <div class="form-group">
+                  <label for="levelDescription">Description</label>
+                  <textarea id="levelDescription" rows="3" placeholder="Optional notes for this level"></textarea>
+                </div>
+                <div class="form-group">
+                  <label for="levelDuration">Duration</label>
+                  <input type="text" id="levelDuration" placeholder="e.g., 6 weeks" autocomplete="off">
+                </div>
+                <div class="form-actions">
+                  <button type="button" class="btn btn-secondary level-modal-cancel" id="levelModalCancel">Cancel</button>
+                  <button type="submit" class="btn programs-add-btn" id="levelSubmitBtn">Add Level</button>
+                </div>
+              </form>
+            </div>
+          </div>
+          <div class="card programs-panel levels-panel">
+            <div class="programs-panel-header">
+              <h3 class="programs-title"><span class="title-icon">📊</span> Levels (<span id="levelsTotalCount">0</span> total)</h3>
+            </div>
+            <div class="levels-toolbar">
+              <div class="levels-toolbar-left">
+                <label class="levels-filter-label" for="levelProgramFilter">Program Filter:</label>
+                <select id="levelProgramFilter" class="levels-program-filter" aria-label="Filter levels by program">
+                  <option value="all">All Programs</option>
+                </select>
+                <div class="levels-select-row">
+                  <label class="levels-select-all"><input type="checkbox" id="levelSelectAll" aria-label="Select all levels on this page"> Select All</label>
+                  <button type="button" class="btn btn-sm btn-danger levels-bulk-delete-btn" id="levelBulkDeleteBtn" disabled aria-disabled="true">Delete</button>
+                </div>
+              </div>
+              <button type="button" class="btn programs-add-btn" id="addLevelBtn">+ Add Level</button>
+            </div>
+            <div class="table-wrap">
+              <table class="levels-table">
+                <thead>
+                  <tr>
+                    <th class="levels-col-check" scope="col"></th>
+                    <th scope="col">Program Name</th>
+                    <th scope="col">Level Name</th>
+                    <th scope="col">CEFR</th>
+                    <th scope="col">Locations</th>
+                    <th class="levels-col-actions" scope="col">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="levelsBody"></tbody>
+              </table>
+            </div>
+            <div class="levels-footer" id="levelsFooter">
+              <p class="levels-showing" id="levelsShowingText">Showing 0 to 0 of 0 levels</p>
+              <div class="levels-pagination" id="levelsPagination">
+                <button type="button" class="levels-page-btn" id="levelPagePrev" aria-label="Previous page">&lt;</button>
+                <span class="levels-page-current" id="levelPageCurrent">1</span>
+                <button type="button" class="levels-page-btn" id="levelPageNext" aria-label="Next page">&gt;</button>
+              </div>
+            </div>
+            <p class="text-muted" id="levelsHint" style="margin:.85rem 1.1rem 1rem;">No levels yet.</p>
+          </div>
+        </div>
+      </section>
+
+      <section id="batchesSection" class="section-stack academic-view">
+        <div class="section-grid">
+          <div id="batchModal" class="modal-overlay-academic">
+            <div class="modal-card-academic card">
+              <div class="modal-header-academic">
+                <h3 id="batchFormTitle">Add New Batch</h3>
+                <button type="button" class="modal-close-academic" data-close-modal="batchModal" aria-label="Close">&times;</button>
+              </div>
+              <form id="batchForm" class="form-grid">
+                <input type="hidden" id="batchId">
+                <input type="hidden" id="batchLevelId" value="">
+                <input type="hidden" id="batchStartDate" value="">
+                <input type="hidden" id="batchEndDate" value="">
+                <div class="form-group">
+                  <label for="batchName">Batch ID *</label>
+                  <input type="text" id="batchName" placeholder="e.g., B13" required autocomplete="off">
+                </div>
+                <div class="form-group">
+                  <label for="batchCourse">Program *</label>
+                  <select id="batchCourse" required></select>
+                </div>
+                <div class="form-group">
+                  <label for="batchLevelName">Level *</label>
+                  <input type="text" id="batchLevelName" list="batchLevelNameList" placeholder="e.g., Foundation 1" required autocomplete="off">
+                  <datalist id="batchLevelNameList"></datalist>
+                  <p class="form-hint">Must match a level for the selected program.</p>
+                </div>
+                <div class="form-group">
+                  <label for="batchTeacherPick">Homeroom teacher *</label>
+                  <select id="batchTeacherPick" required>
+                    <option value="">— Select from Teacher Management —</option>
+                  </select>
+                  <p class="form-hint">Only teachers registered in <a href="teachers.html" target="_blank" rel="noopener">Teacher Management</a> (with a login username). Add the teacher there first if missing.</p>
+                  <p id="batchTeacherOrphanHint" class="form-hint" style="display:none;color:#b45309;font-weight:600;"></p>
+                </div>
+                <div class="form-group">
+                  <label for="batchSchedule">Schedule *</label>
+                  <input type="text" id="batchSchedule" placeholder="e.g., Mon/Wed 9AM" required autocomplete="off">
+                </div>
+                <div class="form-group">
+                  <label for="batchLocation">Location *</label>
+                  <input type="text" id="batchLocation" placeholder="e.g., Rm101" required autocomplete="off">
+                </div>
+                <div class="inline-grid">
+                  <div class="form-group">
+                    <label for="batchMaxStudents">Capacity *</label>
+                    <input type="number" id="batchMaxStudents" min="1" value="20" required>
+                  </div>
+                  <div class="form-group">
+                    <label for="batchCurrentEnrollment">Current Enrollment</label>
+                    <input type="number" id="batchCurrentEnrollment" min="0" value="0" aria-describedby="batchEnrollHint">
+                    <p class="form-hint" id="batchEnrollHint">For your records only; live count comes from assigned students.</p>
+                  </div>
+                </div>
+                <div class="form-actions">
+                  <button type="button" class="btn btn-secondary batch-modal-cancel" id="batchModalCancel">Cancel</button>
+                  <button type="submit" class="btn programs-add-btn" id="batchSubmitBtn">Add Batch</button>
+                </div>
+              </form>
+            </div>
+          </div>
+          <div class="section-stack">
+            <div class="card programs-panel batches-panel">
+              <div class="programs-panel-header">
+                <h3 class="programs-title"><span class="title-icon" aria-hidden="true">👥</span> Batches (<span id="batchesCountFiltered">0</span> / <span id="batchesCountTotal">0</span> total)</h3>
+              </div>
+              <div class="batches-toolbar">
+                <div class="batches-filters-row" style="border:none;padding-top:0;padding-bottom:0;width:100%;">
+                  <label class="batches-filter-label" for="batchProgramFilter">Program Filter:</label>
+                  <select id="batchProgramFilter" class="batches-filter-select" aria-label="Filter batches by program">
+                    <option value="all">All Programs</option>
+                  </select>
+                  <label class="batches-filter-label" for="batchStatusFilter">Status Filter:</label>
+                  <select id="batchStatusFilter" class="batches-filter-select" aria-label="Filter by batch status">
+                    <option value="all" selected>All</option>
+                    <option value="open">Open</option>
+                    <option value="closed">Closed</option>
+                    <option value="full">Full</option>
+                  </select>
+                  <label class="batches-filter-label" for="batchTeacherFilter">Teacher Filter:</label>
+                  <select id="batchTeacherFilter" class="batches-filter-select" aria-label="Filter by teacher">
+                    <option value="all">All Teachers</option>
+                  </select>
+                  <label class="batches-filter-label" for="batchSearchInput">Search</label>
+                  <input type="search" id="batchSearchInput" class="batches-search-input" placeholder="Search..." autocomplete="off" aria-label="Search batches">
+                </div>
+                <div class="batches-toolbar-actions" style="width:100%;justify-content:flex-end;margin-top:0.25rem;flex-wrap:wrap;gap:0.5rem;">
+                  <button type="button" class="btn programs-add-btn" id="addBatchBtn">+ Add Batch</button>
+                  <button type="button" class="btn btn-batch-export" id="batchExportBtn">Export</button>
+                </div>
+                <p class="form-hint" style="margin:0.5rem 0 0;font-size:0.84rem;line-height:1.45;max-width:52rem;">Assign class teachers on each batch below (linked to Teacher Management). Assign students to batches in <a href="students.html">Student Management</a> or use the row <strong>View</strong> action.</p>
+              </div>
+              <div class="table-wrap">
+                <table class="batches-table">
+                  <thead>
+                    <tr>
+                      <th scope="col">Batch</th>
+                      <th scope="col">Program</th>
+                      <th scope="col">Level</th>
+                      <th scope="col">Teacher</th>
+                      <th scope="col">Schedule</th>
+                      <th scope="col">Location</th>
+                      <th scope="col">Cap.</th>
+                      <th scope="col">Enrl.</th>
+                      <th scope="col">Status</th>
+                      <th class="batch-col-actions" scope="col">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody id="batchesBody"></tbody>
+                </table>
+              </div>
+              <div class="batches-footer" id="batchesFooter">
+                <p class="batches-showing" id="batchesShowingText">Showing 0 to 0 of 0 batches</p>
+                <div class="batches-pagination" id="batchesPagination" style="display:none;">
+                  <button type="button" class="batches-page-btn" id="batchPagePrev" aria-label="Previous page">Previous</button>
+                  <span class="batches-page-nums" id="batchPageNums" aria-hidden="true"></span>
+                  <button type="button" class="batches-page-btn" id="batchPageNext" aria-label="Next page">Next</button>
+                </div>
+              </div>
+              <p class="text-muted" id="batchesHint" style="margin:.85rem 1.1rem 1rem;">No batches yet.</p>
+              <div class="batch-students-wrap">
+                <div class="batch-students-header" id="batchStudentsHeaderBar" style="display:none;">
+                  <h3 id="batchStudentsTitle">👨‍🎓 Students In Selected Batch</h3>
+                </div>
+                <div class="batch-students-table-wrap" id="batchStudentsTableShell" style="display:none;">
+                  <div class="table-wrap" style="margin:0;">
+                    <table class="batch-students-table">
+                      <thead>
+                        <tr>
+                          <th scope="col">Student Name</th>
+                          <th scope="col">Enrollment Date</th>
+                          <th scope="col">Level</th>
+                          <th scope="col" class="col-fee">Fee Paid</th>
+                          <th scope="col" class="col-fee">Balance</th>
+                        </tr>
+                      </thead>
+                      <tbody id="batchStudentsTableBody"></tbody>
+                    </table>
+                  </div>
+                </div>
+                <p class="batch-students-footer" id="batchStudentsFooter" style="display:none;"></p>
+                <div id="batchStudentsPanel" class="muted-panel" style="margin:0 1.1rem 1rem;">Select a batch from the table to view assigned students.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="timetablesSection" class="section-stack academic-view">
+        <div class="section-grid">
+          <div id="timetableModal" class="modal-overlay-academic">
+            <div class="modal-card-academic card">
+              <div class="modal-header-academic">
+                <h3 id="timetableFormTitle">Add New Session</h3>
+                <button type="button" class="modal-close-academic" data-close-modal="timetableModal" aria-label="Close">&times;</button>
+              </div>
+              <form id="timetableForm" class="form-grid">
+                <input type="hidden" id="timetableId">
+                <div class="form-group">
+                  <label for="timetableBatch">Batch *</label>
+                  <select id="timetableBatch" required></select>
+                </div>
+                <div class="form-group">
+                  <label for="timetableDay">Day *</label>
+                  <select id="timetableDay" required>
+                    <option value="">Select a day</option>
+                    <option value="Mon">Monday</option>
+                    <option value="Tue">Tuesday</option>
+                    <option value="Wed">Wednesday</option>
+                    <option value="Thu">Thursday</option>
+                    <option value="Fri">Friday</option>
+                    <option value="Sat">Saturday</option>
+                    <option value="Sun">Sunday</option>
+                  </select>
+                </div>
+                <div class="inline-grid">
+                  <div class="form-group">
+                    <label for="timetableStartTime">Start Time *</label>
+                    <input type="time" id="timetableStartTime" required>
+                  </div>
+                  <div class="form-group">
+                    <label for="timetableEndTime">End Time *</label>
+                    <input type="time" id="timetableEndTime" required>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label for="timetableSubject">Subject *</label>
+                  <input type="text" id="timetableSubject" placeholder="e.g., English" required autocomplete="off">
+                </div>
+                <div class="form-group">
+                  <label for="timetableTeacher">Teacher *</label>
+                  <input type="text" id="timetableTeacher" placeholder="e.g., Daw Aye" required autocomplete="off">
+                </div>
+                <div class="form-group">
+                  <label for="timetableLocation">Location *</label>
+                  <input type="text" id="timetableLocation" placeholder="e.g., Rm101" required autocomplete="off">
+                </div>
+                <details class="form-group" style="margin-top:0.25rem;">
+                  <summary style="cursor:pointer;font-weight:600;font-size:0.88rem;color:#475569;">Generate weekly template (overwrite this batch)</summary>
+                  <p class="form-hint" style="margin-top:0.5rem;">Replaces all timetable rows for the selected batch with the flyer template.</p>
+                  <button type="button" class="btn btn-secondary" id="generateTimetableTemplateBtn" style="margin-top:0.5rem;">Generate Template</button>
+                </details>
+                <div class="form-actions">
+                  <button type="button" class="btn timetable-modal-cancel" id="timetableModalCancel">Cancel</button>
+                  <button type="submit" class="btn programs-add-btn" id="timetableSubmitBtn">Add Session</button>
+                </div>
+              </form>
+            </div>
+          </div>
+          <div class="card programs-panel timetables-panel">
+            <div class="programs-panel-header">
+              <h3 class="programs-title"><span class="title-icon" aria-hidden="true">📅</span> Timetable (<span id="timetableSessionCount">0</span> sessions)</h3>
+            </div>
+            <div class="timetables-toolbar">
+              <div class="timetables-toolbar-left">
+                <label class="batches-filter-label" for="timetableBatchFilter">Batch Filter:</label>
+                <select id="timetableBatchFilter" class="batches-filter-select" aria-label="Filter timetable by batch">
+                  <option value="all">All Batches</option>
+                </select>
+                <span class="batches-filter-label">View:</span>
+                <div class="timetable-view-toggle" role="group" aria-label="Timetable view mode">
+                  <button type="button" id="timetableViewListBtn" class="is-active" title="List view">📋 List</button>
+                  <button type="button" id="timetableViewWeeklyBtn" title="Weekly view">📆 Weekly</button>
+                </div>
+              </div>
+              <div class="timetables-toolbar-actions">
+                <button type="button" class="btn programs-add-btn" id="addTimetableBtn">+ Add Row</button>
+              </div>
+            </div>
+            <div id="timetableListWrap">
+              <div class="table-wrap">
+                <table class="timetables-table">
+                  <thead>
+                    <tr>
+                      <th scope="col">Batch</th>
+                      <th scope="col">Day</th>
+                      <th scope="col">Start Time</th>
+                      <th scope="col">End Time</th>
+                      <th scope="col">Subject</th>
+                      <th scope="col">Teacher</th>
+                      <th scope="col">Location</th>
+                      <th scope="col">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody id="timetablesBody"></tbody>
+                </table>
+              </div>
+            </div>
+            <div id="timetableWeeklyWrap" style="display:none;">
+              <div class="tt-weekly-banner" id="timetableWeeklyBanner">
+                <div>
+                  <h4 id="timetableWeeklyProgramTitle">—</h4>
+                  <p id="timetableWeeklySubtitle">Weekly Schedule Overview</p>
+                </div>
+                <span id="timetableWeeklyPageBadge" style="font-weight:700;font-size:0.9rem;">Page 1/1</span>
+              </div>
+              <div class="tt-weekly-grid-wrap">
+                <table class="tt-weekly-grid" id="timetableWeeklyGrid">
+                  <thead><tr><th class="tt-time-cell">Time</th></tr></thead>
+                  <tbody id="timetableWeeklyBody"></tbody>
+                </table>
+              </div>
+            </div>
+            <div class="timetables-footer" id="timetablesFooter">
+              <p class="timetables-showing" id="timetablesShowingText">Program: —</p>
+              <div class="timetables-page-nums" id="timetableProgramPageNums"></div>
+            </div>
+            <p class="text-muted" id="timetablesHint" style="margin:.85rem 1.1rem 1rem;">No timetable rows yet.</p>
+          </div>
+        </div>
+      </section>
+
+      <div id="academicStatus" class="status-box"></div>
+    </main>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+  <script src="../assets/js/firebase-config.js"></script>
+  <script src="../assets/js/auth.js"></script>
+  <script src="../assets/js/school-api.js"></script>
+  <script src="../assets/js/lang-switcher.js"></script>
+  <script src="../assets/js/content-firebase.js"></script>
+  <script src="../assets/js/admin-top-toolbar.js"></script>
+  <script>
+    (function() {
+      var u = window.AcademyAuth && AcademyAuth.currentUser();
+      if (!u) { window.location.href = '../public-page/login.html'; return; }
+      AcademyAuth.getUserProfile(u.uid, function(p) {
+        if ((p && p.role) !== 'admin') window.location.href = '../student/dashboard.html';
+      });
+      if (window.AdminTopToolbar) AdminTopToolbar.init();
+
+      var courses = [];
+      var levels = [];
+      var batches = [];
+      var timetables = [];
+      var teachers = [];
+      var selectedBatchId = '';
+      var currentView = 'courses';
+      var levelListState = { page: 1, pageSize: 10, pageCount: 1 };
+      var batchListState = { page: 1, pageSize: 12, pageCount: 1 };
+      var timetableUiState = { view: 'list', programPage: 1 };
+      var TT_DAY_ORDER = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+      var TT_DAY_LABEL = { Mon: 'Monday', Tue: 'Tuesday', Wed: 'Wednesday', Thu: 'Thursday', Fri: 'Friday', Sat: 'Saturday', Sun: 'Sunday' };
+      var timetablesFooterPagBound = false;
+      var DEFAULT_COURSE_OPTIONS = (window.SchoolAPI && Array.isArray(SchoolAPI.DEFAULT_COURSE_OPTIONS))
+        ? SchoolAPI.DEFAULT_COURSE_OPTIONS.slice()
+        : [
+            'IGCSE',
+            'Pre-IGCSE',
+            'Global Primary Learning Program',
+            'English 4 Skills (PEIC, UK)',
+            'Chinese Language Program',
+            'Business & Management',
+            'Coding & Robotics',
+            'Online Class'
+          ];
+      /** CEFR / Pearson band —  Levels   */
+      var LEVEL_CEFR_MAP = {
+        'Pre-Foundation': 'Pre-A1',
+        'Foundation 1': 'A1 - I',
+        'Foundation 2': 'A1 - II',
+        'Foundation I': 'A1 - I',
+        'Foundation II': 'A1 - II',
+        'Pre-Elementary': 'A1+',
+        'Elementary': 'A2',
+        'Pre-Intermediate': 'A2+',
+        'Intermediate': 'B1',
+        'Intermediate Plus': 'B1+',
+        'Upper Intermediate (B2)': 'B2'
+      };
+      function cefrForLevelName(name) {
+        var n = (name || '').toString().trim();
+        if (LEVEL_CEFR_MAP[n]) return LEVEL_CEFR_MAP[n];
+        var lower = n.toLowerCase();
+        for (var key in LEVEL_CEFR_MAP) {
+          if (!Object.prototype.hasOwnProperty.call(LEVEL_CEFR_MAP, key)) continue;
+          if (lower.indexOf(key.toLowerCase()) >= 0) return LEVEL_CEFR_MAP[key];
+        }
+        return '—';
+      }
+
+      var CEFR_SELECT_OPTIONS = ['Pre-A1', 'A1 - I', 'A1 - II', 'A1+', 'A2', 'A2+', 'B1', 'B1+', 'B2'];
+
+      function initLevelCefrSelect() {
+        var sel = document.getElementById('levelCefr');
+        if (!sel || sel.getAttribute('data-filled') === '1') return;
+        sel.innerHTML = '<option value="">Select CEFR level</option>' + CEFR_SELECT_OPTIONS.map(function(v) {
+          return '<option value="' + esc(v) + '">' + esc(v) + '</option>';
+        }).join('');
+        sel.setAttribute('data-filled', '1');
+      }
+
+      function setLevelCefrValue(val) {
+        initLevelCefrSelect();
+        var sel = document.getElementById('levelCefr');
+        if (!sel) return;
+        var v = (val || '').toString().trim();
+        if (!v) {
+          sel.value = '';
+          return;
+        }
+        var found = false;
+        for (var i = 0; i < sel.options.length; i++) {
+          if (sel.options[i].value === v) {
+            found = true;
+            break;
+          }
+        }
+        if (!found) {
+          var o = document.createElement('option');
+          o.value = v;
+          o.textContent = v;
+          sel.appendChild(o);
+        }
+        sel.value = v;
+      }
+
+      function displayCefrForLevel(level) {
+        if (!level) return '—';
+        var s = (level.cefr || '').toString().trim();
+        if (s) return s;
+        return cefrForLevelName(level.name);
+      }
+
+      function levelLocationsCell(level) {
+        if (!level) return '—';
+        var s = (level.locations || '').toString().trim();
+        if (s) return s;
+        return courseLocationsByCourseId(level.course_id);
+      }
+
+      function suggestCefrFromLevelNameInput() {
+        var nameEl = document.getElementById('levelName');
+        var cefrSel = document.getElementById('levelCefr');
+        if (!nameEl || !cefrSel || (cefrSel.value || '').toString().trim()) return;
+        var band = cefrForLevelName(nameEl.value);
+        if (band && band !== '—' && CEFR_SELECT_OPTIONS.indexOf(band) >= 0) cefrSel.value = band;
+      }
+
+      function prefillLevelLocationsFromCourse() {
+        var cid = (document.getElementById('levelCourse') || {}).value;
+        var locEl = document.getElementById('levelLocations');
+        if (!locEl || (locEl.value || '').toString().trim()) return;
+        var c = courses.find(function(x) { return String(x.id || '') === String(cid || ''); });
+        if (c && (c.locations || '').toString().trim()) locEl.value = c.locations;
+      }
+
+      function prefillBatchLocationFromCourse() {
+        var cid = (document.getElementById('batchCourse') || {}).value;
+        var locEl = document.getElementById('batchLocation');
+        if (!locEl || (locEl.value || '').toString().trim()) return;
+        var c = courses.find(function(x) { return String(x.id || '') === String(cid || ''); });
+        if (c && (c.locations || '').toString().trim()) locEl.value = c.locations;
+      }
+
+      function resolveBatchLevelId(courseId, levelName) {
+        var n = (levelName || '').trim();
+        if (!n || !courseId) return '';
+        var cid = String(courseId);
+        var exact = levels.find(function(l) {
+          return String(l.course_id || '') === cid && String(l.name || '').toLowerCase() === n.toLowerCase();
+        });
+        if (exact) return String(exact.id);
+        var partial = levels.find(function(l) {
+          return String(l.course_id || '') === cid && String(l.name || '').toLowerCase().indexOf(n.toLowerCase()) >= 0;
+        });
+        return partial ? String(partial.id) : '';
+      }
+
+      function refreshBatchLevelDatalist() {
+        var courseId = (document.getElementById('batchCourse') || {}).value;
+        var dl = document.getElementById('batchLevelNameList');
+        if (!dl) return;
+        var filtered = levels.filter(function(l) { return String(l.course_id || '') === String(courseId || ''); });
+        dl.innerHTML = filtered.map(function(l) {
+          return '<option value="' + esc(l.name) + '"></option>';
+        }).join('');
+      }
+
+      function syncBatchLevelIdFromName() {
+        var courseId = (document.getElementById('batchCourse') || {}).value;
+        var nameEl = document.getElementById('batchLevelName');
+        var hid = document.getElementById('batchLevelId');
+        if (!nameEl || !hid) return;
+        var lid = resolveBatchLevelId(courseId, nameEl.value);
+        hid.value = lid || '';
+      }
+
+      // Flyer   course/level  weekly timetable template 
+      function scheduleTemplateForCourseAndLevel(courseName, levelName) {
+        var cn = (courseName || '').toString();
+        var ln = (levelName || '').toString();
+
+        // Basic level program (Basic Level  -level table   courseName  )
+        if (cn.toLowerCase().indexOf('basic') >= 0) {
+          return {
+            daysText: 'Tue, Wed, Thu, Fri',
+            days: ['Tue', 'Wed', 'Thu', 'Fri'],
+            time: '2:30 PM - 4:00 PM',
+            subjectsByDay: {
+              Tue: 'Speaking & Listening',
+              Wed: 'Reading & Writing',
+              Thu: 'Grammar / Vocabulary',
+              Fri: 'Weekly Review / Quiz'
+            }
+          };
+        }
+
+        var cefr = cefrForLevelName(ln);
+        if (cefr === 'Pre-A1' || cefr === 'A2+' || cefr === 'B1' || cefr === 'B1+' || cefr === 'A2') {
+          // Pre-A1 (Mon-Fri, 1:30-4), A2+ (Mon-Fri, 1:30-4), B1 (Mon-Fri, 8:30-11), B1+ (Mon-Fri, 11-1:30), A2 (Mon-Fri, 11-1:30)
+        }
+
+        if (cefr === 'Pre-A1') {
+          return {
+            daysText: 'Mon to Fri',
+            days: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'],
+            time: '1:30 PM - 4:00 PM',
+            subjectsByDay: {
+              Mon: 'Speaking & Listening',
+              Tue: 'Reading & Writing',
+              Wed: 'Grammar & Vocabulary',
+              Thu: 'Weekly Review / Quiz',
+              Fri: 'Weekly Review / Quiz'
+            }
+          };
+        }
+        if (cefr === 'A1 - I' || cefr === 'A1 - II') {
+          return {
+            daysText: 'Mon to Fri',
+            days: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'],
+            time: '8:30 AM - 11:00 AM',
+            subjectsByDay: {
+              Mon: 'Speaking & Listening',
+              Tue: 'Grammar & Vocabulary',
+              Wed: 'Reading & Writing',
+              Thu: 'Weekly Review / Quiz',
+              Fri: 'Weekly Review / Quiz'
+            }
+          };
+        }
+        if (cefr === 'A1+') {
+          return {
+            daysText: 'Mon to Fri',
+            days: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'],
+            time: '4:00 PM - 6:30 PM',
+            subjectsByDay: {
+              Mon: 'Speaking & Listening',
+              Tue: 'Reading & Writing',
+              Wed: 'Grammar / Vocabulary',
+              Thu: 'Weekly Review / Quiz',
+              Fri: 'Weekly Review / Quiz'
+            }
+          };
+        }
+        if (cefr === 'A2') {
+          return {
+            daysText: 'Mon to Fri',
+            days: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'],
+            time: '11:00 AM - 1:30 PM',
+            subjectsByDay: {
+              Mon: 'Speaking & Listening',
+              Tue: 'Reading & Writing',
+              Wed: 'Grammar / Vocabulary',
+              Thu: 'Weekly Review / Quiz',
+              Fri: 'Weekly Review / Quiz'
+            }
+          };
+        }
+        if (cefr === 'A2+') {
+          return {
+            daysText: 'Mon to Fri',
+            days: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'],
+            time: '1:30 PM - 4:00 PM',
+            subjectsByDay: {
+              Mon: 'Speaking & Listening',
+              Tue: 'Reading & Writing',
+              Wed: 'Grammar / Vocabulary',
+              Thu: 'Weekly Review / Quiz',
+              Fri: 'Weekly Review / Quiz'
+            }
+          };
+        }
+        if (cefr === 'B1') {
+          return {
+            daysText: 'Mon to Fri',
+            days: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'],
+            time: '8:30 AM - 11:00 AM',
+            subjectsByDay: {
+              Mon: 'Speaking & Listening',
+              Tue: 'Grammar & Vocabulary',
+              Wed: 'Reading & Writing',
+              Thu: 'Weekly Review / Quiz',
+              Fri: 'Weekly Review / Quiz'
+            }
+          };
+        }
+        if (cefr === 'B1+') {
+          return {
+            daysText: 'Mon to Fri',
+            days: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'],
+            time: '11:00 AM - 1:30 PM',
+            subjectsByDay: {
+              Mon: 'Speaking & Listening',
+              Tue: 'Reading & Writing',
+              Wed: 'Grammar / Vocabulary',
+              Thu: 'Weekly Review / Quiz',
+              Fri: 'Weekly Review / Quiz'
+            }
+          };
+        }
+        if (cefr === 'B2') {
+          return {
+            daysText: 'Sat & Sun',
+            days: ['Sat', 'Sun'],
+            time: '11:00 AM - 1:30 PM',
+            subjectsByDay: {
+              Sat: 'Speaking & Listening',
+              Sun: 'Weekly Review / Mock Test'
+            }
+          };
+        }
+
+        return null;
+      }
+
+      function autoFillBatchScheduleFromSelection() {
+        var courseSel = document.getElementById('batchCourse');
+        var levelIdEl = document.getElementById('batchLevelId');
+        var scheduleEl = document.getElementById('batchSchedule');
+        var startEl = document.getElementById('batchStartDate');
+        if (!courseSel || !levelIdEl || !scheduleEl) return;
+
+        var courseId = courseSel.value;
+        var levelId = levelIdEl.value;
+        var course = courses.find(function(c) { return String(c.id) === String(courseId); });
+        var level = levels.find(function(l) { return String(l.id) === String(levelId); });
+        if (!course) return;
+
+        var tpl = scheduleTemplateForCourseAndLevel(course.name || '', level ? (level.name || '') : '');
+        if (!tpl) return;
+
+        var current = (scheduleEl.value || '').toString().trim();
+        if (!current) {
+          scheduleEl.value = tpl.daysText + ' (' + tpl.time + ')';
+        }
+
+        if (startEl) {
+          var curStart = (startEl.value || '').toString().trim();
+          if (!curStart) {
+            // Flyer  Start Dates
+            var d = null;
+            var cn = (course.name || '').toString();
+            if (cn.toLowerCase().indexOf('basic') >= 0) d = '2026-03-03';
+            else d = '2026-03-12';
+            if (d) startEl.value = d;
+          }
+        }
+      }
+
+      function buildTimetableTemplateRowsForBatch(batchObj) {
+        if (!batchObj) return [];
+        var tpl = scheduleTemplateForCourseAndLevel(batchObj.course_name || '', batchObj.level_name || '');
+        if (!tpl) return [];
+        var tn = (batchObj.teacher_name || '').toString().trim();
+        var loc = (batchObj.location || '').toString().trim();
+        if (!loc) loc = (batchLocation(batchObj) || '').toString().trim();
+        if (loc === '—') loc = '';
+        return (tpl.days || []).map(function(day) {
+          return {
+            day: day,
+            time: tpl.time,
+            subject: (tpl.subjectsByDay && tpl.subjectsByDay[day]) ? tpl.subjectsByDay[day] : 'Class Focus',
+            teacher_name: tn,
+            location: loc
+          };
+        });
+      }
+
+      function courseTemplateForCourseName(courseName) {
+        var cn = (courseName || '').toString();
+        var lc = cn.toLowerCase();
+        if (lc.indexOf('basic') >= 0) {
+          return {
+            duration: '3 Months (Starting Mar 3, 2026)',
+            fee: 0,
+            description: 'Basic Level (General English) — Speaking, Listening, Reading & Writing'
+          };
+        }
+        if (lc.indexOf('upper intermediate') >= 0 || lc.indexOf('b2') >= 0) {
+          return {
+            duration: '~ 9 Months (12 Mar - Dec 2026)',
+            fee: 0,
+            description: 'Pearson Upper Intermediate (B2) — Focused practice for speaking, listening, reading & writing'
+          };
+        }
+        // Pre-A1 to B1+ (PEIC / English 4 Skills)
+        if (lc.indexOf('pearson') >= 0 || lc.indexOf('peic') >= 0 || lc.indexOf('english 4 skills') >= 0) {
+          return {
+            duration: '~ 3 Months (12 Mar - 31 May 2026)',
+            fee: 0,
+            description: 'PEIC / English 4 Skills (Pre-A1 to B1+) — Speaking, Listening, Reading & Writing'
+          };
+        }
+        return null;
+      }
+
+      function esc(s) {
+        if (s == null || s === undefined) return '';
+        var d = document.createElement('div');
+        d.textContent = s;
+        return d.innerHTML;
+      }
+
+      var BATCH_ICO_VIEW = '<svg class="batch-ico-svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>';
+      var BATCH_ICO_EDIT = '<svg class="batch-ico-svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a.996.996 0 0 0 0-1.41l-2.34-2.34a.996.996 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>';
+      var BATCH_ICO_DEL = '<svg class="batch-ico-svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>';
+
+      // Convert "1:30 PM - 4:00 PM" / "1:30 PM – 4:00 PM" into { start, end }
+      function parseTimeRange(timeStr) {
+        var s = (timeStr == null ? '' : timeStr).toString().trim();
+        if (!s) return { start: '', end: '' };
+        var parts = s.split(/\s*[-–—]\s*/);
+        if (parts.length >= 2) {
+          return { start: (parts[0] || '').trim(), end: (parts[1] || '').trim() };
+        }
+        return { start: s, end: '' };
+      }
+
+      function timeStrToHtmlTime(str) {
+        var s = (str || '').toString().trim();
+        if (!s) return '';
+        var m24 = s.match(/^(\d{1,2}):(\d{2})$/);
+        if (m24) {
+          var h = parseInt(m24[1], 10);
+          var mm = parseInt(m24[2], 10);
+          if (h >= 0 && h < 24 && mm >= 0 && mm < 60) {
+            return String(h).padStart(2, '0') + ':' + String(mm).padStart(2, '0');
+          }
+        }
+        var m = s.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)/i);
+        if (m) {
+          var h2 = parseInt(m[1], 10);
+          var mm2 = parseInt(m[2], 10);
+          if (m[3].toUpperCase() === 'PM' && h2 !== 12) h2 += 12;
+          if (m[3].toUpperCase() === 'AM' && h2 === 12) h2 = 0;
+          return String(h2).padStart(2, '0') + ':' + String(mm2).padStart(2, '0');
+        }
+        return '';
+      }
+
+      function htmlTimeToAmPm(hhmm) {
+        var s = (hhmm || '').toString().trim();
+        if (!s) return '';
+        var parts = s.split(':');
+        if (parts.length < 2) return s;
+        var h = parseInt(parts[0], 10);
+        var m = parseInt(parts[1], 10);
+        if (!isFinite(h) || !isFinite(m)) return s;
+        var ap = h >= 12 ? 'PM' : 'AM';
+        var h12 = h % 12;
+        if (h12 === 0) h12 = 12;
+        return h12 + ':' + String(m).padStart(2, '0') + ' ' + ap;
+      }
+
+      function timeToMinutes(str) {
+        var st = (str || '').toString().trim();
+        if (!st) return NaN;
+        var m24 = st.match(/^(\d{1,2}):(\d{2})$/);
+        if (m24) return parseInt(m24[1], 10) * 60 + parseInt(m24[2], 10);
+        var m = st.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)/i);
+        if (m) {
+          var h = parseInt(m[1], 10);
+          var mm = parseInt(m[2], 10);
+          if (m[3].toUpperCase() === 'PM' && h !== 12) h += 12;
+          if (m[3].toUpperCase() === 'AM' && h === 12) h = 0;
+          return h * 60 + mm;
+        }
+        return NaN;
+      }
+
+      function slotMinutesFromTimetableRow(item) {
+        var tr = parseTimeRange(item && item.time ? item.time : '');
+        var n = timeToMinutes(tr.start);
+        return isFinite(n) ? n : 99999;
+      }
+
+      function batchForTimetableRow(item) {
+        if (!item || item.batch_id == null) return null;
+        return batches.find(function(b) { return String(b.id) === String(item.batch_id); });
+      }
+
+      function timetableBatchCellLabel(item) {
+        var b = batchForTimetableRow(item);
+        if (b) {
+          var code = batchDisplayCode(b);
+          var prog = (b.course_name || '').toString().trim();
+          return prog ? code + ' — ' + prog : code;
+        }
+        return (item.batch_name || '—').toString();
+      }
+
+      function timetableTeacherCell(item) {
+        var t = (item.teacher_name || '').toString().trim();
+        if (t) return t;
+        var b = batchForTimetableRow(item);
+        if (b && (b.teacher_name || '').toString().trim()) return b.teacher_name;
+        return '—';
+      }
+
+      function timetableLocationCell(item) {
+        var L = (item.location || '').toString().trim();
+        if (L) return L;
+        var b = batchForTimetableRow(item);
+        if (b) {
+          var bl = batchLocation(b);
+          return bl === '—' ? '—' : bl;
+        }
+        return '—';
+      }
+
+      function timetableDayLabel(dayCode) {
+        var d = (dayCode || '').toString().trim();
+        return TT_DAY_LABEL[d] || d || '—';
+      }
+
+      function fillTimetableBatchFilter() {
+        var sel = document.getElementById('timetableBatchFilter');
+        if (!sel) return;
+        var keep = sel.value || 'all';
+        var orderedBatches = batches.slice().sort(function(a, b) {
+          var ai = programOrderIndex(a && a.course_name);
+          var bi = programOrderIndex(b && b.course_name);
+          if (ai !== bi) return ai - bi;
+          return String((a && a.name) || '').toLowerCase().localeCompare(String((b && b.name) || '').toLowerCase());
+        });
+        sel.innerHTML = '<option value="all">All Batches</option>' + orderedBatches.map(function(batch) {
+          return '<option value="' + esc(batch.id) + '">' + esc(batchDisplayCode(batch) + ' — ' + (batch.course_name || '')) + '</option>';
+        }).join('');
+        if (keep === 'all' || orderedBatches.some(function(b) { return String(b.id) === String(keep); })) sel.value = keep;
+        else sel.value = 'all';
+      }
+
+      function timetableFilteredRows() {
+        var sel = document.getElementById('timetableBatchFilter');
+        var v = sel ? (sel.value || 'all') : 'all';
+        var base = timetables.slice();
+        if (v !== 'all') base = base.filter(function(r) { return String(r.batch_id) === String(v); });
+        return base.sort(function(a, b) {
+          var ai = programOrderIndex(a && a.course_name);
+          var bi = programOrderIndex(b && b.course_name);
+          if (ai !== bi) return ai - bi;
+          return String((a && a.batch_name) || '').toLowerCase().localeCompare(String((b && b.batch_name) || '').toLowerCase());
+        });
+      }
+
+      function timetableCourseKey(row) {
+        var n = (row && row.course_name || '').toString().trim();
+        return n || '—';
+      }
+
+      function timetableProgramsFromRows(rows) {
+        var seen = {};
+        var names = [];
+        (rows || []).forEach(function(r) {
+          var k = timetableCourseKey(r);
+          if (!seen[k]) {
+            seen[k] = true;
+            names.push(k);
+          }
+        });
+        names.sort(function(a, b) {
+          var ai = programOrderIndex(a);
+          var bi = programOrderIndex(b);
+          if (ai !== bi) return ai - bi;
+          return String(a).localeCompare(String(b));
+        });
+        return names;
+      }
+
+      function clampTimetableProgramPage() {
+        var rows = timetableFilteredRows();
+        var progs = timetableProgramsFromRows(rows);
+        var pc = Math.max(1, progs.length);
+        if (!progs.length) timetableUiState.programPage = 1;
+        else if (timetableUiState.programPage > pc) timetableUiState.programPage = pc;
+        else if (timetableUiState.programPage < 1) timetableUiState.programPage = 1;
+      }
+
+      function bindTimetablesFooterPagination() {
+        if (timetablesFooterPagBound) return;
+        var foot = document.getElementById('timetablesFooter');
+        if (!foot) return;
+        timetablesFooterPagBound = true;
+        foot.addEventListener('click', function(e) {
+          var pg = e.target.closest('[data-timetable-program-page]');
+          if (pg) {
+            var p = parseInt(pg.getAttribute('data-timetable-program-page'), 10);
+            if (isFinite(p) && p >= 1) {
+              timetableUiState.programPage = p;
+              renderTimetables();
+            }
+            return;
+          }
+          if (e.target.closest('#timetableProgPrev')) {
+            if (timetableUiState.programPage > 1) {
+              timetableUiState.programPage--;
+              renderTimetables();
+            }
+            return;
+          }
+          if (e.target.closest('#timetableProgNext')) {
+            var rowsN = timetableFilteredRows();
+            var pcN = Math.max(1, timetableProgramsFromRows(rowsN).length);
+            if (timetableUiState.programPage < pcN) {
+              timetableUiState.programPage++;
+              renderTimetables();
+            }
+          }
+        });
+      }
+
+      function renderTimetableWeeklySessionCard(s) {
+        var tr = parseTimeRange(s && s.time ? s.time : '');
+        var timeLine = (tr.start && tr.end) ? (tr.start + ' - ' + tr.end) : (s && s.time ? s.time : '—');
+        return '<div class="tt-session-card">' +
+          '<strong>' + esc((s && s.subject) || '—') + '</strong>' +
+          '<div class="tt-line">📍 ' + esc(timetableLocationCell(s)) + '</div>' +
+          '<div class="tt-line">👥 ' + esc(timetableBatchCellLabel(s)) + '</div>' +
+          '<div class="tt-line">👤 ' + esc(timetableTeacherCell(s)) + '</div>' +
+          '<div class="tt-line">🕐 ' + esc(timeLine) + '</div>' +
+        '</div>';
+      }
+
+      function renderTimetableWeekly(programRows) {
+        var grid = document.getElementById('timetableWeeklyGrid');
+        var tbody = document.getElementById('timetableWeeklyBody');
+        var theadRow = grid && grid.querySelector('thead tr');
+        if (!grid || !tbody || !theadRow) return;
+        theadRow.innerHTML = '<th class="tt-time-cell">Time</th>' + TT_DAY_ORDER.map(function(d) {
+          return '<th>' + esc(TT_DAY_LABEL[d]) + '</th>';
+        }).join('');
+        var slotSet = {};
+        (programRows || []).forEach(function(s) {
+          var m = slotMinutesFromTimetableRow(s);
+          if (isFinite(m)) slotSet[m] = true;
+        });
+        var slots = Object.keys(slotSet).map(function(k) { return parseInt(k, 10); }).filter(function(x) { return isFinite(x) && x !== 99999; });
+        slots.sort(function(a, b) { return a - b; });
+        if (!slots.length) {
+          tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:1.5rem;color:#64748b;">No sessions with a parseable start time.</td></tr>';
+          return;
+        }
+        tbody.innerHTML = slots.map(function(minu) {
+          var label = String(Math.floor(minu / 60)).padStart(2, '0') + ':' + String(minu % 60).padStart(2, '0');
+          var cells = TT_DAY_ORDER.map(function(day) {
+            var inSlot = (programRows || []).filter(function(s) {
+              return (s.day || '') === day && slotMinutesFromTimetableRow(s) === minu;
+            });
+            if (!inSlot.length) return '<td>—</td>';
+            return '<td>' + inSlot.map(function(s) { return renderTimetableWeeklySessionCard(s); }).join('') + '</td>';
+          }).join('');
+          return '<tr><td class="tt-time-cell">' + esc(label) + '</td>' + cells + '</tr>';
+        }).join('');
+      }
+
+      function showStatus(message, type) {
+        var box = document.getElementById('academicStatus');
+        box.textContent = message || '';
+        box.className = 'status-box show ' + (type === 'error' ? 'error' : 'success');
+        clearTimeout(window._academicStatusTimer);
+        window._academicStatusTimer = setTimeout(function() {
+          box.className = 'status-box';
+          box.textContent = '';
+        }, 3500);
+      }
+
+      function openModal(modalId) {
+        var modal = document.getElementById(modalId);
+        if (modal) modal.classList.add('show');
+      }
+
+      function closeModal(modalId) {
+        var modal = document.getElementById(modalId);
+        if (modal) modal.classList.remove('show');
+      }
+
+      function formatFee(value) {
+        var n = Number(value || 0);
+        if (!isFinite(n)) n = 0;
+        return n.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+      }
+
+      function uniqueOptions(values) {
+        var out = [];
+        (values || []).forEach(function(value) {
+          var text = (value || '').toString().trim();
+          if (text && out.indexOf(text) === -1) out.push(text);
+        });
+        return out;
+      }
+
+      var PROGRAM_ORDER = [
+        'IGCSE',
+        'Pre-IGCSE',
+        'Global Primary Learning Program',
+        'English 4 Skills (PEIC, UK)',
+        'Chinese Language Program',
+        'Business & Management',
+        'Coding & Robotics',
+        'Online Class'
+      ];
+
+      var PROGRAM_DEFAULTS = {
+        'IGCSE': {
+          duration: '6 weeks',
+          fee: 300000,
+          locations: 'Rm101, Rm102',
+          capacity: 30,
+          current_enrollment: 25,
+          age_group: '14-16 years',
+          schedule: 'Mon-Fri, 9:00 AM - 12:00 PM',
+          instructor: 'Dr. John Smith',
+          status: 'active',
+          description: 'IGCSE preparation program for exam-focused learners.'
+        },
+        'Pre-IGCSE': {
+          duration: '6 weeks',
+          fee: 280000,
+          locations: 'Rm103, Rm104',
+          capacity: 25,
+          current_enrollment: 20,
+          age_group: '13-15 years',
+          schedule: 'Mon-Fri, 1:00 PM - 4:00 PM',
+          instructor: 'Ms. Aye Aye',
+          status: 'active',
+          description: 'Foundation pathway for students preparing to join IGCSE.'
+        },
+        'Global Primary Learning Program': {
+          duration: '8 weeks',
+          fee: 350000,
+          locations: 'Rm105, Rm106',
+          capacity: 35,
+          current_enrollment: 32,
+          age_group: '8-12 years',
+          schedule: 'Mon-Fri, 9:00 AM - 12:00 PM',
+          instructor: 'Ms. Mary',
+          status: 'active',
+          description: 'Primary learning program covering English, Mathematics, Science, Computing, and enrichment.'
+        },
+        'English 4 Skills (PEIC, UK)': {
+          duration: '8 weeks',
+          fee: 400000,
+          locations: 'Rm107, Rm108',
+          capacity: 28,
+          current_enrollment: 28,
+          age_group: '12+ years',
+          schedule: 'Sat-Sun, 11:00 AM - 1:30 PM',
+          instructor: 'Mr. David',
+          status: 'active',
+          description: 'PEIC / English 4 Skills pathway for speaking, listening, reading, and writing.'
+        },
+        'Chinese Language Program': {
+          duration: '10 weeks',
+          fee: 380000,
+          locations: 'Rm109, Rm110',
+          capacity: 20,
+          current_enrollment: 15,
+          age_group: '12+ years',
+          schedule: 'Mon-Wed-Fri, 4:00 PM - 6:00 PM',
+          instructor: 'Prof. Li Wei',
+          status: 'active',
+          description: 'Chinese language program with communication, pronunciation, characters, and culture.'
+        },
+        'Business & Management': {
+          duration: '8 weeks',
+          fee: 450000,
+          locations: 'Rm111, Rm112',
+          capacity: 30,
+          current_enrollment: 22,
+          age_group: '16+ years',
+          schedule: 'Tue-Thu, 7:00 PM - 8:30 PM',
+          instructor: 'Mr. Michael',
+          status: 'active',
+          description: 'Business and management program for workplace communication and practical business skills.'
+        },
+        'Coding & Robotics': {
+          duration: '6 weeks',
+          fee: 500000,
+          locations: 'Lab1, Lab2',
+          capacity: 24,
+          current_enrollment: 24,
+          age_group: '10-16 years',
+          schedule: 'Sat-Sun, 2:00 PM - 4:00 PM',
+          instructor: 'Mr. Robert',
+          status: 'active',
+          description: 'Hands-on coding and robotics program with project-based learning.'
+        },
+        'Online Class': {
+          duration: '12 weeks',
+          fee: 600000,
+          locations: 'Online',
+          capacity: 40,
+          current_enrollment: 35,
+          age_group: '16+ years',
+          schedule: 'Tue-Wed-Thu, 7:00 PM - 8:30 PM',
+          instructor: 'Online Instructor',
+          status: 'active',
+          description: 'Live online class program delivered through virtual sessions.'
+        }
+      };
+
+      function normalizeProgramName(name) {
+        var s = (name || '').toString().trim().toLowerCase();
+        if (/pre[-\s]?igcse|preigcse/.test(s)) return 'pre-igcse';
+        if (/igcse/.test(s) && !/pre/.test(s)) return 'igcse';
+        if (/global primary|gplp|\bgpl\b/.test(s)) return 'global-primary';
+        if (/peic|english 4 skills|english four skills|pearson english international|upper intermediate|b2/.test(s)) return 'english-4-skills';
+        if (/chinese|mandarin/.test(s)) return 'chinese';
+        if (/business|management/.test(s)) return 'business';
+        if (/coding|robotics|programming|stem|robot/.test(s)) return 'coding';
+        if (/online|zoom|virtual|remote/.test(s)) return 'online';
+        if (/basic/.test(s)) return 'basic';
+        return s;
+      }
+
+      function programOrderIndex(name) {
+        var target = normalizeProgramName(name);
+        for (var i = 0; i < PROGRAM_ORDER.length; i++) {
+          if (normalizeProgramName(PROGRAM_ORDER[i]) === target) return i;
+        }
+        return PROGRAM_ORDER.length + 100;
+      }
+
+      function canonicalProgramName(name) {
+        var target = normalizeProgramName(name);
+        for (var i = 0; i < PROGRAM_ORDER.length; i++) {
+          if (normalizeProgramName(PROGRAM_ORDER[i]) === target) return PROGRAM_ORDER[i];
+        }
+        return (name || '').toString().trim();
+      }
+
+      function defaultProgramMeta(name) {
+        return PROGRAM_DEFAULTS[canonicalProgramName(name)] || {};
+      }
+
+      function orderedCourses(list) {
+        var source = list || [];
+        return PROGRAM_ORDER.map(function(name) {
+          var match = source.find(function(course) {
+            return normalizeProgramName(course && course.name) === normalizeProgramName(name);
+          });
+          var meta = defaultProgramMeta(name);
+          return Object.assign({}, meta, match || {}, {
+            id: match && match.id != null ? match.id : '',
+            name: name,
+            capacity: match && match.capacity != null ? match.capacity : (meta.capacity || 0),
+            current_enrollment: match && match.current_enrollment != null ? match.current_enrollment : (meta.current_enrollment || 0),
+            is_default_only: !match
+          });
+        });
+      }
+
+      function orderedStoredCourses(list) {
+        return (list || []).slice().sort(function(a, b) {
+          var ai = programOrderIndex(a && a.name);
+          var bi = programOrderIndex(b && b.name);
+          if (ai !== bi) return ai - bi;
+          return String((a && a.name) || '').toLowerCase().localeCompare(String((b && b.name) || '').toLowerCase());
+        });
+      }
+
+      function getCourseLevels(courseId) {
+        return levels.filter(function(level) {
+          return String(level.course_id || '') === String(courseId || '');
+        });
+      }
+
+      function getCourseBatches(courseId) {
+        return batches.filter(function(batch) {
+          return String(batch.course_id || '') === String(courseId || '');
+        });
+      }
+
+      function courseEnrollment(courseOrId) {
+        var course = courseOrId && typeof courseOrId === 'object'
+          ? courseOrId
+          : courses.find(function(item) { return String(item.id || '') === String(courseOrId || ''); });
+        if (course && (course.capacity != null || course.current_enrollment != null)) {
+          return {
+            current: Number(course.current_enrollment || 0),
+            capacity: Number(course.capacity || 0)
+          };
+        }
+        var related = getCourseBatches(courseOrId);
+        return related.reduce(function(acc, batch) {
+          acc.current += Number(batch.students_count || 0);
+          acc.capacity += Number(batch.max_students || 0);
+          return acc;
+        }, { current: 0, capacity: 0 });
+      }
+
+      function courseLocations(course) {
+        var meta = defaultProgramMeta(course && course.name);
+        if (course && course.locations) return course.locations;
+        var batchLocations = joinNames(getCourseBatches(course && course.id), 'location', '');
+        return batchLocations || meta.locations || '—';
+      }
+
+      function courseLocationsByCourseId(courseId) {
+        var c = courses.find(function(x) { return String(x.id || '') === String(courseId || ''); });
+        if (!c) return '—';
+        if (c.locations) return c.locations;
+        return defaultProgramMeta(c.name).locations || '—';
+      }
+
+      function populateLevelProgramFilter() {
+        var sel = document.getElementById('levelProgramFilter');
+        if (!sel) return;
+        var keep = sel.value || 'all';
+        var names = uniqueOptions(levels.map(function(l) { return l.course_name; }));
+        names.sort(function(a, b) {
+          var ai = programOrderIndex(a);
+          var bi = programOrderIndex(b);
+          if (ai !== bi) return ai - bi;
+          return String(a).toLowerCase().localeCompare(String(b).toLowerCase());
+        });
+        sel.innerHTML = '<option value="all">All Programs</option>' + names.map(function(n) {
+          return '<option value="' + esc(n) + '">' + esc(n) + '</option>';
+        }).join('');
+        if (keep === 'all' || names.indexOf(keep) >= 0) sel.value = keep;
+        else sel.value = 'all';
+      }
+
+      function courseStatus(course) {
+        if (course && course.status) return String(course.status).toLowerCase() === 'inactive' ? 'inactive' : 'active';
+        if (!course || !course.id) return 'inactive';
+        return getCourseBatches(course.id).length ? 'active' : 'inactive';
+      }
+
+      function courseStatusLabel(status) {
+        return status === 'active' ? 'Active' : 'Inactive';
+      }
+
+      function enrollmentColor(percent) {
+        if (percent >= 90) return '#ef4444';
+        if (percent >= 70) return '#f59e0b';
+        return '#22c55e';
+      }
+
+      function renderEnrollment(courseOrId) {
+        var enrollment = courseEnrollment(courseOrId);
+        var percent = enrollment.capacity > 0 ? Math.min(100, Math.round((enrollment.current / enrollment.capacity) * 100)) : 0;
+        return '<div class="program-enrollment">' +
+          '<span class="program-enrollment-text">' + esc(enrollment.current) + ' / ' + esc(enrollment.capacity || 0) + '</span>' +
+          '<div class="program-progress" aria-hidden="true"><span style="width:' + esc(percent) + '%;background:' + enrollmentColor(percent) + ';"></span></div>' +
+        '</div>';
+      }
+
+      function renderEnrollmentDetail(courseOrId) {
+        var enrollment = courseEnrollment(courseOrId);
+        var percent = enrollment.capacity > 0 ? Math.min(100, Math.round((enrollment.current / enrollment.capacity) * 100)) : 0;
+        return '<div class="program-enrollment program-enrollment--detail">' +
+          '<span class="program-enrollment-text">' + esc(enrollment.current) + ' / ' + esc(enrollment.capacity || 0) + ' students</span>' +
+          '<div class="program-progress program-progress--detail" aria-hidden="true"><span style="width:' + esc(percent) + '%;background:' + enrollmentColor(percent) + ';"></span></div>' +
+        '</div>';
+      }
+
+      function getCourseDetailModel(idStr, nameStr) {
+        var all = orderedCourses(courses);
+        if (idStr) {
+          var byId = all.find(function(c) { return String(c.id || '') === String(idStr); });
+          if (byId) return byId;
+        }
+        if (nameStr) {
+          return all.find(function(c) {
+            return c.name === nameStr || normalizeProgramName(c.name) === normalizeProgramName(nameStr);
+          });
+        }
+        return null;
+      }
+
+      function openCourseDetailsFromRow(idStr, nameStr) {
+        var course = getCourseDetailModel(idStr, nameStr);
+        if (!course) return;
+        openCourseDetailsModel(course);
+      }
+
+      function joinNames(items, key, emptyText) {
+        var names = uniqueOptions((items || []).map(function(item) { return item && item[key]; }));
+        return names.length ? names.join(', ') : (emptyText || '—');
+      }
+
+      function fillCourseNameSelect(selectedValue) {
+        var select = document.getElementById('courseName');
+        if (!select) return;
+        var raw = uniqueOptions(DEFAULT_COURSE_OPTIONS.concat(courses.map(function(course) { return course.name; })));
+        var options = raw.slice().sort(function(a, b) {
+          var ai = programOrderIndex(a);
+          var bi = programOrderIndex(b);
+          if (ai !== bi) return ai - bi;
+          return String(a).toLowerCase().localeCompare(String(b).toLowerCase());
+        });
+        select.innerHTML = '<option value="">Select program</option>' + options.map(function(name) {
+          return '<option value="' + esc(name) + '">' + esc(name) + '</option>';
+        }).join('');
+        select.value = selectedValue && options.indexOf(selectedValue) >= 0 ? selectedValue : '';
+      }
+
+      function switchView(view) {
+        currentView = view || 'courses';
+        document.querySelectorAll('.academic-view').forEach(function(section) {
+          section.classList.remove('show');
+        });
+        document.querySelectorAll('.academic-mgmt-card').forEach(function(card) {
+          card.classList.remove('active');
+        });
+        var section = document.getElementById(currentView + 'Section');
+        if (section) section.classList.add('show');
+        var card = document.querySelector('.academic-mgmt-card[data-view="' + currentView + '"]');
+        if (card) card.classList.add('active');
+      }
+
+      function setSummary() {
+        document.getElementById('summaryCourses').textContent = PROGRAM_ORDER.length;
+        document.getElementById('summaryLevels').textContent = levels.length;
+        document.getElementById('summaryBatches').textContent = batches.length;
+        document.getElementById('summaryAssigned').textContent = batches.reduce(function(sum, batch) {
+          return sum + Number(batch.students_count || 0);
+        }, 0);
+        document.getElementById('summaryTimetables').textContent = timetables.length;
+      }
+
+      function fillBatchFormDropdowns() {
+        var courseSel = document.getElementById('batchCourse');
+        var levelIdInput = document.getElementById('batchLevelId');
+        var levelNameInput = document.getElementById('batchLevelName');
+        var selectedCourse = courseSel.value || '';
+        var selectedLevelId = levelIdInput ? levelIdInput.value : '';
+        var selectedLevelName = levelNameInput ? levelNameInput.value : '';
+        var levelCourseSel = document.getElementById('levelCourse');
+        var selectedLevelCourse = levelCourseSel.value || '';
+        var orderedCourseOptions = orderedStoredCourses(courses);
+        var courseOptionsHtml = '<option value="">Select a program</option>' + orderedCourseOptions.map(function(course) {
+          return '<option value="' + esc(course.id) + '">' + esc(course.name) + '</option>';
+        }).join('');
+        if (courses.length) {
+          courseSel.disabled = false;
+          courseSel.innerHTML = courseOptionsHtml;
+        } else {
+          courseSel.disabled = true;
+          courseSel.innerHTML = '<option value="">No programs yet</option>';
+        }
+        if (courses.length) {
+          levelCourseSel.disabled = false;
+          levelCourseSel.innerHTML = courseOptionsHtml;
+        } else {
+          levelCourseSel.disabled = true;
+          levelCourseSel.innerHTML = '<option value="">No programs yet</option>';
+        }
+        courseSel.value = selectedCourse && courses.some(function(course) { return String(course.id) === String(selectedCourse); })
+          ? selectedCourse
+          : (orderedCourseOptions[0] ? String(orderedCourseOptions[0].id) : '');
+        levelCourseSel.value = selectedLevelCourse && courses.some(function(course) { return String(course.id) === String(selectedLevelCourse); })
+          ? selectedLevelCourse
+          : (orderedCourseOptions[0] ? String(orderedCourseOptions[0].id) : '');
+
+        refreshBatchLevelDatalist();
+        if (selectedLevelId && levels.some(function(l) {
+          return String(l.id) === String(selectedLevelId) && String(l.course_id || '') === String(courseSel.value || '');
+        })) {
+          if (levelIdInput) levelIdInput.value = selectedLevelId;
+          var lvObj = levels.find(function(l) { return String(l.id) === String(selectedLevelId); });
+          if (lvObj && levelNameInput) levelNameInput.value = lvObj.name;
+        } else if (selectedLevelName && levelNameInput) {
+          syncBatchLevelIdFromName();
+        } else {
+          if (levelIdInput) levelIdInput.value = '';
+          if (levelNameInput) levelNameInput.value = '';
+        }
+
+        var timetableBatchSel = document.getElementById('timetableBatch');
+        var selectedTimetableBatch = timetableBatchSel.value || '';
+        var orderedBatches = batches.slice().sort(function(a, b) {
+          var ai = programOrderIndex(a && a.course_name);
+          var bi = programOrderIndex(b && b.course_name);
+          if (ai !== bi) return ai - bi;
+          return String((a && a.name) || '').toLowerCase().localeCompare(String((b && b.name) || '').toLowerCase());
+        });
+        timetableBatchSel.innerHTML = '<option value="">Select a batch</option>' + orderedBatches.map(function(batch) {
+          return '<option value="' + esc(batch.id) + '">' + esc((batch.name || '') + ' | ' + (batch.course_name || '') + ' | ' + (batch.level_name || '')) + '</option>';
+        }).join('');
+        timetableBatchSel.value = selectedTimetableBatch;
+        fillCourseNameSelect(document.getElementById('courseName').value || '');
+        fillBatchTeacherPickSelect();
+        fillTimetableBatchFilter();
+      }
+
+      function fillBatchTeacherPickSelect() {
+        var sel = document.getElementById('batchTeacherPick');
+        if (!sel) return;
+        var keep = sel.value || '';
+        sel.innerHTML =
+          '<option value="">— Select from Teacher Management —</option>' +
+          teachers.map(function(t) {
+            var u = String((t.username || t.teacher_id || '') || '').trim();
+            if (!u) return '';
+            var n = (t.name || t.teacher_name || u || '').toString();
+            var label = n && n !== u ? n + ' (' + u + ')' : (n || u);
+            return '<option value="' + esc(u) + '">' + esc(label) + '</option>';
+          }).join('');
+        if (keep && teachers.some(function(t) { return String(t.username || t.teacher_id || '').trim() === keep; })) {
+          sel.value = keep;
+        }
+      }
+
+      function applyBatchTeacherFieldsFromBatch(batch) {
+        var orphanEl = document.getElementById('batchTeacherOrphanHint');
+        if (orphanEl) {
+          orphanEl.style.display = 'none';
+          orphanEl.textContent = '';
+        }
+        fillBatchTeacherPickSelect();
+        var pick = document.getElementById('batchTeacherPick');
+        if (!pick || !batch) return;
+        var u = ((batch.teacher_username || '') + '').trim();
+        var matched = u && teachers.some(function(t) { return String(t.username || t.teacher_id || '').trim() === u; });
+        if (matched) {
+          pick.value = u;
+        } else {
+          pick.value = '';
+          if (orphanEl) {
+            var tn = ((batch.teacher_name || '') + '').trim();
+            var msg = 'This batch is linked to a teacher that is not in Teacher Management';
+            if (tn || u) msg += ' (' + [tn, u].filter(Boolean).join(' · ') + ')';
+            msg += '. Register them (same login username) in Teacher Management, then select them here.';
+            orphanEl.textContent = msg;
+            orphanEl.style.display = 'block';
+          }
+        }
+      }
+
+      function resetCourseForm() {
+        document.getElementById('courseId').value = '';
+        fillCourseNameSelect('');
+        document.getElementById('courseDuration').value = '';
+        document.getElementById('courseFee').value = '';
+        document.getElementById('courseDescription').value = '';
+        document.getElementById('courseStartDate').value = '';
+        document.getElementById('courseEndDate').value = '';
+        document.getElementById('courseCapacity').value = '';
+        document.getElementById('courseCurrentEnrollment').value = '0';
+        document.getElementById('courseLocations').value = '';
+        document.getElementById('courseAgeGroup').value = '';
+        document.getElementById('courseSchedule').value = '';
+        document.getElementById('courseInstructor').value = '';
+        document.getElementById('courseStatus').value = 'active';
+        document.getElementById('courseFormTitle').textContent = 'Add New Program';
+        var submitBtn = document.getElementById('courseSubmitBtn');
+        if (submitBtn) submitBtn.textContent = 'Add Program';
+      }
+
+      function resetLevelForm() {
+        document.getElementById('levelId').value = '';
+        document.getElementById('levelCourse').value = '';
+        document.getElementById('levelName').value = '';
+        var cefrSel = document.getElementById('levelCefr');
+        if (cefrSel) cefrSel.value = '';
+        document.getElementById('levelLocations').value = '';
+        document.getElementById('levelDescription').value = '';
+        document.getElementById('levelDuration').value = '';
+        document.getElementById('levelFormTitle').textContent = 'Add New Level';
+        var sub = document.getElementById('levelSubmitBtn');
+        if (sub) sub.textContent = 'Add Level';
+      }
+
+      function resetBatchForm() {
+        document.getElementById('batchId').value = '';
+        document.getElementById('batchName').value = '';
+        document.getElementById('batchCourse').value = '';
+        var blid = document.getElementById('batchLevelId');
+        if (blid) blid.value = '';
+        var bln = document.getElementById('batchLevelName');
+        if (bln) bln.value = '';
+        var btp = document.getElementById('batchTeacherPick');
+        if (btp) btp.value = '';
+        var oHint = document.getElementById('batchTeacherOrphanHint');
+        if (oHint) { oHint.style.display = 'none'; oHint.textContent = ''; }
+        document.getElementById('batchSchedule').value = '';
+        var locEl = document.getElementById('batchLocation');
+        if (locEl) locEl.value = '';
+        var curEnr = document.getElementById('batchCurrentEnrollment');
+        if (curEnr) curEnr.value = '0';
+        var t = new Date();
+        document.getElementById('batchStartDate').value = t.toISOString().slice(0, 10);
+        document.getElementById('batchEndDate').value = '';
+        document.getElementById('batchMaxStudents').value = '20';
+        document.getElementById('batchFormTitle').textContent = 'Add New Batch';
+        var bsub = document.getElementById('batchSubmitBtn');
+        if (bsub) bsub.textContent = 'Add Batch';
+      }
+
+      function resetTimetableForm() {
+        document.getElementById('timetableId').value = '';
+        document.getElementById('timetableBatch').value = '';
+        document.getElementById('timetableDay').value = '';
+        document.getElementById('timetableStartTime').value = '';
+        document.getElementById('timetableEndTime').value = '';
+        document.getElementById('timetableSubject').value = '';
+        document.getElementById('timetableTeacher').value = '';
+        document.getElementById('timetableLocation').value = '';
+        document.getElementById('timetableFormTitle').textContent = 'Add New Session';
+        var sub = document.getElementById('timetableSubmitBtn');
+        if (sub) sub.textContent = 'Add Session';
+      }
+
+      function renderCourses() {
+        var body = document.getElementById('coursesBody');
+        var hint = document.getElementById('coursesHint');
+        var totalEl = document.getElementById('programsTotal');
+        if (totalEl) totalEl.textContent = PROGRAM_ORDER.length;
+        var searchEl = document.getElementById('programSearch');
+        var filterEl = document.getElementById('programStatusFilter');
+        var query = searchEl ? (searchEl.value || '').toString().trim().toLowerCase() : '';
+        var statusFilter = filterEl ? (filterEl.value || 'all') : 'all';
+        var rows = orderedCourses(courses).filter(function(course) {
+          var status = courseStatus(course);
+          if (statusFilter !== 'all' && status !== statusFilter) return false;
+          if (!query) return true;
+          var hay = [
+            course.name,
+            course.duration,
+            course.description,
+            joinNames(getCourseLevels(course.id), 'name', ''),
+            joinNames(getCourseBatches(course.id), 'name', '')
+          ].join(' ').toLowerCase();
+          return hay.indexOf(query) >= 0;
+        });
+        if (!rows.length) {
+          body.innerHTML = '';
+          hint.style.display = 'block';
+          hint.textContent = courses.length ? 'No programs matched your search.' : 'No programs yet.';
+          return;
+        }
+        hint.style.display = 'none';
+        body.innerHTML = rows.map(function(course, index) {
+          var feeNum = Number(course.fee);
+          var feeText = (!course.fee && course.fee !== 0) || !isFinite(feeNum) || feeNum <= 0
+            ? 'Pending'
+            : formatFee(course.fee);
+          var status = courseStatus(course);
+          var editAttr = course.id ? ' data-id="' + esc(course.id) + '"' : ' data-name="' + esc(course.name) + '"';
+          var deleteDisabled = course.id ? '' : ' disabled title="Save this program before deleting"';
+          return '<tr class="program-table-row" tabindex="0" title="Double-click for program details" data-program-id="' + esc(course.id || '') + '" data-program-name="' + esc(course.name) + '">' +
+            '<td class="program-index">' + esc(index + 1) + '</td>' +
+            '<td class="program-name-cell"><strong>' + esc(course.name) + '</strong></td>' +
+            '<td>' + esc(course.duration || defaultProgramMeta(course.name).duration || '—') + '</td>' +
+            '<td>' + esc(feeText) + '</td>' +
+            '<td>' + esc(courseLocations(course)) + '</td>' +
+            '<td>' + renderEnrollment(course) + '</td>' +
+            '<td><span class="program-status is-' + esc(status) + '"><span class="program-status-dot"></span>' + esc(courseStatusLabel(status)) + '</span></td>' +
+            '<td><div class="program-actions">' +
+            '<button type="button" class="btn btn-sm btn-secondary btn-edit-course"' + editAttr + ' aria-label="Edit program">Edit</button>' +
+            '<button type="button" class="btn btn-sm btn-danger btn-delete-course" data-id="' + esc(course.id) + '" aria-label="Delete program"' + deleteDisabled + '>Delete</button>' +
+            '</div></td>' +
+          '</tr>';
+        }).join('');
+      }
+
+      function openCourseDetailsModel(course) {
+        var body = document.getElementById('courseDetailBody');
+        var title = document.getElementById('courseDetailTitle');
+        var courseBatches = course.id ? getCourseBatches(course.id) : [];
+        var enrollment = courseEnrollment(course);
+        var status = courseStatus(course);
+        var scheduleText = joinNames(courseBatches, 'schedule', '—');
+        var teacherText = joinNames(courseBatches, 'teacher_name', '—');
+        var startD = course.start_date || '—';
+        var endD = course.end_date || '—';
+        title.textContent = course.name || 'Program Details';
+        var displaySchedule = course.schedule || scheduleText;
+        var displayInstructor = course.instructor || teacherText;
+        var ageGroup = course.age_group || defaultProgramMeta(course.name).age_group || '—';
+        var feeNum = Number(course.fee);
+        var feeDisplay = (!course.fee && course.fee !== 0) || !isFinite(feeNum) || feeNum <= 0
+          ? 'Pending'
+          : formatFee(course.fee) + ' MMK';
+        var editIdAttr = course.id ? esc(course.id) : '';
+        var editNameAttr = course.id ? '' : esc(course.name);
+        body.innerHTML =
+          '<div class="program-detail-item program-detail-wide"><span>Description</span><p>' + esc(course.description || '—') + '</p></div>' +
+          '<div class="program-detail-grid">' +
+            '<div class="program-detail-item"><span>Duration</span><strong>' + esc(course.duration || '—') + '</strong></div>' +
+            '<div class="program-detail-item"><span>Fee</span><strong>' + esc(feeDisplay) + '</strong></div>' +
+            '<div class="program-detail-item"><span>Start Date</span><strong>' + esc(startD) + '</strong></div>' +
+            '<div class="program-detail-item"><span>End Date</span><strong>' + esc(endD) + '</strong></div>' +
+            '<div class="program-detail-item"><span>Enrollment</span>' + renderEnrollmentDetail(course) + '</div>' +
+            '<div class="program-detail-item"><span>Age Group</span><strong>' + esc(ageGroup) + '</strong></div>' +
+          '</div>' +
+          '<div class="program-detail-stack">' +
+            '<div class="program-detail-item program-detail-wide"><span>Locations</span><strong>' + esc(courseLocations(course)) + '</strong></div>' +
+            '<div class="program-detail-item program-detail-wide"><span>Schedule</span><strong>' + esc(displaySchedule) + '</strong></div>' +
+            '<div class="program-detail-item program-detail-wide"><span>Instructor</span><strong>' + esc(displayInstructor) + '</strong></div>' +
+            '<div class="program-detail-item program-detail-wide"><span>Status</span><strong><span class="program-status is-' + esc(status) + '"><span class="program-status-dot"></span>' + esc(courseStatusLabel(status)) + '</span></strong></div>' +
+          '</div>' +
+          '<div class="program-modal-actions">' +
+            '<button type="button" class="btn program-detail-close" data-close-modal="courseDetailModal">Close</button>' +
+            '<button type="button" class="btn programs-add-btn btn-edit-course-from-detail" data-id="' + editIdAttr + '" data-name="' + editNameAttr + '">Edit Program</button>' +
+          '</div>';
+        body.querySelectorAll('[data-close-modal]').forEach(function(btn) {
+          btn.addEventListener('click', function() { closeModal(btn.getAttribute('data-close-modal')); });
+        });
+        var editBtn = body.querySelector('.btn-edit-course-from-detail');
+        if (editBtn) editBtn.addEventListener('click', function() {
+          closeModal('courseDetailModal');
+          var eid = editBtn.getAttribute('data-id');
+          if (eid) editCourseById(eid);
+          else editCourseByName(editBtn.getAttribute('data-name') || '');
+        });
+        openModal('courseDetailModal');
+      }
+
+      function editCourseById(courseId) {
+        var course = courses.find(function(item) { return String(item.id) === String(courseId); });
+        if (!course) return;
+        editCourseRecord(course);
+      }
+
+      function editCourseByName(courseName) {
+        var meta = defaultProgramMeta(courseName);
+        editCourseRecord({
+          id: '',
+          name: canonicalProgramName(courseName),
+          duration: meta.duration || '',
+          fee: meta.fee != null ? meta.fee : '',
+          description: meta.description || '',
+          start_date: meta.start_date || '',
+          end_date: meta.end_date || '',
+          capacity: meta.capacity != null ? meta.capacity : '',
+          current_enrollment: meta.current_enrollment != null ? meta.current_enrollment : 0,
+          locations: meta.locations || '',
+          age_group: meta.age_group || '',
+          schedule: meta.schedule || '',
+          instructor: meta.instructor || '',
+          status: meta.status || 'active'
+        });
+      }
+
+      function editCourseRecord(course) {
+        document.getElementById('courseId').value = course.id;
+        fillCourseNameSelect(course.name || '');
+        document.getElementById('courseDuration').value = course.duration || '';
+        document.getElementById('courseFee').value = course.fee != null ? course.fee : '';
+        document.getElementById('courseDescription').value = course.description || '';
+        document.getElementById('courseStartDate').value = course.start_date || '';
+        document.getElementById('courseEndDate').value = course.end_date || '';
+        document.getElementById('courseCapacity').value = course.capacity != null ? course.capacity : '';
+        document.getElementById('courseCurrentEnrollment').value = course.current_enrollment != null ? course.current_enrollment : 0;
+        document.getElementById('courseLocations').value = course.locations || courseLocations(course) || '';
+        document.getElementById('courseAgeGroup').value = course.age_group || defaultProgramMeta(course.name).age_group || '';
+        document.getElementById('courseSchedule').value = course.schedule || defaultProgramMeta(course.name).schedule || '';
+        document.getElementById('courseInstructor').value = course.instructor || defaultProgramMeta(course.name).instructor || '';
+        document.getElementById('courseStatus').value = courseStatus(course);
+        document.getElementById('courseFormTitle').textContent = 'Edit Program';
+        var submitBtn = document.getElementById('courseSubmitBtn');
+        if (submitBtn) submitBtn.textContent = 'Save Program';
+        switchView('courses');
+        openModal('courseModal');
+      }
+
+      function getSelectedLevelIdsFromTable() {
+        var ids = [];
+        document.querySelectorAll('#levelsBody .level-row-check:checked').forEach(function(cb) {
+          var id = cb.getAttribute('data-id');
+          if (id) ids.push(id);
+        });
+        return ids;
+      }
+
+      function updateLevelBulkDeleteButtonState() {
+        var btn = document.getElementById('levelBulkDeleteBtn');
+        if (!btn) return;
+        var n = getSelectedLevelIdsFromTable().length;
+        btn.disabled = n === 0;
+        btn.setAttribute('aria-disabled', n === 0 ? 'true' : 'false');
+      }
+
+      function renderLevels() {
+        var body = document.getElementById('levelsBody');
+        var hint = document.getElementById('levelsHint');
+        var totalCountEl = document.getElementById('levelsTotalCount');
+        var footer = document.getElementById('levelsFooter');
+        var showingEl = document.getElementById('levelsShowingText');
+        var pagEl = document.getElementById('levelsPagination');
+        var pageCurEl = document.getElementById('levelPageCurrent');
+        var prevBtn = document.getElementById('levelPagePrev');
+        var nextBtn = document.getElementById('levelPageNext');
+
+        populateLevelProgramFilter();
+        if (totalCountEl) totalCountEl.textContent = levels.length;
+
+        if (!levels.length) {
+          body.innerHTML = '';
+          if (hint) {
+            hint.style.display = 'block';
+            hint.textContent = 'No levels yet.';
+          }
+          if (footer) footer.style.display = 'none';
+          updateLevelBulkDeleteButtonState();
+          return;
+        }
+
+        var filterSel = document.getElementById('levelProgramFilter');
+        var filterVal = filterSel ? filterSel.value : 'all';
+        var rows = levels.slice().sort(function(a, b) {
+          var ai = programOrderIndex(a && a.course_name);
+          var bi = programOrderIndex(b && b.course_name);
+          if (ai !== bi) return ai - bi;
+          return String((a && a.name) || '').toLowerCase().localeCompare(String((b && b.name) || '').toLowerCase());
+        });
+        if (filterVal !== 'all') {
+          rows = rows.filter(function(l) { return (l.course_name || '') === filterVal; });
+        }
+
+        var total = rows.length;
+        var pageSize = levelListState.pageSize;
+        var page = levelListState.page;
+        var pageCount = Math.max(1, Math.ceil(total / pageSize) || 1);
+        levelListState.pageCount = pageCount;
+        if (page < 1) page = 1;
+        if (page > pageCount) page = pageCount;
+        levelListState.page = page;
+        var start = (page - 1) * pageSize;
+        var pageRows = rows.slice(start, start + pageSize);
+
+        if (!total) {
+          body.innerHTML = '<tr><td colspan="6" style="padding:1rem;color:var(--text-muted);">No levels match this filter.</td></tr>';
+          if (hint) hint.style.display = 'none';
+          if (footer) footer.style.display = 'flex';
+          if (showingEl) showingEl.textContent = 'Showing 0 to 0 of 0 levels';
+          if (pagEl) pagEl.style.display = 'none';
+          if (pageCurEl) pageCurEl.textContent = '1';
+          if (prevBtn) prevBtn.disabled = true;
+          if (nextBtn) nextBtn.disabled = true;
+          var selAll0 = document.getElementById('levelSelectAll');
+          if (selAll0) selAll0.checked = false;
+          updateLevelBulkDeleteButtonState();
+          return;
+        }
+
+        if (hint) hint.style.display = 'none';
+        if (footer) footer.style.display = 'flex';
+
+        var fromN = start + 1;
+        var toN = start + pageRows.length;
+        if (showingEl) showingEl.textContent = 'Showing ' + fromN + ' to ' + toN + ' of ' + total + ' levels';
+        if (pageCurEl) pageCurEl.textContent = String(page);
+        if (prevBtn) prevBtn.disabled = page <= 1;
+        if (nextBtn) nextBtn.disabled = page >= pageCount;
+        if (pagEl) pagEl.style.display = total > pageSize ? 'flex' : 'none';
+
+        body.innerHTML = pageRows.map(function(level) {
+          var loc = levelLocationsCell(level);
+          return '<tr class="level-table-row" data-level-id="' + esc(level.id) + '">' +
+            '<td class="levels-col-check"><input type="checkbox" class="level-row-check" data-id="' + esc(level.id) + '" aria-label="Select level"></td>' +
+            '<td>' + esc(level.course_name || '—') + '</td>' +
+            '<td><strong>' + esc(level.name) + '</strong></td>' +
+            '<td><span class="level-cefr-tag">' + esc(displayCefrForLevel(level)) + '</span></td>' +
+            '<td>' + esc(loc) + '</td>' +
+            '<td class="levels-col-actions"><button type="button" class="btn level-btn-edit btn-edit-level" data-id="' + esc(level.id) + '" aria-label="Edit level">Edit</button></td>' +
+          '</tr>';
+        }).join('');
+
+        var selAll = document.getElementById('levelSelectAll');
+        if (selAll) selAll.checked = false;
+        updateLevelBulkDeleteButtonState();
+      }
+
+      function batchIsOpen(batch) {
+        var end = (batch && batch.end_date || '').toString().trim();
+        if (!end) return true;
+        var parts = end.split('-');
+        if (parts.length === 3) {
+          var d = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+          if (!isNaN(d.getTime())) {
+            var today = new Date();
+            today.setHours(0, 0, 0, 0);
+            d.setHours(0, 0, 0, 0);
+            return d >= today;
+          }
+        }
+        return true;
+      }
+
+      function batchIsFull(batch) {
+        var cap = Number(batch && batch.max_students || 0);
+        if (cap <= 0) return false;
+        var enr = Number(batch && batch.students_count != null ? batch.students_count : 0);
+        return enr >= cap;
+      }
+
+      function batchLocation(batch) {
+        if (!batch) return '—';
+        var bl = (batch.location || '').toString().trim();
+        if (bl) return bl;
+        if (batch.course_id == null) return '—';
+        var c = courses.find(function(x) { return String(x.id || '') === String(batch.course_id); });
+        if (!c) return '—';
+        var loc = (c.locations || '').toString().trim();
+        if (loc) return loc;
+        return (defaultProgramMeta(c.name).locations || '').toString().trim() || '—';
+      }
+
+      function batchDisplayCode(batch) {
+        var n = (batch && batch.name || '').toString().trim();
+        if (/^b\d+/i.test(n)) return n.toUpperCase();
+        var id = batch && batch.id != null ? Number(batch.id) : 0;
+        return 'B' + String(id).padStart(2, '0');
+      }
+
+      function filteredBatchesList() {
+        var progEl = document.getElementById('batchProgramFilter');
+        var statEl = document.getElementById('batchStatusFilter');
+        var teachEl = document.getElementById('batchTeacherFilter');
+        var searchEl = document.getElementById('batchSearchInput');
+        var prog = progEl ? progEl.value : 'all';
+        var stat = statEl ? statEl.value : 'all';
+        var teach = teachEl ? teachEl.value : 'all';
+        var q = searchEl ? (searchEl.value || '').toLowerCase().trim() : '';
+        var rows = batches.slice().sort(function(a, b) {
+          var ai = programOrderIndex(a && a.course_name);
+          var bi = programOrderIndex(b && b.course_name);
+          if (ai !== bi) return ai - bi;
+          return String((a && a.name) || '').toLowerCase().localeCompare(String((b && b.name) || '').toLowerCase());
+        });
+        return rows.filter(function(batch) {
+          if (prog !== 'all' && (batch.course_name || '') !== prog) return false;
+          if (teach !== 'all') {
+          var tu = teach;
+          var tch = teachers.find(function(t) { return String(t.username || t.teacher_id || '').trim() === tu; });
+          if (!tch) return false;
+          var bU = (batch.teacher_username || '').trim();
+          var bN = (batch.teacher_name || '').trim();
+          var tName = (tch.name || tch.teacher_name || '').trim();
+          if (bU && bU === tu) return true;
+          if (!bU && bN && tName && bN === tName) return true;
+          return false;
+        }
+          var open = batchIsOpen(batch);
+          var full = batchIsFull(batch);
+          if (stat === 'open' && !open) return false;
+          if (stat === 'closed' && open) return false;
+          if (stat === 'full' && !full) return false;
+          if (!q) return true;
+          var hay = [
+            batch.name, batch.course_name, batch.level_name, batch.teacher_name, batch.schedule,
+            batchLocation(batch), batchDisplayCode(batch)
+          ].join(' ').toLowerCase();
+          return hay.indexOf(q) >= 0;
+        });
+      }
+
+      function populateBatchFilterDropdowns() {
+        var prog = document.getElementById('batchProgramFilter');
+        var teach = document.getElementById('batchTeacherFilter');
+        if (prog) {
+          var keepP = prog.value || 'all';
+          var names = uniqueOptions(batches.map(function(b) { return b.course_name; }));
+          names.sort(function(a, b) {
+            var ai = programOrderIndex(a);
+            var bi = programOrderIndex(b);
+            if (ai !== bi) return ai - bi;
+            return String(a).toLowerCase().localeCompare(String(b).toLowerCase());
+          });
+          prog.innerHTML = '<option value="all">All Programs</option>' + names.map(function(n) {
+            return '<option value="' + esc(n) + '">' + esc(n) + '</option>';
+          }).join('');
+          if (keepP === 'all' || names.indexOf(keepP) >= 0) prog.value = keepP;
+          else prog.value = 'all';
+        }
+        if (teach) {
+          var keepT = teach.value || 'all';
+          var trows = teachers.slice().filter(function(t) {
+            return String((t.username || t.teacher_id || '') || '').trim() !== '';
+          });
+          trows.sort(function(a, b) {
+            var an = (a.name || a.teacher_name || a.username || '').toString().toLowerCase();
+            var bn = (b.name || b.teacher_name || b.username || '').toString().toLowerCase();
+            return an.localeCompare(bn);
+          });
+          teach.innerHTML =
+            '<option value="all">All Teachers</option>' +
+            trows.map(function(t) {
+              var u = String((t.username || t.teacher_id || '') || '').trim();
+              var n = (t.name || t.teacher_name || u).toString();
+              var label = n && n !== u ? n + ' (' + u + ')' : (n || u);
+              return '<option value="' + esc(u) + '">' + esc(label) + '</option>';
+            }).join('');
+          if (keepT === 'all' || trows.some(function(t) { return String((t.username || t.teacher_id || '') || '').trim() === keepT; })) {
+            teach.value = keepT;
+          } else {
+            teach.value = 'all';
+          }
+        }
+      }
+
+      function renderBatchPageNums() {
+        var el = document.getElementById('batchPageNums');
+        if (!el) return;
+        var pc = batchListState.pageCount;
+        var p = batchListState.page;
+        if (pc <= 1) {
+          el.innerHTML = '';
+          return;
+        }
+        var html = '';
+        for (var i = 1; i <= pc; i++) {
+          html += '<button type="button" class="batches-page-num' + (i === p ? '' : ' is-muted') + '" data-batch-page="' + i + '">' + i + '</button>';
+        }
+        el.innerHTML = html;
+      }
+
+      function formatMmKInt(n) {
+        if (n == null || !isFinite(Number(n))) return '—';
+        return Math.round(Number(n)).toLocaleString('en-US');
+      }
+
+      function formatStudentEnrollmentDisplay(d) {
+        if (!d) return '—';
+        var s = String(d).slice(0, 10);
+        var parts = s.split('-');
+        if (parts.length === 3) {
+          var dt = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+          if (!isNaN(dt.getTime())) {
+            return dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+          }
+        }
+        return s;
+      }
+
+      function abbrevLevelName(name) {
+        var s = (name || '').toString().trim();
+        if (!s) return '—';
+        s = s.replace(/Foundation\s+/gi, 'Found ').replace(/^Intermediate\s+/i, 'Inter ').replace(/^Pre-Intermediate/i, 'Pre-Intermed').replace(/^Elementary/i, 'Elem');
+        if (s.length > 16) return s.slice(0, 14) + '…';
+        return s;
+      }
+
+      function studentBalanceNumber(s) {
+        var raw = s.balance != null ? s.balance : s.fee_balance != null ? s.fee_balance : s.outstanding;
+        if (raw === '' || raw == null) return null;
+        var n = Number(raw);
+        return isFinite(n) ? n : null;
+      }
+
+      function studentFeePaidDisplay(s) {
+        var raw = s.fee_paid != null ? s.fee_paid : s.amount_paid != null ? s.amount_paid : s.paid_amount != null ? s.paid_amount : s.total_paid;
+        if (raw === '' || raw == null) return '—';
+        var n = Number(raw);
+        return isFinite(n) ? formatMmKInt(n) : '—';
+      }
+
+      function studentBalanceDisplay(s) {
+        var n = studentBalanceNumber(s);
+        if (n === null) return '—';
+        return formatMmKInt(n);
+      }
+
+      function csvEscapeCell(v) {
+        var s = (v == null ? '' : String(v)).replace(/"/g, '""');
+        if (/[",\n\r]/.test(s)) return '"' + s + '"';
+        return s;
+      }
+
+      function exportFilteredBatchesCsv() {
+        var rows = filteredBatchesList();
+        var headers = ['Batch', 'Program', 'Level', 'Teacher', 'Schedule', 'Location', 'Cap', 'Enrl', 'Status'];
+        var lines = [headers.map(csvEscapeCell).join(',')];
+        rows.forEach(function(batch) {
+          var max = Number(batch.max_students || 0);
+          var enr = batch.students_count != null ? Number(batch.students_count) : '';
+          var st = batchIsFull(batch) ? 'Full' : (batchIsOpen(batch) ? 'Open' : 'Closed');
+          lines.push([
+            batchDisplayCode(batch), batch.course_name || '', batch.level_name || '', batch.teacher_name || '',
+            batch.schedule || '', batchLocation(batch), max, enr, st
+          ].map(csvEscapeCell).join(','));
+        });
+        var blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
+        var a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'batches-export.csv';
+        a.click();
+        URL.revokeObjectURL(a.href);
+      }
+
+      function highlightSelectedBatchRow() {
+        document.querySelectorAll('#batchesBody tr.batch-table-row').forEach(function(tr) {
+          tr.classList.toggle('batch-row-selected', String(tr.getAttribute('data-batch-id')) === String(selectedBatchId));
+        });
+      }
+
+      function renderBatches() {
+        var body = document.getElementById('batchesBody');
+        var hint = document.getElementById('batchesHint');
+        var footer = document.getElementById('batchesFooter');
+        var showingEl = document.getElementById('batchesShowingText');
+        var pagWrap = document.getElementById('batchesPagination');
+        var prevBtn = document.getElementById('batchPagePrev');
+        var nextBtn = document.getElementById('batchPageNext');
+        var countF = document.getElementById('batchesCountFiltered');
+        var countT = document.getElementById('batchesCountTotal');
+
+        populateBatchFilterDropdowns();
+        if (countT) countT.textContent = batches.length;
+
+        if (!batches.length) {
+          body.innerHTML = '';
+          if (hint) {
+            hint.style.display = 'block';
+            hint.textContent = 'No batches yet.';
+          }
+          if (footer) footer.style.display = 'none';
+          if (countF) countF.textContent = '0';
+          return;
+        }
+        if (hint) hint.style.display = 'none';
+        if (footer) footer.style.display = 'flex';
+
+        var filtered = filteredBatchesList();
+        if (countF) countF.textContent = filtered.length;
+
+        var total = filtered.length;
+        var pageSize = batchListState.pageSize;
+        var page = batchListState.page;
+        var pageCount = Math.max(1, Math.ceil(total / pageSize) || 1);
+        batchListState.pageCount = pageCount;
+        if (page < 1) page = 1;
+        if (page > pageCount) page = pageCount;
+        batchListState.page = page;
+        var start = (page - 1) * pageSize;
+        var pageRows = filtered.slice(start, start + pageSize);
+
+        var statEl = document.getElementById('batchStatusFilter');
+        var stat = statEl ? statEl.value : 'all';
+        var suffixByStat = { all: 'batches', open: 'open batches', closed: 'closed batches', full: 'full batches' };
+        var suffix = suffixByStat[stat] || 'batches';
+
+        if (!total) {
+          body.innerHTML = '<tr><td colspan="10" style="padding:1rem;color:var(--text-muted);">No batches match the current filters.</td></tr>';
+          if (showingEl) showingEl.textContent = 'Showing 0 to 0 of 0 ' + suffix;
+          if (pagWrap) pagWrap.style.display = 'none';
+          if (prevBtn) prevBtn.disabled = true;
+          if (nextBtn) nextBtn.disabled = true;
+          highlightSelectedBatchRow();
+          return;
+        }
+
+        var fromN = start + 1;
+        var toN = start + pageRows.length;
+        if (showingEl) showingEl.textContent = 'Showing ' + fromN + ' to ' + toN + ' of ' + total + ' ' + suffix;
+        if (pagWrap) pagWrap.style.display = pageCount > 1 ? 'flex' : 'none';
+        if (prevBtn) prevBtn.disabled = page <= 1;
+        if (nextBtn) nextBtn.disabled = page >= pageCount;
+        renderBatchPageNums();
+
+        body.innerHTML = pageRows.map(function(batch) {
+          var max = Number(batch.max_students || 0);
+          var initialCount = batch.students_count != null ? Number(batch.students_count) : 0;
+          var open = batchIsOpen(batch);
+          var full = batchIsFull(batch);
+          var statusHtml = full
+            ? '<span class="batch-status is-full"><span class="batch-status-dot" aria-hidden="true"></span>Full</span>'
+            : (open
+              ? '<span class="batch-status is-open"><span class="batch-status-dot" aria-hidden="true"></span>Open</span>'
+              : '<span class="batch-status is-closed"><span class="batch-status-dot" aria-hidden="true"></span>Closed</span>');
+          var lvl = (batch.level_name || '').toString();
+          var lvlShow = lvl.toLowerCase().indexOf('all level') >= 0 ? '(all levels)' : lvl;
+          return '<tr class="batch-table-row" data-batch-id="' + esc(batch.id) + '" tabindex="0" title="Click row to view students">' +
+            '<td><strong>' + esc(batchDisplayCode(batch)) + '</strong></td>' +
+            '<td>' + esc(batch.course_name || '—') + '</td>' +
+            '<td>' + esc(lvlShow || '—') + '</td>' +
+            '<td>' + esc(batch.teacher_name || '—') + '</td>' +
+            '<td>' + esc(batch.schedule || '—') + '</td>' +
+            '<td>' + esc(batchLocation(batch)) + '</td>' +
+            '<td class="batch-col-cap">' + esc(max) + '</td>' +
+            '<td class="batch-enrl-count" data-batch-id="' + esc(batch.id) + '">' + esc(initialCount) + '</td>' +
+            '<td>' + statusHtml + '</td>' +
+            '<td class="batch-col-actions"><span class="batch-actions-inner">' +
+            '<a class="btn-batch-icon btn-batch-view" href="students.html?batch=' + esc(batch.id) + '" title="View students (Student Management)" aria-label="View">' + BATCH_ICO_VIEW + '</a>' +
+            '<button type="button" class="btn-batch-icon btn-batch-edit btn-edit-batch" data-id="' + esc(batch.id) + '" title="Edit batch" aria-label="Edit batch">' + BATCH_ICO_EDIT + '</button>' +
+            '<button type="button" class="btn-batch-icon btn-batch-delete btn-delete-batch" data-id="' + esc(batch.id) + '" title="Delete batch" aria-label="Delete batch">' + BATCH_ICO_DEL + '</button>' +
+            '</span></td>' +
+          '</tr>';
+        }).join('');
+
+        highlightSelectedBatchRow();
+      }
+
+      // Refresh enrollment counts in the batches table (Enrl. column)
+      function updateBatchesStudentsCounts() {
+        if (!batches || !batches.length) return;
+        batches.forEach(function(batch) {
+          var batchId = batch && batch.id != null ? String(batch.id) : '';
+          if (!batchId) return;
+          var td = document.querySelector('.batch-enrl-count[data-batch-id="' + batchId + '"]');
+          if (!td) return;
+          var prev = td.textContent;
+          td.textContent = '…';
+          SchoolAPI.getBatchStudents(batchId).then(function(res) {
+            var students = res && res.ok && Array.isArray(res.students) ? res.students : [];
+            var count = students.length;
+            batch.students_count = count;
+            td.textContent = String(count);
+            setSummary();
+            renderCourses();
+          }).catch(function() {
+            td.textContent = prev || String(batch.students_count != null ? batch.students_count : '0');
+          });
+        });
+      }
+
+      function renderTimetables() {
+        bindTimetablesFooterPagination();
+        var body = document.getElementById('timetablesBody');
+        var hint = document.getElementById('timetablesHint');
+        var countEl = document.getElementById('timetableSessionCount');
+        var listWrap = document.getElementById('timetableListWrap');
+        var weekWrap = document.getElementById('timetableWeeklyWrap');
+        var showingEl = document.getElementById('timetablesShowingText');
+        var pageNums = document.getElementById('timetableProgramPageNums');
+        var foot = document.getElementById('timetablesFooter');
+        var bannerTitle = document.getElementById('timetableWeeklyProgramTitle');
+        var bannerSub = document.getElementById('timetableWeeklySubtitle');
+        var pageBadge = document.getElementById('timetableWeeklyPageBadge');
+        var listBtn = document.getElementById('timetableViewListBtn');
+        var weekBtn = document.getElementById('timetableViewWeeklyBtn');
+
+        if (listBtn && weekBtn) {
+          listBtn.classList.toggle('is-active', timetableUiState.view === 'list');
+          weekBtn.classList.toggle('is-active', timetableUiState.view === 'weekly');
+        }
+        if (listWrap && weekWrap) {
+          if (timetableUiState.view === 'weekly') {
+            listWrap.style.display = 'none';
+            weekWrap.style.display = 'block';
+          } else {
+            listWrap.style.display = 'block';
+            weekWrap.style.display = 'none';
+          }
+        }
+
+        var rows = timetableFilteredRows();
+        if (countEl) countEl.textContent = String(rows.length);
+
+        if (!rows.length) {
+          if (body) body.innerHTML = '';
+          if (hint) {
+            hint.style.display = 'block';
+            hint.textContent = timetables.length ? 'No sessions match this batch filter.' : 'No timetable rows yet.';
+          }
+          if (showingEl) showingEl.textContent = 'Program: —';
+          if (pageNums) {
+            pageNums.innerHTML = '';
+            pageNums.className = 'timetables-page-nums';
+          }
+          if (bannerTitle) bannerTitle.textContent = '—';
+          if (bannerSub) bannerSub.textContent = 'Weekly Schedule Overview';
+          if (pageBadge) pageBadge.textContent = 'Page 1/1';
+          if (foot) foot.style.display = 'none';
+          return;
+        }
+        if (hint) hint.style.display = 'none';
+        if (foot) foot.style.display = 'flex';
+
+        clampTimetableProgramPage();
+        var progs = timetableProgramsFromRows(rows);
+        var pageCount = Math.max(1, progs.length);
+        var curProg = progs[timetableUiState.programPage - 1] || progs[0];
+        var programRows = rows.filter(function(r) { return timetableCourseKey(r) === curProg; });
+
+        if (bannerTitle) bannerTitle.textContent = curProg;
+        if (bannerSub) bannerSub.textContent = 'Weekly Schedule Overview - ' + programRows.length + ' session' + (programRows.length === 1 ? '' : 's');
+        if (pageBadge) pageBadge.textContent = 'Page ' + timetableUiState.programPage + '/' + pageCount;
+
+        if (timetableUiState.view === 'weekly') {
+          renderTimetableWeekly(programRows);
+          if (showingEl) showingEl.textContent = 'Weekly View - Program: ' + curProg + ' (' + programRows.length + ' session' + (programRows.length === 1 ? '' : 's') + ')';
+        } else if (body) {
+          body.innerHTML = programRows.map(function(item) {
+            var tr = parseTimeRange(item && item.time ? item.time : '');
+            return '<tr>' +
+              '<td><strong>' + esc(timetableBatchCellLabel(item)) + '</strong></td>' +
+              '<td>' + esc(timetableDayLabel(item.day)) + '</td>' +
+              '<td>' + esc(tr.start || '—') + '</td>' +
+              '<td>' + esc(tr.end || '—') + '</td>' +
+              '<td>' + esc(item.subject || '—') + '</td>' +
+              '<td>' + esc(timetableTeacherCell(item)) + '</td>' +
+              '<td>' + esc(timetableLocationCell(item)) + '</td>' +
+              '<td><button type="button" class="btn btn-sm btn-secondary btn-edit-timetable" data-id="' + esc(item.id) + '" aria-label="Edit session">Edit</button> ' +
+              '<button type="button" class="btn btn-sm btn-danger btn-delete-timetable" data-id="' + esc(item.id) + '" aria-label="Delete session">Delete</button></td>' +
+            '</tr>';
+          }).join('');
+          if (showingEl) showingEl.textContent = 'Program: ' + curProg + ' - Showing ' + programRows.length + ' session' + (programRows.length === 1 ? '' : 's');
+        }
+
+        if (pageNums) {
+          if (timetableUiState.view === 'weekly') {
+            pageNums.className = 'timetables-page-nums tt-weekly-nav';
+            pageNums.innerHTML =
+              '<button type="button" id="timetableProgPrev">&lt; Previous</button>' +
+              '<button type="button" class="tt-prog-current" disabled>' + esc(curProg) + ' (' + timetableUiState.programPage + '/' + pageCount + ')</button>' +
+              '<button type="button" id="timetableProgNext">Next &gt;</button>';
+          } else {
+            pageNums.className = 'timetables-page-nums';
+            pageNums.innerHTML = '';
+            for (var p = 1; p <= pageCount; p++) {
+              var active = p === timetableUiState.programPage;
+              pageNums.innerHTML += '<button type="button" class="timetables-page-num' + (active ? '' : ' is-muted') + '" data-timetable-program-page="' + p + '">' + p + '</button>';
+            }
+          }
+        }
+      }
+
+      function renderAll() {
+        setSummary();
+        fillBatchFormDropdowns();
+        renderCourses();
+        renderLevels();
+        renderBatches();
+        updateBatchesStudentsCounts();
+        renderTimetables();
+        switchView(currentView);
+      }
+
+      function loadBatchStudents(batchId) {
+        selectedBatchId = String(batchId || '');
+        var panel = document.getElementById('batchStudentsPanel');
+        var headerBar = document.getElementById('batchStudentsHeaderBar');
+        var tableShell = document.getElementById('batchStudentsTableShell');
+        var tbody = document.getElementById('batchStudentsTableBody');
+        var titleEl = document.getElementById('batchStudentsTitle');
+        var footEl = document.getElementById('batchStudentsFooter');
+
+        if (!selectedBatchId) {
+          if (headerBar) headerBar.style.display = 'none';
+          if (tableShell) tableShell.style.display = 'none';
+          if (footEl) footEl.style.display = 'none';
+          if (tbody) tbody.innerHTML = '';
+          if (panel) {
+            panel.style.display = 'block';
+            panel.className = 'muted-panel';
+            panel.style.margin = '0 1.1rem 1rem';
+            panel.textContent = 'Select a batch from the table to view assigned students.';
+          }
+          highlightSelectedBatchRow();
+          return;
+        }
+
+        var batch = batches.find(function(item) { return String(item.id) === selectedBatchId; });
+        var loc = batch ? batchLocation(batch) : '—';
+        var prog = batch ? (batch.course_name || '—') : '—';
+        var lvl = batch ? (batch.level_name || '—') : '—';
+        var code = batch ? batchDisplayCode(batch) : '';
+        if (titleEl) {
+          titleEl.textContent = '👨‍🎓 Students In Selected Batch: ' + code + ' – ' + prog + ' ' + lvl + ' (' + loc + ')';
+        }
+        if (headerBar) headerBar.style.display = 'block';
+        if (tableShell) tableShell.style.display = 'block';
+        if (footEl) footEl.style.display = 'none';
+        if (tbody) tbody.innerHTML = '';
+        if (panel) {
+          panel.style.display = 'block';
+          panel.className = 'muted-panel';
+          panel.style.margin = '0 1.1rem 1rem';
+          panel.textContent = 'Loading students...';
+        }
+        highlightSelectedBatchRow();
+
+        SchoolAPI.getBatchStudents(selectedBatchId).then(function(res) {
+          if (!res || !res.ok) throw new Error((res && res.error) || 'Failed to load students');
+          var students = Array.isArray(res.students) ? res.students : [];
+          if (panel) panel.style.display = 'none';
+          if (tbody) {
+            tbody.innerHTML = students.map(function(student) {
+              var name = student.name || student.student_name || 'Student';
+              var enr = formatStudentEnrollmentDisplay(student.enrollment_date || student.admission_date || '');
+              var lev = abbrevLevelName(student.level || (res.batch && res.batch.level_name) || '');
+              var paid = studentFeePaidDisplay(student);
+              var balStr = studentBalanceDisplay(student);
+              var balNum = studentBalanceNumber(student);
+              var balClass = balNum === null ? '' : (balNum <= 0 ? 'student-balance-zero' : 'student-balance-due');
+              return '<tr><td>' + esc(name) + '</td><td>' + esc(enr) + '</td><td>' + esc(lev) + '</td>' +
+                '<td class="col-fee">' + esc(paid) + '</td><td class="col-fee ' + balClass + '">' + esc(balStr) + '</td></tr>';
+            }).join('');
+          }
+          if (footEl) {
+            footEl.style.display = 'block';
+            footEl.textContent = '(' + students.length + ' student' + (students.length === 1 ? '' : 's') + ')';
+          }
+        }).catch(function(err) {
+          if (headerBar) headerBar.style.display = 'none';
+          if (tableShell) tableShell.style.display = 'none';
+          if (footEl) footEl.style.display = 'none';
+          if (tbody) tbody.innerHTML = '';
+          if (panel) {
+            panel.style.display = 'block';
+            panel.className = 'muted-panel';
+            panel.style.margin = '0 1.1rem 1rem';
+            panel.textContent = (err && err.message) ? err.message : 'Failed to load batch students.';
+          }
+        });
+      }
+
+      function loadAllData() {
+        return Promise.all([
+          SchoolAPI.getCourses(),
+          SchoolAPI.getLevels(),
+          SchoolAPI.getBatches(),
+          SchoolAPI.getBatchTimetables ? SchoolAPI.getBatchTimetables() : Promise.resolve({ ok: false }),
+          SchoolAPI.getTeachers ? SchoolAPI.getTeachers() : Promise.resolve({ ok: false })
+        ]).then(function(results) {
+          courses = results[0] && results[0].ok && Array.isArray(results[0].courses) ? results[0].courses : [];
+          levels = results[1] && results[1].ok && Array.isArray(results[1].levels) ? results[1].levels : [];
+          batches = results[2] && results[2].ok && Array.isArray(results[2].batches) ? results[2].batches : [];
+          timetables = results[3] && results[3].ok && Array.isArray(results[3].timetables) ? results[3].timetables : [];
+          teachers = results[4] && results[4].ok && Array.isArray(results[4].teachers) ? results[4].teachers : [];
+          renderAll();
+          if (selectedBatchId) loadBatchStudents(selectedBatchId);
+        }).catch(function(err) {
+          showStatus(err && err.message ? err.message : 'Failed to load academic data.', 'error');
+        });
+      }
+
+      document.getElementById('courseForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        var payload = {
+          name: document.getElementById('courseName').value.trim(),
+          duration: document.getElementById('courseDuration').value.trim(),
+          fee: document.getElementById('courseFee').value.trim(),
+          description: document.getElementById('courseDescription').value.trim(),
+          start_date: document.getElementById('courseStartDate').value,
+          end_date: document.getElementById('courseEndDate').value,
+          capacity: document.getElementById('courseCapacity').value,
+          current_enrollment: document.getElementById('courseCurrentEnrollment').value,
+          locations: document.getElementById('courseLocations').value.trim(),
+          age_group: document.getElementById('courseAgeGroup').value.trim(),
+          schedule: document.getElementById('courseSchedule').value.trim(),
+          instructor: document.getElementById('courseInstructor').value.trim(),
+          status: document.getElementById('courseStatus').value
+        };
+        var id = document.getElementById('courseId').value;
+        var job = id ? SchoolAPI.updateCourse(id, payload) : SchoolAPI.addCourse(payload);
+        job.then(function(res) {
+          if (!res || !res.ok) throw new Error((res && res.error) || 'Failed to save course');
+          resetCourseForm();
+          closeModal('courseModal');
+          showStatus('Program saved successfully.');
+          return loadAllData();
+        }).catch(function(err) {
+          showStatus(err && err.message || 'Failed to save program.', 'error');
+        });
+      });
+
+      document.getElementById('levelForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        var payload = {
+          course_id: document.getElementById('levelCourse').value,
+          name: document.getElementById('levelName').value.trim(),
+          cefr: document.getElementById('levelCefr').value.trim(),
+          locations: document.getElementById('levelLocations').value.trim(),
+          description: document.getElementById('levelDescription').value.trim(),
+          duration: document.getElementById('levelDuration').value.trim()
+        };
+        var id = document.getElementById('levelId').value;
+        var job = id ? SchoolAPI.updateLevel(id, payload) : SchoolAPI.addLevel(payload);
+        job.then(function(res) {
+          if (!res || !res.ok) throw new Error((res && res.error) || 'Failed to save level');
+          resetLevelForm();
+          closeModal('levelModal');
+          showStatus('Level saved successfully.');
+          return loadAllData();
+        }).catch(function(err) {
+          showStatus(err && err.message || 'Failed to save level.', 'error');
+        });
+      });
+
+      document.getElementById('batchForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        syncBatchLevelIdFromName();
+        var levelId = (document.getElementById('batchLevelId') || {}).value;
+        if (!levelId) {
+          showStatus('Enter a level that exists for the selected program (check spelling or pick from suggestions).', 'error');
+          return;
+        }
+        var pick = (document.getElementById('batchTeacherPick') && document.getElementById('batchTeacherPick').value) || '';
+        if (!pick) {
+          showStatus('Select a homeroom teacher from Teacher Management.', 'error');
+          return;
+        }
+        var tch = teachers.find(function(x) { return String(x.username || x.teacher_id || '').trim() === pick; });
+        if (!tch) {
+          showStatus('Selected teacher not found. Reload the page or register the teacher first.', 'error');
+          return;
+        }
+        var teacher_name = (tch.name || tch.teacher_name || pick).toString().trim();
+        var teacher_username = (tch.username || tch.teacher_id || pick).toString().trim();
+        var payload = {
+          name: document.getElementById('batchName').value.trim(),
+          course_id: document.getElementById('batchCourse').value,
+          level_id: levelId,
+          teacher_name: teacher_name,
+          teacher_username: teacher_username,
+          schedule: document.getElementById('batchSchedule').value.trim(),
+          start_date: document.getElementById('batchStartDate').value,
+          end_date: document.getElementById('batchEndDate').value,
+          max_students: document.getElementById('batchMaxStudents').value,
+          location: document.getElementById('batchLocation').value.trim()
+        };
+        var id = document.getElementById('batchId').value;
+        var job = id ? SchoolAPI.updateBatch(id, payload) : SchoolAPI.addBatch(payload);
+        job.then(function(res) {
+          if (!res || !res.ok) throw new Error((res && res.error) || 'Failed to save batch');
+          resetBatchForm();
+          closeModal('batchModal');
+          showStatus('Batch saved successfully.');
+          return loadAllData();
+        }).catch(function(err) {
+          showStatus(err && err.message || 'Failed to save batch.', 'error');
+        });
+      });
+
+      document.getElementById('timetableForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        var startTime = document.getElementById('timetableStartTime').value.trim();
+        var endTime = document.getElementById('timetableEndTime').value.trim();
+        var timeRange = (startTime && endTime)
+          ? (htmlTimeToAmPm(startTime) + ' - ' + htmlTimeToAmPm(endTime))
+          : (startTime || endTime || '');
+        var payload = {
+          batch_id: document.getElementById('timetableBatch').value,
+          day: document.getElementById('timetableDay').value,
+          time: timeRange,
+          subject: document.getElementById('timetableSubject').value.trim(),
+          teacher_name: document.getElementById('timetableTeacher').value.trim(),
+          location: document.getElementById('timetableLocation').value.trim()
+        };
+        var id = document.getElementById('timetableId').value;
+        var job = id ? SchoolAPI.updateBatchTimetable(id, payload) : SchoolAPI.addBatchTimetable(payload);
+        job.then(function(res) {
+          if (!res || !res.ok) throw new Error((res && res.error) || 'Failed to save timetable');
+          resetTimetableForm();
+          closeModal('timetableModal');
+          showStatus('Timetable saved successfully.');
+          return loadAllData();
+        }).catch(function(err) {
+          showStatus(err && err.message || 'Failed to save timetable.', 'error');
+        });
+      });
+
+      document.getElementById('coursesBody').addEventListener('dblclick', function(e) {
+        if (e.target.closest('button')) return;
+        var tr = e.target.closest('tr.program-table-row');
+        if (!tr) return;
+        openCourseDetailsFromRow(tr.getAttribute('data-program-id') || '', tr.getAttribute('data-program-name') || '');
+      });
+      document.getElementById('coursesBody').addEventListener('click', function(e) {
+        var editBtn = e.target.closest('.btn-edit-course');
+        var deleteBtn = e.target.closest('.btn-delete-course');
+        if (editBtn) {
+          var editId = editBtn.getAttribute('data-id') || '';
+          if (editId) editCourseById(editId);
+          else editCourseByName(editBtn.getAttribute('data-name') || '');
+          return;
+        }
+        if (deleteBtn) {
+          var courseId = deleteBtn.getAttribute('data-id');
+          if (!confirm('Delete this program?')) return;
+          SchoolAPI.deleteCourse(courseId).then(function(res) {
+            if (!res || !res.ok) throw new Error((res && res.error) || 'Failed to delete course');
+            showStatus('Program deleted successfully.');
+            resetCourseForm();
+            return loadAllData();
+          }).catch(function(err) {
+            showStatus(err && err.message || 'Failed to delete program.', 'error');
+          });
+        }
+      });
+
+      document.getElementById('levelsBody').addEventListener('click', function(e) {
+        var editBtn = e.target.closest('.btn-edit-level');
+        var deleteBtn = e.target.closest('.btn-delete-level');
+        if (editBtn) {
+          var level = levels.find(function(item) { return String(item.id) === String(editBtn.getAttribute('data-id')); });
+          if (!level) return;
+          initLevelCefrSelect();
+          document.getElementById('levelId').value = level.id;
+          document.getElementById('levelCourse').value = level.course_id != null ? String(level.course_id) : '';
+          document.getElementById('levelName').value = level.name || '';
+          var storedCefr = (level.cefr || '').toString().trim();
+          var inferred = cefrForLevelName(level.name || '');
+          setLevelCefrValue(storedCefr || (inferred !== '—' ? inferred : ''));
+          var locStored = (level.locations || '').toString().trim();
+          document.getElementById('levelLocations').value = locStored || courseLocationsByCourseId(level.course_id) || '';
+          document.getElementById('levelDescription').value = (level.description || '').toString();
+          document.getElementById('levelDuration').value = (level.duration || '').toString();
+          document.getElementById('levelFormTitle').textContent = 'Edit Level';
+          var sub = document.getElementById('levelSubmitBtn');
+          if (sub) sub.textContent = 'Save Level';
+          switchView('levels');
+          openModal('levelModal');
+          return;
+        }
+        if (deleteBtn) {
+          var levelId = deleteBtn.getAttribute('data-id');
+          if (!confirm('Delete this level?')) return;
+          SchoolAPI.deleteLevel(levelId).then(function(res) {
+            if (!res || !res.ok) throw new Error((res && res.error) || 'Failed to delete level');
+            showStatus('Level deleted successfully.');
+            resetLevelForm();
+            return loadAllData();
+          }).catch(function(err) {
+            showStatus(err && err.message || 'Failed to delete level.', 'error');
+          });
+        }
+      });
+
+      document.getElementById('batchesBody').addEventListener('click', function(e) {
+        var editBtn = e.target.closest('.btn-edit-batch');
+        var deleteBtn = e.target.closest('.btn-delete-batch');
+        if (editBtn) {
+          var batch = batches.find(function(item) { return String(item.id) === String(editBtn.getAttribute('data-id')); });
+          if (!batch) return;
+          document.getElementById('batchId').value = batch.id;
+          document.getElementById('batchName').value = batch.name || '';
+          document.getElementById('batchCourse').value = batch.course_id != null ? String(batch.course_id) : '';
+          document.getElementById('batchLevelId').value = batch.level_id != null ? String(batch.level_id) : '';
+          document.getElementById('batchLevelName').value = batch.level_name || '';
+          document.getElementById('batchSchedule').value = batch.schedule || '';
+          document.getElementById('batchLocation').value = (batch.location || '').toString();
+          document.getElementById('batchStartDate').value = batch.start_date || '';
+          document.getElementById('batchEndDate').value = batch.end_date || '';
+          document.getElementById('batchMaxStudents').value = batch.max_students != null ? batch.max_students : '20';
+          var cenr = document.getElementById('batchCurrentEnrollment');
+          if (cenr) cenr.value = batch.students_count != null ? String(batch.students_count) : '0';
+          fillBatchFormDropdowns();
+          applyBatchTeacherFieldsFromBatch(batch);
+          document.getElementById('batchFormTitle').textContent = 'Edit Batch';
+          var bsub2 = document.getElementById('batchSubmitBtn');
+          if (bsub2) bsub2.textContent = 'Save Batch';
+          switchView('batches');
+          openModal('batchModal');
+          return;
+        }
+        if (deleteBtn) {
+          var batchId = deleteBtn.getAttribute('data-id');
+          if (!confirm('Delete this batch?')) return;
+          SchoolAPI.deleteBatch(batchId).then(function(res) {
+            if (!res || !res.ok) throw new Error((res && res.error) || 'Failed to delete batch');
+            if (String(selectedBatchId) === String(batchId)) loadBatchStudents('');
+            showStatus('Batch deleted successfully.');
+            resetBatchForm();
+            return loadAllData();
+          }).catch(function(err) {
+            showStatus(err && err.message || 'Failed to delete batch.', 'error');
+          });
+        }
+        var tr = e.target.closest('tr.batch-table-row');
+        if (tr && !e.target.closest('button') && !e.target.closest('a')) {
+          switchView('batches');
+          loadBatchStudents(tr.getAttribute('data-batch-id'));
+        }
+      });
+      document.getElementById('batchesBody').addEventListener('keydown', function(e) {
+        if (e.key !== 'Enter') return;
+        var tr = e.target.closest('tr.batch-table-row');
+        if (!tr || e.target.closest('button') || e.target.closest('a')) return;
+        e.preventDefault();
+        switchView('batches');
+        loadBatchStudents(tr.getAttribute('data-batch-id'));
+      });
+
+      document.getElementById('timetablesBody').addEventListener('click', function(e) {
+        var editBtn = e.target.closest('.btn-edit-timetable');
+        var deleteBtn = e.target.closest('.btn-delete-timetable');
+        if (editBtn) {
+          var row = timetables.find(function(item) { return String(item.id) === String(editBtn.getAttribute('data-id')); });
+          if (!row) return;
+          document.getElementById('timetableId').value = row.id;
+          document.getElementById('timetableBatch').value = row.batch_id != null ? String(row.batch_id) : '';
+          document.getElementById('timetableDay').value = row.day || '';
+          var tr = parseTimeRange(row.time || '');
+          document.getElementById('timetableStartTime').value = timeStrToHtmlTime(tr.start) || '';
+          document.getElementById('timetableEndTime').value = timeStrToHtmlTime(tr.end) || '';
+          document.getElementById('timetableSubject').value = row.subject || '';
+          document.getElementById('timetableTeacher').value = (row.teacher_name || '').toString();
+          document.getElementById('timetableLocation').value = (row.location || '').toString();
+          document.getElementById('timetableFormTitle').textContent = 'Edit Session';
+          var tsub = document.getElementById('timetableSubmitBtn');
+          if (tsub) tsub.textContent = 'Save Session';
+          switchView('timetables');
+          openModal('timetableModal');
+          return;
+        }
+        if (deleteBtn) {
+          var timetableId = deleteBtn.getAttribute('data-id');
+          if (!confirm('Delete this timetable row?')) return;
+          SchoolAPI.deleteBatchTimetable(timetableId).then(function(res) {
+            if (!res || !res.ok) throw new Error((res && res.error) || 'Failed to delete timetable');
+            showStatus('Timetable deleted successfully.');
+            resetTimetableForm();
+            return loadAllData();
+          }).catch(function(err) {
+            showStatus(err && err.message || 'Failed to delete timetable.', 'error');
+          });
+        }
+      });
+
+      document.getElementById('resetCourseBtn').addEventListener('click', function() {
+        resetCourseForm();
+        closeModal('courseModal');
+      });
+      var levelModalCancelEl = document.getElementById('levelModalCancel');
+      if (levelModalCancelEl) {
+        levelModalCancelEl.addEventListener('click', function() {
+          resetLevelForm();
+          closeModal('levelModal');
+        });
+      }
+      var levelCourseEl = document.getElementById('levelCourse');
+      if (levelCourseEl) {
+        levelCourseEl.addEventListener('change', function() {
+          prefillLevelLocationsFromCourse();
+        });
+      }
+      var levelNameInputEl = document.getElementById('levelName');
+      if (levelNameInputEl) {
+        levelNameInputEl.addEventListener('blur', suggestCefrFromLevelNameInput);
+      }
+      var batchModalCancelEl = document.getElementById('batchModalCancel');
+      if (batchModalCancelEl) {
+        batchModalCancelEl.addEventListener('click', function() {
+          resetBatchForm();
+          closeModal('batchModal');
+        });
+      }
+      var timetableModalCancelEl = document.getElementById('timetableModalCancel');
+      if (timetableModalCancelEl) {
+        timetableModalCancelEl.addEventListener('click', function() {
+          resetTimetableForm();
+          closeModal('timetableModal');
+        });
+      }
+      var timetableBatchEl = document.getElementById('timetableBatch');
+      if (timetableBatchEl) {
+        timetableBatchEl.addEventListener('change', function() {
+          var b = batches.find(function(x) { return String(x.id) === String(timetableBatchEl.value); });
+          if (!b) return;
+          var te = document.getElementById('timetableTeacher');
+          var lo = document.getElementById('timetableLocation');
+          if (te && !(te.value || '').toString().trim()) te.value = (b.teacher_name || '').toString();
+          if (lo && !(lo.value || '').toString().trim()) {
+            var loc = batchLocation(b);
+            lo.value = loc === '—' ? '' : loc;
+          }
+        });
+      }
+      var timetableViewListBtnEl = document.getElementById('timetableViewListBtn');
+      if (timetableViewListBtnEl) {
+        timetableViewListBtnEl.addEventListener('click', function() {
+          timetableUiState.view = 'list';
+          renderTimetables();
+        });
+      }
+      var timetableViewWeeklyBtnEl = document.getElementById('timetableViewWeeklyBtn');
+      if (timetableViewWeeklyBtnEl) {
+        timetableViewWeeklyBtnEl.addEventListener('click', function() {
+          timetableUiState.view = 'weekly';
+          renderTimetables();
+        });
+      }
+      var timetableBatchFilterEl = document.getElementById('timetableBatchFilter');
+      if (timetableBatchFilterEl) {
+        timetableBatchFilterEl.addEventListener('change', function() {
+          timetableUiState.programPage = 1;
+          renderTimetables();
+        });
+      }
+      var programSearchEl = document.getElementById('programSearch');
+      if (programSearchEl) programSearchEl.addEventListener('input', renderCourses);
+      var programStatusFilterEl = document.getElementById('programStatusFilter');
+      if (programStatusFilterEl) programStatusFilterEl.addEventListener('change', renderCourses);
+      var levelProgramFilterEl = document.getElementById('levelProgramFilter');
+      if (levelProgramFilterEl) levelProgramFilterEl.addEventListener('change', function() {
+        levelListState.page = 1;
+        renderLevels();
+      });
+      var levelSelectAllEl = document.getElementById('levelSelectAll');
+      if (levelSelectAllEl) levelSelectAllEl.addEventListener('change', function() {
+        var on = this.checked;
+        document.querySelectorAll('#levelsBody .level-row-check').forEach(function(cb) { cb.checked = on; });
+        updateLevelBulkDeleteButtonState();
+      });
+      var levelsBodyEl = document.getElementById('levelsBody');
+      if (levelsBodyEl) levelsBodyEl.addEventListener('change', function(e) {
+        if (!e.target.classList.contains('level-row-check')) return;
+        var boxes = document.querySelectorAll('#levelsBody .level-row-check');
+        var sel = document.getElementById('levelSelectAll');
+        if (!sel || !boxes.length) return;
+        var every = true;
+        for (var i = 0; i < boxes.length; i++) {
+          if (!boxes[i].checked) { every = false; break; }
+        }
+        sel.checked = every;
+        updateLevelBulkDeleteButtonState();
+      });
+      var levelBulkDeleteBtnEl = document.getElementById('levelBulkDeleteBtn');
+      if (levelBulkDeleteBtnEl) {
+        levelBulkDeleteBtnEl.addEventListener('click', function() {
+          var ids = getSelectedLevelIdsFromTable();
+          if (!ids.length) return;
+          var noun = ids.length === 1 ? 'level' : 'levels';
+          if (!confirm('Are you sure you want to delete ' + ids.length + ' ' + noun + '?')) return;
+          levelBulkDeleteBtnEl.disabled = true;
+          Promise.all(ids.map(function(id) {
+            return SchoolAPI.deleteLevel(id).then(function(res) {
+              return { id: id, ok: res && res.ok, error: res && res.error };
+            });
+          })).then(function(results) {
+            var ok = results.filter(function(r) { return r.ok; });
+            var bad = results.filter(function(r) { return !r.ok; });
+            if (bad.length && ok.length === 0) {
+              showStatus((bad[0] && bad[0].error) || 'Failed to delete levels.', 'error');
+              return loadAllData();
+            }
+            if (bad.length) {
+              showStatus('Deleted ' + ok.length + ' of ' + results.length + ' levels. ' + ((bad[0] && bad[0].error) || 'Some could not be deleted.'), 'error');
+            } else {
+              showStatus('Deleted ' + ok.length + ' ' + (ok.length === 1 ? 'level' : 'levels') + ' successfully.');
+            }
+            var selAllHdr = document.getElementById('levelSelectAll');
+            if (selAllHdr) selAllHdr.checked = false;
+            return loadAllData();
+          }).catch(function(err) {
+            showStatus(err && err.message ? err.message : 'Failed to delete levels.', 'error');
+          }).finally(function() {
+            levelBulkDeleteBtnEl.disabled = false;
+            updateLevelBulkDeleteButtonState();
+          });
+        });
+      }
+      var levelPagePrevEl = document.getElementById('levelPagePrev');
+      if (levelPagePrevEl) levelPagePrevEl.addEventListener('click', function() {
+        if (levelListState.page > 1) {
+          levelListState.page--;
+          renderLevels();
+        }
+      });
+      var levelPageNextEl = document.getElementById('levelPageNext');
+      if (levelPageNextEl) levelPageNextEl.addEventListener('click', function() {
+        if (levelListState.page < levelListState.pageCount) {
+          levelListState.page++;
+          renderLevels();
+        }
+      });
+
+      function refilterBatchesList() {
+        batchListState.page = 1;
+        renderBatches();
+      }
+      var batchProgramFilterEl = document.getElementById('batchProgramFilter');
+      if (batchProgramFilterEl) batchProgramFilterEl.addEventListener('change', refilterBatchesList);
+      var batchStatusFilterEl = document.getElementById('batchStatusFilter');
+      if (batchStatusFilterEl) batchStatusFilterEl.addEventListener('change', refilterBatchesList);
+      var batchTeacherFilterEl = document.getElementById('batchTeacherFilter');
+      if (batchTeacherFilterEl) batchTeacherFilterEl.addEventListener('change', refilterBatchesList);
+      var batchSearchInputEl = document.getElementById('batchSearchInput');
+      if (batchSearchInputEl) batchSearchInputEl.addEventListener('input', refilterBatchesList);
+      var batchPagePrevEl = document.getElementById('batchPagePrev');
+      if (batchPagePrevEl) batchPagePrevEl.addEventListener('click', function() {
+        if (batchListState.page > 1) {
+          batchListState.page--;
+          renderBatches();
+        }
+      });
+      var batchPageNextEl = document.getElementById('batchPageNext');
+      if (batchPageNextEl) batchPageNextEl.addEventListener('click', function() {
+        if (batchListState.page < batchListState.pageCount) {
+          batchListState.page++;
+          renderBatches();
+        }
+      });
+      var batchesPaginationEl = document.getElementById('batchesPagination');
+      if (batchesPaginationEl) {
+        batchesPaginationEl.addEventListener('click', function(e) {
+          var pg = e.target.closest('[data-batch-page]');
+          if (!pg) return;
+          var p = parseInt(pg.getAttribute('data-batch-page'), 10);
+          if (!isFinite(p) || p < 1 || p > batchListState.pageCount) return;
+          batchListState.page = p;
+          renderBatches();
+        });
+      }
+      var batchExportBtnEl = document.getElementById('batchExportBtn');
+      if (batchExportBtnEl) batchExportBtnEl.addEventListener('click', exportFilteredBatchesCsv);
+
+      var courseNameEl = document.getElementById('courseName');
+      if (courseNameEl) courseNameEl.addEventListener('change', function() {
+        var tpl = Object.assign({}, courseTemplateForCourseName(courseNameEl.value) || {}, defaultProgramMeta(courseNameEl.value));
+        var durationEl = document.getElementById('courseDuration');
+        var feeEl = document.getElementById('courseFee');
+        var descEl = document.getElementById('courseDescription');
+        var capacityEl = document.getElementById('courseCapacity');
+        var currentEl = document.getElementById('courseCurrentEnrollment');
+        var locationsEl = document.getElementById('courseLocations');
+        var ageGroupEl = document.getElementById('courseAgeGroup');
+        var scheduleEl = document.getElementById('courseSchedule');
+        var instructorEl = document.getElementById('courseInstructor');
+        var statusEl = document.getElementById('courseStatus');
+        if (durationEl) {
+          var dcur = (durationEl.value || '').toString().trim();
+          if (!dcur) durationEl.value = tpl.duration;
+        }
+        if (feeEl) {
+          var fcur = (feeEl.value || '').toString().trim();
+          if (!fcur) feeEl.value = String(tpl.fee);
+        }
+        if (descEl) {
+          var pcur = (descEl.value || '').toString().trim();
+          if (!pcur) descEl.value = tpl.description;
+        }
+        if (capacityEl && !(capacityEl.value || '').toString().trim() && tpl.capacity != null) capacityEl.value = tpl.capacity;
+        if (currentEl && !(currentEl.value || '').toString().trim() && tpl.current_enrollment != null) currentEl.value = tpl.current_enrollment;
+        if (locationsEl && !(locationsEl.value || '').toString().trim()) locationsEl.value = tpl.locations || '';
+        if (ageGroupEl && !(ageGroupEl.value || '').toString().trim()) ageGroupEl.value = tpl.age_group || '';
+        if (scheduleEl && !(scheduleEl.value || '').toString().trim()) scheduleEl.value = tpl.schedule || '';
+        if (instructorEl && !(instructorEl.value || '').toString().trim()) instructorEl.value = tpl.instructor || '';
+        if (statusEl) statusEl.value = tpl.status || 'active';
+      });
+      document.getElementById('addCourseBtn').addEventListener('click', function() {
+        resetCourseForm();
+        openModal('courseModal');
+      });
+      document.getElementById('addLevelBtn').addEventListener('click', function() {
+        resetLevelForm();
+        initLevelCefrSelect();
+        fillBatchFormDropdowns();
+        openModal('levelModal');
+      });
+      document.getElementById('addBatchBtn').addEventListener('click', function() {
+        resetBatchForm();
+        fillBatchFormDropdowns();
+        autoFillBatchScheduleFromSelection();
+        openModal('batchModal');
+      });
+      document.getElementById('addTimetableBtn').addEventListener('click', function() {
+        resetTimetableForm();
+        openModal('timetableModal');
+      });
+      document.querySelectorAll('[data-close-modal]').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          closeModal(btn.getAttribute('data-close-modal'));
+        });
+      });
+      document.querySelectorAll('.modal-overlay-academic').forEach(function(modal) {
+        modal.addEventListener('click', function(e) {
+          if (e.target === modal) modal.classList.remove('show');
+        });
+      });
+      document.querySelectorAll('.academic-mgmt-card').forEach(function(card) {
+        card.addEventListener('click', function() {
+          switchView(card.getAttribute('data-view'));
+        });
+      });
+      document.getElementById('batchCourse').addEventListener('change', function() {
+        fillBatchFormDropdowns();
+        autoFillBatchScheduleFromSelection();
+        prefillBatchLocationFromCourse();
+      });
+
+      var batchLevelNameEl = document.getElementById('batchLevelName');
+      if (batchLevelNameEl) {
+        batchLevelNameEl.addEventListener('blur', function() {
+          syncBatchLevelIdFromName();
+          autoFillBatchScheduleFromSelection();
+        });
+      }
+
+      document.getElementById('generateTimetableTemplateBtn').addEventListener('click', function() {
+        var batchId = document.getElementById('timetableBatch').value;
+        if (!batchId) {
+          showStatus('Select batch first.', 'error');
+          return;
+        }
+        var batchObj = batches.find(function(b) { return String(b.id) === String(batchId); });
+        var rows = buildTimetableTemplateRowsForBatch(batchObj);
+        if (!rows || !rows.length) {
+          showStatus('No timetable template found for this batch.', 'error');
+          return;
+        }
+        if (!confirm('Generate timetable template and overwrite existing timetable rows for this batch?')) return;
+
+        var btn = document.getElementById('generateTimetableTemplateBtn');
+        var originalText = btn.textContent;
+        btn.disabled = true;
+        btn.textContent = 'Generating...';
+
+        SchoolAPI.getBatchTimetables(batchId).then(function(res) {
+          var existing = res && res.ok && Array.isArray(res.timetables) ? res.timetables : [];
+          var deletes = existing.map(function(row) {
+            if (!row || row.id == null) return Promise.resolve();
+            return SchoolAPI.deleteBatchTimetable(row.id);
+          });
+          return Promise.all(deletes);
+        }).then(function() {
+          var adds = rows.map(function(r) {
+            return SchoolAPI.addBatchTimetable({
+              batch_id: batchId,
+              day: r.day,
+              time: r.time,
+              subject: r.subject,
+              teacher_name: r.teacher_name || '',
+              location: r.location || ''
+            });
+          });
+          return Promise.all(adds);
+        }).then(function() {
+          btn.disabled = false;
+          btn.textContent = originalText;
+          showStatus('Timetable template generated successfully.');
+          resetTimetableForm();
+          closeModal('timetableModal');
+          return loadAllData();
+        }).catch(function(err) {
+          btn.disabled = false;
+          btn.textContent = originalText;
+          showStatus(err && err.message ? err.message : 'Failed to generate timetable template.', 'error');
+        });
+      });
+      initLevelCefrSelect();
+      switchView('courses');
+      loadAllData();
+    })();
+  </script>
+  <script src="../assets/js/admin-badge.js"></script>
+  <script src="../assets/js/dashboard-sidebar.js" defer></script>
+</body>
+</html>

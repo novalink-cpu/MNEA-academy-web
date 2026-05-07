@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{# Login: teacher/student use ID as username and password until first change #}
+{% block title %}Login — MNEA{% endblock %}
+{% block body %}
+<div class="container">
+  <div class="card">
+    <h1>Myanmar New Era — Sign in</h1>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for cat, msg in messages %}
+          <div class="flash flash-{{ cat }}">{{ msg }}</div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <form method="post" action="{{ url_for('auth.login') }}" novalidate>
+      {{ form.hidden_tag() }}
+
+      <div class="field">
+        {{ form.username.label }}
+        {{ form.username(class="") }}
+        <p class="hint">Admin: <code>admin</code>. Teacher/Student: your ID (e.g. <code>TCH_1426</code>, <code>STD_3369</code>).</p>
+      </div>
+
+      <div class="field">
+        {{ form.password.label }}
+        <div class="row-eye">
+          {{ form.password(id="loginPassword") }}
+          <button type="button" class="btn-eye" data-toggle-pw="#loginPassword" title="Show/hide password" aria-pressed="false">👁</button>
+        </div>
+      </div>
+
+      <button type="submit" class="btn btn-primary">{{ form.submit.label.text }}</button>
+    </form>
+
+    <div class="meta-row">
+      <span></span>
+      <button type="button" class="btn btn-ghost" id="openForgotModal">Forgot password?</button>
+    </div>
+
+    <p class="hint" style="margin-top:1.25rem;">
+      Passwords are stored only as bcrypt hashes. Administrators cannot view your current password.
+    </p>
+  </div>
+</div>
+
+{# Modal: enter user ID to receive email reset link #}
+<div class="modal-backdrop" id="forgotModal" role="dialog" aria-modal="true" aria-labelledby="forgotTitle">
+  <div class="modal">
+    <h2 id="forgotTitle">Reset via email</h2>
+    <p class="hint">Enter your login ID. If the account has an email on file, a reset link is sent (max 3/hour).</p>
+    <form method="post" action="{{ url_for('auth.forgot_password') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+      <div class="field">
+        <label for="fp_user_id">User ID</label>
+        <input id="fp_user_id" name="user_id" required maxlength="191" autocomplete="username">
+      </div>
+      <button type="submit" class="btn btn-primary">Send reset link</button>
+      <button type="button" class="btn btn-ghost" id="closeForgotModal" style="margin-top:.5rem;width:100%;">Cancel</button>
+    </form>
+  </div>
+</div>
+
+<script>
+(function(){
+  var m = document.getElementById('forgotModal');
+  document.getElementById('openForgotModal').onclick = function(){ m.classList.add('open'); };
+  document.getElementById('closeForgotModal').onclick = function(){ m.classList.remove('open'); };
+  m.addEventListener('click', function(e){ if (e.target === m) m.classList.remove('open'); });
+})();
+</script>
+{% endblock %}

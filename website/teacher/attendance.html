@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="../assets/js/desktop-layout-viewport.js"></script>
+  <title>Take Attendance | Teacher | Myanmar New Era Academy</title>
+  <link rel="stylesheet" href="../assets/css/main.css">
+  <link rel="stylesheet" href="../assets/css/dashboard.css">
+  <link rel="stylesheet" href="../assets/css/teacher-portal.css">
+  <style>
+    .att-filter-grid {
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.85rem; margin-bottom: 1rem;
+    }
+    @media (max-width: 960px) { .att-filter-grid { grid-template-columns: 1fr 1fr; } }
+    @media (max-width: 520px) { .att-filter-grid { grid-template-columns: 1fr; } }
+    .att-filter-tile {
+      background: #fff; border: 1px solid rgba(148, 163, 184, 0.28); border-radius: 14px; padding: 0.85rem 1rem;
+      box-shadow: 0 4px 14px rgba(15, 23, 42, 0.05);
+    }
+    .att-filter-tile label {
+      display: block; font-size: 0.72rem; font-weight: 800; color: #64748b; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 0.4rem;
+    }
+    .att-filter-tile select, .att-filter-tile input[type="date"] {
+      width: 100%; padding: 0.5rem 0.6rem; border: 1px solid #e2e8f0; border-radius: 10px; font-size: 0.9rem;
+      background: #fff; color: #1e293b; box-sizing: border-box; min-height: 2.55rem;
+    }
+    .att-filter-tile--action {
+      background: linear-gradient(180deg, #e8f5e9 0%, #c8e6c9 100%); border-color: rgba(67, 160, 71, 0.35);
+      display: flex; flex-direction: column; justify-content: flex-end;
+    }
+    .att-filter-tile--action label { color: #1b5e20; }
+    .att-btn-load {
+      width: 100%; padding: 0.55rem 1rem; border: none; border-radius: 12px; cursor: pointer; font-weight: 800; font-size: 0.92rem;
+      background: linear-gradient(180deg, #66bb6a, #43a047); color: #fff;
+      box-shadow: 0 4px 14px rgba(67, 160, 71, 0.35);
+    }
+    .att-btn-load:hover { filter: brightness(1.04); }
+    .att-btn-markall {
+      width: 100%; margin-top: 0.45rem; padding: 0.5rem 0.85rem; border-radius: 10px; border: none; cursor: pointer; font-weight: 800; font-size: 0.88rem;
+      background: #fff; color: #2e7d32; border: 2px solid #43a047;
+    }
+    .att-btn-markall:disabled { opacity: 0.45; cursor: not-allowed; }
+    .att-tt-row { display: flex; align-items: center; gap: 0.5rem; margin-top: 0.5rem; font-size: 0.78rem; color: #64748b; }
+    .att-tt-row input { width: 1rem; height: 1rem; }
+    .att-session-card {
+      background: linear-gradient(135deg, rgba(14, 165, 233, 0.07), rgba(99, 102, 241, 0.05));
+      border: 1px solid var(--border); border-radius: 14px; padding: 1rem 1.2rem; margin-bottom: 1rem;
+    }
+    .att-session-card dl { display: grid; grid-template-columns: auto 1fr; gap: 0.35rem 1.25rem; margin: 0; font-size: 0.9rem; }
+    .att-session-card dt { font-weight: 700; color: var(--text-muted); }
+    .att-session-card dd { margin: 0; }
+    .sess-title { font-weight: 800; margin: 0 0 0.65rem; font-size: 0.95rem; display: flex; align-items: center; gap: 0.35rem; }
+    .att-dash-stats {
+      display: grid; grid-template-columns: repeat(5, 1fr); gap: 0.65rem; margin-bottom: 1.1rem;
+      width: 100%; box-sizing: border-box;
+    }
+    @media (max-width: 900px) { .att-dash-stats { grid-template-columns: repeat(2, 1fr); } }
+    .att-dash-stat {
+      border-radius: 14px; padding: 0.75rem 0.85rem; text-align: center; border: 1px solid rgba(148, 163, 184, 0.22);
+      background: #fff; box-shadow: 0 3px 12px rgba(15, 23, 42, 0.04);
+      min-width: 0; overflow: hidden;
+    }
+    .att-dash-stat .lbl { font-size: 0.72rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 0.2rem; overflow-wrap:anywhere; }
+    .att-dash-stat .num { font-size: 1.45rem; font-weight: 900; font-variant-numeric: tabular-nums; line-height: 1.2; }
+    .att-dash-stat .ico { font-size: 1.1rem; margin-bottom: 0.15rem; }
+    .att-dash-stat--total .num { color: #0f172a; }
+    .att-dash-stat--present { background: linear-gradient(180deg, #e8f5e9, #f1f8e9); border-color: rgba(76, 175, 80, 0.35); }
+    .att-dash-stat--present .num { color: #1b5e20; }
+    .att-dash-stat--absent { background: linear-gradient(180deg, #ffebee, #fce4ec); border-color: rgba(229, 57, 53, 0.28); }
+    .att-dash-stat--absent .num { color: #b71c1c; }
+    .att-dash-stat--late { background: linear-gradient(180deg, #fff8e1, #fffde7); border-color: rgba(245, 127, 23, 0.35); }
+    .att-dash-stat--late .num { color: #e65100; }
+    .att-dash-stat--open .num { color: #475569; }
+    .att-list-card {
+      background: #fff; border: 1px solid rgba(148, 163, 184, 0.22); border-radius: 16px; padding: 1.1rem 1.2rem 1.25rem;
+      box-shadow: 0 8px 28px rgba(15, 23, 42, 0.06);
+    }
+    .att-list-card h2 { margin: 0 0 0.25rem; font-size: 1.05rem; font-weight: 800; color: #1e293b; }
+    .att-list-card .sub { margin: 0 0 1rem; font-size: 0.84rem; color: #64748b; }
+    .att-table-wrap { overflow-x: auto; border-radius: 12px; border: 1px solid #eef1f5; }
+    .att-table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+    .att-table th, .att-table td { padding: 0.65rem 0.75rem; border-bottom: 1px solid #eef1f5; vertical-align: middle; }
+    .att-table thead th { text-align: center; background: var(--table-header-bg); color: var(--table-header-text); font-weight: 700; }
+    .att-table td { text-align: left; }
+    .att-table .att-col-roll { text-align: center; font-weight: 800; font-variant-numeric: tabular-nums; width: 4rem; }
+    .att-table .att-col-status { text-align: center; }
+    .att-table tbody tr { transition: background 0.15s ease; }
+    .att-table tbody tr:hover { background: #fafbfc; }
+    .att-table tr.row-late td:first-child { box-shadow: inset 3px 0 0 #eab308; }
+    .att-table tr.row-absent { background: rgba(254, 202, 202, 0.14); }
+    .att-table tr.row-present { background: rgba(187, 247, 208, 0.16); }
+    .att-table tr.row-open { background: rgba(248, 250, 252, 0.9); }
+    .att-table input[type="text"].st-rem { padding: 0.4rem 0.55rem; border-radius: 8px; border: 1px solid var(--border); width: 100%; max-width: 14rem; box-sizing: border-box; }
+    .att-status-btns { display: inline-flex; align-items: center; justify-content: center; gap: 0.45rem; flex-wrap: wrap; }
+    .att-sbtn {
+      width: 2.35rem; height: 2.35rem; border-radius: 50%; border: 2px solid transparent; cursor: pointer;
+      display: inline-flex; align-items: center; justify-content: center; padding: 0; background: #f8fafc;
+      transition: transform 0.12s ease, box-shadow 0.12s ease, background 0.12s ease;
+    }
+    .att-sbtn:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
+    .att-sbtn--p { border-color: rgba(27, 94, 32, 0.45); color: #1b5e20; }
+    .att-sbtn--p.is-on { background: #43a047; color: #fff; border-color: #2e7d32; box-shadow: 0 2px 8px rgba(67, 160, 71, 0.45); }
+    .att-sbtn--l { border-color: rgba(245, 124, 0, 0.5); color: #e65100; }
+    .att-sbtn--l.is-on { background: #ffb300; color: #1a237e; border-color: #ff8f00; box-shadow: 0 2px 8px rgba(255, 179, 0, 0.45); }
+    .att-sbtn--a { border-color: rgba(229, 57, 53, 0.45); color: #c62828; }
+    .att-sbtn--a.is-on { background: #e53935; color: #fff; border-color: #c62828; box-shadow: 0 2px 8px rgba(229, 57, 53, 0.4); }
+    .att-sbtn .sym { font-size: 0.95rem; font-weight: 900; line-height: 1; }
+    .att-sbtn--l .att-ico-late-svg { display: block; width: 14px; height: 14px; }
+    .att-sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); border: 0; white-space: nowrap; }
+    .btn-save-att {
+      background: #16a34a !important; color: #fff !important; border: none; padding: 0.7rem 1.75rem;
+      border-radius: 12px; font-weight: 800; cursor: pointer; font-size: 1rem;
+      box-shadow: 0 4px 16px rgba(22, 163, 74, 0.35);
+    }
+    .btn-save-att:disabled { opacity: 0.5; cursor: not-allowed; }
+    .banner-locked {
+      background: #fef3c7; border: 1px solid #f59e0b; color: #92400e; padding: 0.75rem 1rem; border-radius: 12px; margin-bottom: 1rem; font-size: 0.9rem;
+    }
+    .banner-note { font-size: 0.85rem; color: var(--text-muted); margin-top: 0.75rem; }
+    .warn { background: #fff7ed; border: 1px solid #fdba74; color: #9a3412; padding: 0.6rem 0.85rem; border-radius: 10px; margin-bottom: 0.75rem; font-size: 0.9rem; }
+    .save-att-footer {
+      margin-top: 1.25rem; padding: 1.1rem 1.25rem; border: 2px solid rgba(22, 163, 74, 0.35); border-radius: 14px;
+      background: linear-gradient(180deg, rgba(220, 252, 231, 0.5), rgba(240, 253, 244, 0.35)); text-align: center;
+    }
+    .save-att-footer .warn-inline { font-size: 0.88rem; color: #92400e; margin-top: 0.75rem; }
+  </style>
+</head>
+<body class="admin-dashboard-glass" data-toolbar="teacher" data-notif-admin-base="../admin/">
+  <div class="dashboard-wrap glass-dashboard">
+    <aside class="dashboard-sidebar">
+      <a href="../public-page/index.html" class="logo-link"><span class="logo-brand-row"><img src="../photo/logo.png" alt="" class="logo-mark-img" width="72" decoding="async" /><span class="logo-headlines"><span class="logo-title-line">MYANMAR</span><span class="logo-title-line">NEW ERA</span></span></span></a>
+      <nav>
+        <a href="dashboard.html">Dashboard</a>
+        <a href="students.html">My Students</a>
+        <a href="attendance.html" class="active">Take Attendance</a>
+        <a href="attendance-records.html">My Records</a>
+        <a href="marks.html">Marks Entry</a>
+        <a href="materials.html">Lesson Materials</a>
+        <a href="account-settings.html">Teacher profile</a>
+      </nav>
+    </aside>
+    <main class="dashboard-main">
+      <div class="dashboard-header glass-toolbar">
+        <div>
+          <p class="dashboard-toolbar-title">Take Attendance</p>
+          <p class="teacher-toolbar-sub">Daily entry · <span id="teacherToolbarRole">Teacher</span></p>
+        </div>
+        <div class="auth-info">
+          <div class="notification-wrap">
+            <button type="button" class="btn-notification" id="btnNotification" aria-haspopup="true" aria-expanded="false">
+              &#x1F514; <span id="notificationLabel">Notifications</span> (<span id="notificationCount" class="notification-count-num">0</span>)
+              <span class="notification-badge" id="notificationBadge" style="display:none;">0</span>
+            </button>
+            <div class="notification-dropdown" id="notificationDropdown" role="menu">
+              <h3>Notifications</h3>
+              <ul id="notificationList"><li class="notif-empty">…</li></ul>
+            </div>
+          </div>
+          <div class="profile-wrap">
+            <button type="button" class="btn-profile" id="btnProfile" aria-haspopup="true" aria-expanded="false">&#x1F464; <span id="profileName">Teacher</span> &#x25BC;</button>
+            <div class="profile-dropdown" id="profileDropdown" role="menu">
+              <a href="account-settings.html">Profile</a>
+              <a href="account-settings.html#password">Change password</a>
+              <div class="divider"></div>
+              <button type="button" id="btnAdminToolbarLogout">Logout</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card mb-2">
+        <div id="bannerLocked" class="banner-locked" style="display:none;">
+          This session is <strong>finalized</strong>. Status and remarks cannot be changed. If something is wrong, ask an administrator to unlock this batch + date.
+        </div>
+
+        <div class="att-filter-grid">
+          <div class="att-filter-tile">
+            <label for="attDate">Date</label>
+            <input type="date" id="attDate" lang="en-GB" placeholder="dd/mm/yyyy">
+          </div>
+          <div class="att-filter-tile">
+            <label for="attBatch">Batch / Class</label>
+            <select id="attBatch"><option value="">Set username first</option></select>
+          </div>
+          <div class="att-filter-tile">
+            <label for="attPeriod">Period</label>
+            <select id="attPeriod" disabled><option value="">Load roster first</option></select>
+            <div class="att-tt-row">
+              <input type="checkbox" id="attRequireTT" title="When checked, save is allowed only if this weekday has a timetable row">
+              <label for="attRequireTT" style="margin:0;font-weight:600;font-size:0.78rem;color:#64748b;cursor:pointer;">Require timetable for this weekday</label>
+            </div>
+          </div>
+          <div class="att-filter-tile att-filter-tile--action">
+            <label>Quick action</label>
+            <button type="button" class="att-btn-load" id="btnLoad">Load roster</button>
+            <button type="button" class="att-btn-markall" id="btnMarkAllPresent" disabled>Mark all present</button>
+          </div>
+        </div>
+
+        <div class="warn" id="ttWarn" style="display:none;"></div>
+
+        <div class="att-session-card" id="sessionCard" style="display:none;">
+          <p class="sess-title"><span aria-hidden="true">📅</span> Session details</p>
+          <dl>
+            <dt>Batch</dt><dd id="sessBatch">—</dd>
+            <dt>Date</dt><dd id="sessDate">—</dd>
+            <dt>Subject</dt><dd id="sessSubject">—</dd>
+            <dt>Time</dt><dd id="sessTime">—</dd>
+          </dl>
+        </div>
+
+        <div class="att-dash-stats" id="attStats" style="display:none;">
+          <div class="att-dash-stat att-dash-stat--total">
+            <div class="lbl">Total students</div>
+            <div class="ico" aria-hidden="true">👥</div>
+            <div class="num" id="statTotal">0</div>
+          </div>
+          <div class="att-dash-stat att-dash-stat--present">
+            <div class="lbl">Present</div>
+            <div class="ico" aria-hidden="true">✓</div>
+            <div class="num" id="statP">0</div>
+          </div>
+          <div class="att-dash-stat att-dash-stat--absent">
+            <div class="lbl">Absent</div>
+            <div class="ico" aria-hidden="true">✕</div>
+            <div class="num" id="statA">0</div>
+          </div>
+          <div class="att-dash-stat att-dash-stat--late">
+            <div class="lbl">Late</div>
+            <div class="ico" aria-hidden="true">!</div>
+            <div class="num" id="statL">0</div>
+          </div>
+          <div class="att-dash-stat att-dash-stat--open">
+            <div class="lbl">Unmarked</div>
+            <div class="ico" aria-hidden="true">○</div>
+            <div class="num" id="statU">0</div>
+          </div>
+        </div>
+
+        <div class="att-list-card" id="attTodayWrap">
+          <h2>Student attendance list</h2>
+          <p class="sub">Click a status circle for each student (Present, Late, or Absent). Add remarks if needed.</p>
+          <div class="att-table-wrap">
+            <table class="att-table" id="attTableToday">
+              <thead>
+                <tr>
+                  <th class="att-col-roll">Roll no.</th>
+                  <th>Student name</th>
+                  <th lang="my">မြန်မာအမည်</th>
+                  <th class="att-col-status">Attendance</th>
+                  <th>Remarks</th>
+                </tr>
+              </thead>
+              <tbody id="attBody"></tbody>
+            </table>
+          </div>
+        </div>
+        <p class="text-muted" id="attHint" style="margin-top:0.85rem;">Choose batch and date, then <strong>Load roster</strong>.</p>
+        <div class="save-att-footer">
+          <button type="button" class="btn-save-att" id="btnSave" disabled>💾 SAVE ATTENDANCE</button>
+          <p class="banner-note" id="saveMsg" style="margin-top:0.65rem;"></p>
+          <p class="warn-inline">⚠️ After save: cannot edit. Contact admin if a correction is needed.</p>
+        </div>
+        <div class="card mb-2 no-print" style="padding:1rem 1.15rem;margin-top:1rem;">
+          <h3 style="margin:0 0 0.5rem;font-size:0.95rem;font-weight:800;">Unlock request</h3>
+          <p class="text-muted" style="font-size:0.85rem;margin:0 0 0.65rem;line-height:1.5;">If this session is locked and needs a correction, ask an administrator to unlock this batch and date in <strong>Admin → Attendance Management</strong>.</p>
+          <button type="button" class="btn-primary" id="btnUnlockRequest" style="padding:0.45rem 1rem;border-radius:8px;border:none;cursor:pointer;font-weight:600;">Draft email to admin</button>
+          <p id="unlockReqMsg" class="text-muted" style="font-size:0.8rem;margin-top:0.5rem;"></p>
+        </div>
+        <p class="banner-note" style="margin-top:0.75rem;">Finalized sessions can be unlocked by an administrator in Attendance Management.</p>
+      </div>
+    </main>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+  <script src="../assets/js/firebase-config.js"></script>
+  <script src="../assets/js/auth.js"></script>
+  <script src="../assets/js/school-api.js"></script>
+  <script src="../assets/js/teacher-school.js"></script>
+  <script src="../assets/js/content-firebase.js"></script>
+  <script src="../assets/js/admin-top-toolbar.js"></script>
+  <script src="../assets/js/lang-switcher.js"></script>
+  <script>
+    (function() {
+      var user = window.AcademyAuth && AcademyAuth.currentUser();
+      if (!user) { window.location.href = '../public-page/login.html?redirect=teacher/attendance.html'; return; }
+      var attBatch = document.getElementById('attBatch');
+      var attDate = document.getElementById('attDate');
+      var attPeriod = document.getElementById('attPeriod');
+      var attBody = document.getElementById('attBody');
+      var attHint = document.getElementById('attHint');
+      var saveMsg = document.getElementById('saveMsg');
+      var ttWarn = document.getElementById('ttWarn');
+      var sessionLocked = false;
+      var LATE_SVG = '<svg class="att-ico-late-svg" viewBox="0 0 24 24" width="14" height="14" aria-hidden="true" focusable="false"><path d="M12 4L21 20H3L12 4z" fill="#f57c00"/><path d="M11 10h2v3.5h-2V10zm0 4.75h2v2h-2v-2z" fill="#1a237e"/></svg>';
+
+      attDate.value = new Date().toISOString().slice(0, 10);
+
+      function esc(s) {
+        if (s == null) return '';
+        return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+      }
+
+      function rowStatus(tr) {
+        return ((tr && tr.getAttribute('data-status')) || '').trim().toLowerCase();
+      }
+
+      function syncRowButtons(tr) {
+        var v = rowStatus(tr);
+        tr.querySelectorAll('.att-sbtn').forEach(function(b) {
+          var d = b.getAttribute('data-st');
+          var on = d === v && v !== '';
+          b.classList.toggle('is-on', on);
+          b.setAttribute('aria-pressed', on ? 'true' : 'false');
+        });
+      }
+
+      function setRowStatus(tr, st) {
+        var v = (st === 'present' || st === 'absent' || st === 'late') ? st : '';
+        tr.setAttribute('data-status', v);
+        syncRowButtons(tr);
+        applyRowStatusClass(tr);
+      }
+
+      function applyRowStatusClass(tr) {
+        tr.classList.remove('row-late', 'row-absent', 'row-present', 'row-open');
+        var v = rowStatus(tr);
+        if (v === 'late') tr.classList.add('row-late');
+        else if (v === 'absent') tr.classList.add('row-absent');
+        else if (v === 'present') tr.classList.add('row-present');
+        else tr.classList.add('row-open');
+      }
+
+      function statusPickerHtml(disabled) {
+        var d = disabled ? ' disabled' : '';
+        return '<div class="att-status-btns" role="group" aria-label="Attendance status">' +
+          '<button type="button" class="att-sbtn att-sbtn--p" data-st="present" aria-pressed="false"' + d + '><span class="sym" aria-hidden="true">✓</span><span class="att-sr-only">Present</span></button>' +
+          '<button type="button" class="att-sbtn att-sbtn--l" data-st="late" aria-pressed="false"' + d + '>' + LATE_SVG + '<span class="att-sr-only">Late</span></button>' +
+          '<button type="button" class="att-sbtn att-sbtn--a" data-st="absent" aria-pressed="false"' + d + '><span class="sym" aria-hidden="true">✕</span><span class="att-sr-only">Absent</span></button>' +
+          '</div>';
+      }
+
+      function currentTeacher() {
+        return window.TeacherSchool ? TeacherSchool.getUsername() : '';
+      }
+
+      function updateSummary() {
+        var n = 0, p = 0, a = 0, l = 0, u = 0;
+        attBody.querySelectorAll('tr').forEach(function(tr) {
+          n++;
+          var v = rowStatus(tr);
+          if (v === 'present') p++;
+          else if (v === 'absent') a++;
+          else if (v === 'late') l++;
+          else u++;
+        });
+        document.getElementById('statTotal').textContent = String(n);
+        document.getElementById('statP').textContent = String(p);
+        document.getElementById('statA').textContent = String(a);
+        document.getElementById('statL').textContent = String(l);
+        document.getElementById('statU').textContent = String(u);
+      }
+
+      function loadBatches() {
+        var u = currentTeacher();
+        attBatch.innerHTML = '<option value="">Select batch</option>';
+        if (!u || !window.TeacherSchool) {
+          attHint.textContent = 'Your account has no school username. Log out and sign in again with your teacher login.';
+          return;
+        }
+        TeacherSchool.loadBatches().then(function(r) {
+          if (!r || !r.ok || !Array.isArray(r.batches)) {
+            attHint.textContent = (r && r.error) || 'Could not load batches.';
+            return;
+          }
+          TeacherSchool.fillBatchSelect(attBatch, r.batches, 'Select batch');
+          attHint.textContent = r.batches.length
+            ? 'Batches linked to your username in Academic Management.'
+            : 'No batch is linked to this username yet — ask an admin to set Teacher login on the batch.';
+        });
+      }
+
+      function fmtUsDate(iso) {
+        if (!iso) return '—';
+        var d = new Date(iso.slice(0, 10) + 'T12:00:00');
+        if (isNaN(d.getTime())) return iso;
+        return d.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' });
+      }
+
+      function fillPeriodSelect(r) {
+        var slots = (r && r.timetable_slots) || [];
+        attPeriod.innerHTML = '';
+        if (!slots.length) {
+          attPeriod.appendChild(new Option('No period rows (whole day)', ''));
+          attPeriod.disabled = true;
+          return;
+        }
+        attPeriod.disabled = false;
+        slots.forEach(function(slot, i) {
+          var t = (slot.time || '').trim();
+          var sub = (slot.subject || '').trim();
+          var lab = 'Period ' + (i + 1) + (t ? ' (' + t + ')' : '') + (sub ? ' · ' + sub : '');
+          attPeriod.appendChild(new Option(lab, String(i)));
+        });
+      }
+
+      function showSessionCard(r, slotIndex) {
+        var card = document.getElementById('sessionCard');
+        var opt = attBatch.options[attBatch.selectedIndex];
+        document.getElementById('sessBatch').textContent = opt ? opt.textContent : '—';
+        var iso = r.date || attDate.value;
+        var wd = '';
+        if (iso) {
+          var dx = new Date(iso.slice(0, 10) + 'T12:00:00');
+          if (!isNaN(dx.getTime())) wd = dx.toLocaleDateString('en-GB', { weekday: 'long' });
+        }
+        document.getElementById('sessDate').textContent = fmtUsDate(iso) + (wd ? ' (' + wd + ')' : '');
+        var slots = r.timetable_slots || [];
+        var idx = slotIndex == null || slotIndex === '' ? 0 : parseInt(slotIndex, 10);
+        var tp = (slots.length && !isNaN(idx) && slots[idx]) ? slots[idx] : r.timetable_primary;
+        var bc = r.batch || {};
+        var course = (bc.course_name || '').trim();
+        var subjEl = document.getElementById('sessSubject');
+        if (tp && (tp.subject || tp.time)) {
+          var rawSub = (tp.subject || '').trim();
+          var line = course && rawSub ? (course + ' - ' + rawSub) : (rawSub || course || '—');
+          var fromTt = !!(r.timetable_ok && rawSub);
+          subjEl.innerHTML = esc(line) + (fromTt ? ' <span aria-hidden="true">✅</span> <span style="font-size:0.85rem;color:var(--text-muted);">(timetable)</span>' : '');
+          document.getElementById('sessTime').textContent = tp.time || '—';
+        } else {
+          subjEl.textContent = r.timetable_ok ? '—' : '(no timetable row for this weekday)';
+          document.getElementById('sessTime').textContent = '—';
+        }
+        card.style.display = 'block';
+      }
+
+      attPeriod.addEventListener('change', function() {
+        var r = window.__attLastSession;
+        if (!r) return;
+        showSessionCard(r, attPeriod.value);
+      });
+
+      attBody.addEventListener('click', function(e) {
+        var btn = e.target.closest('.att-sbtn');
+        if (!btn || sessionLocked || btn.disabled) return;
+        var tr = btn.closest('tr');
+        if (!tr) return;
+        var next = btn.getAttribute('data-st') || '';
+        if (rowStatus(tr) === next) setRowStatus(tr, '');
+        else setRowStatus(tr, next);
+        updateSummary();
+      });
+
+      document.getElementById('btnMarkAllPresent').addEventListener('click', function() {
+        if (sessionLocked) return;
+        attBody.querySelectorAll('tr').forEach(function(tr) {
+          setRowStatus(tr, 'present');
+        });
+        updateSummary();
+      });
+
+      document.getElementById('btnLoad').addEventListener('click', function() {
+        saveMsg.textContent = '';
+        ttWarn.style.display = 'none';
+        var bid = attBatch.value;
+        var d = attDate.value;
+        var u = currentTeacher();
+        if (!bid || !d) { attHint.textContent = 'Choose batch and date.'; return; }
+        if (!u) { attHint.textContent = 'Could not resolve your teacher username. Log in again.'; return; }
+        if (!SchoolAPI || !SchoolAPI.getBatchAttendanceSession) {
+          attHint.textContent = 'School API unavailable.';
+          return;
+        }
+        SchoolAPI.getBatchAttendanceSession(bid, d, { assignedTeacher: u }).then(function(r) {
+          if (!r || !r.ok) {
+            attHint.textContent = (r && r.error) || 'Failed.';
+            attBody.innerHTML = '';
+            document.getElementById('btnSave').disabled = true;
+            document.getElementById('btnMarkAllPresent').disabled = true;
+            document.getElementById('sessionCard').style.display = 'none';
+            document.getElementById('attStats').style.display = 'none';
+            window.__attLastSession = null;
+            attPeriod.innerHTML = '<option value="">Load roster first</option>';
+            attPeriod.disabled = true;
+            return;
+          }
+          window.__attLastSession = r;
+          attHint.textContent = '';
+          sessionLocked = !!r.locked;
+          document.getElementById('bannerLocked').style.display = sessionLocked ? 'block' : 'none';
+          if (!r.timetable_ok) {
+            ttWarn.style.display = 'block';
+            ttWarn.textContent = 'No timetable row for this weekday. Saving may be blocked if “Require timetable” is checked.';
+          } else {
+            ttWarn.style.display = 'none';
+          }
+          fillPeriodSelect(r);
+          if (!(r.timetable_slots || []).length) {
+            showSessionCard(r, null);
+          } else {
+            attPeriod.value = '0';
+            showSessionCard(r, '0');
+          }
+          document.getElementById('attStats').style.display = 'grid';
+          var rows = r.students || [];
+          attBody.innerHTML = rows.map(function(s, idx) {
+            var raw = (s.status == null ? '' : String(s.status)).trim().toLowerCase();
+            var st = (raw === 'present' || raw === 'absent' || raw === 'late') ? raw : '';
+            var roll = (s.roll_no || '').trim();
+            var rollDisp = roll || String(idx + 1).padStart(3, '0');
+            var my = (s.name_myanmar || '').trim();
+            var dis = sessionLocked;
+            return '<tr data-sid="' + esc(s.student_id) + '" data-status="' + esc(st) + '">' +
+              '<td class="att-col-roll">' + esc(rollDisp) + '</td>' +
+              '<td>' + esc(s.name || s.student_id) + '</td>' +
+              '<td lang="my">' + (my ? esc(my) : '<span class="text-muted">—</span>') + '</td>' +
+              '<td class="att-col-status">' + statusPickerHtml(dis) + '</td>' +
+              '<td><input type="text" class="st-rem"' + (dis ? ' disabled' : '') + ' value="' + esc(s.remark || '') + '" placeholder="Add remarks..."></td>' +
+              '</tr>';
+          }).join('');
+          attBody.querySelectorAll('tr').forEach(function(tr) {
+            syncRowButtons(tr);
+            applyRowStatusClass(tr);
+          });
+          document.getElementById('btnSave').disabled = !rows.length || sessionLocked;
+          document.getElementById('btnMarkAllPresent').disabled = !rows.length || sessionLocked;
+          updateSummary();
+        });
+      });
+
+      document.getElementById('btnSave').addEventListener('click', function() {
+        var bid = attBatch.value;
+        var d = attDate.value;
+        var u = currentTeacher();
+        if (!bid || !d || !u || sessionLocked) return;
+        var unmarked = 0;
+        attBody.querySelectorAll('tr').forEach(function(tr) {
+          if (!rowStatus(tr)) unmarked++;
+        });
+        if (unmarked > 0) {
+          saveMsg.textContent = 'Please mark every student (Present, Late, or Absent) before saving.';
+          return;
+        }
+        var entries = [];
+        attBody.querySelectorAll('tr').forEach(function(tr) {
+          entries.push({
+            student_id: tr.getAttribute('data-sid'),
+            status: rowStatus(tr),
+            remark: (tr.querySelector('.st-rem').value || '').trim()
+          });
+        });
+        saveMsg.textContent = 'Saving…';
+        SchoolAPI.saveBatchAttendance({
+          batch_id: parseInt(bid, 10),
+          date: d,
+          entries: entries,
+          taken_by: u,
+          assigned_teacher: u,
+          require_timetable: document.getElementById('attRequireTT').checked
+        }).then(function(r) {
+          if (!r || !r.ok) {
+            saveMsg.textContent = (r && r.error) || 'Save failed.';
+            return;
+          }
+          saveMsg.textContent = 'Saved and finalized for this date.';
+          document.getElementById('btnLoad').click();
+        });
+      });
+
+      document.getElementById('btnUnlockRequest').addEventListener('click', function() {
+        var bid = attBatch.value;
+        var d = attDate.value;
+        var u = currentTeacher();
+        var sub = encodeURIComponent('Attendance unlock request — batch ' + (bid || '?') + ' — ' + (d || '?'));
+        var body = encodeURIComponent(
+          'Teacher username: ' + (u || '—') + '\nBatch ID: ' + (bid || '—') + '\nDate: ' + (d || '—') + '\n\nReason:\n'
+        );
+        var msg = document.getElementById('unlockReqMsg');
+        window.location.href = 'mailto:admin@school.local?subject=' + sub + '&body=' + body;
+        if (msg) msg.textContent = 'If your mail client did not open, copy the details above and email your administrator.';
+      });
+
+      AcademyAuth.getUserProfile(user.uid, function(profile) {
+        var role = (profile && profile.role) || 'student';
+        if (role !== 'teacher' && role !== 'admin') {
+          window.location.href = '../student/dashboard.html';
+          return;
+        }
+        var name = (profile && profile.displayName) || user.email || 'Teacher';
+        var el = document.getElementById('profileName');
+        if (el) el.textContent = name;
+        var schoolUser = ((profile && profile.username) || '').trim();
+        if (schoolUser && window.TeacherSchool) TeacherSchool.setUsername(schoolUser);
+        loadBatches();
+      });
+      if (window.AdminTopToolbar) AdminTopToolbar.init();
+    })();
+  </script>
+  <script src="../assets/js/dashboard-sidebar.js" defer></script>
+</body>
+</html>
+

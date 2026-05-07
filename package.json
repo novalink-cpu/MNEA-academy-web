@@ -1,0 +1,9 @@
+{
+  "name": "mnea",
+  "version": "1.0.0",
+  "description": "Myanmar New Era Education - Placement Test & Admission",
+  "scripts": {
+    "start": "npx --yes serve website -l 3000",
+    "serve": "npx --yes serve website -l 3000"
+  }
+}

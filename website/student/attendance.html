@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="my">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="../assets/js/desktop-layout-viewport.js"></script>
+  <title>Attendance | Student | Myanmar New Era Academy</title>
+  <link rel="stylesheet" href="../assets/css/main.css">
+  <link rel="stylesheet" href="../assets/css/dashboard.css">
+  <link rel="stylesheet" href="../assets/css/teacher-portal.css">
+</head>
+<body class="admin-dashboard-glass" data-toolbar="student" data-notif-admin-base="../admin/">
+  <div class="dashboard-wrap glass-dashboard">
+    <aside class="dashboard-sidebar">
+      <a href="../public-page/index.html" class="logo-link"><span class="logo-brand-row"><img src="../photo/logo.png" alt="" class="logo-mark-img" width="72" decoding="async" /><span class="logo-headlines"><span class="logo-title-line">MYANMAR</span><span class="logo-title-line">NEW ERA</span></span></span></a>
+      <nav>
+        <a href="dashboard.html">Dashboard</a>
+        <a href="courses.html">My Courses</a>
+        <a href="attendance.html" class="active">Attendance</a>
+        <a href="exam-results.html">Exam Results</a>
+        <a href="notice-board.html">Notice Board</a>
+        <a href="../public-page/placement-test.html">Placement Test</a>
+        <a href="progress.html">Progress Report</a>
+        <a href="profile.html">Profile</a>
+      </nav>
+    </aside>
+    <main class="dashboard-main">
+      <div class="dashboard-header glass-toolbar">
+        <div>
+          <p class="dashboard-toolbar-title">Attendance</p>
+          <p class="teacher-toolbar-sub">Calendar, rates, leave requests · <span id="teacherToolbarRole">Student</span></p>
+        </div>
+        <div class="auth-info">
+          <div class="notification-wrap">
+            <button type="button" class="btn-notification" id="btnNotification" aria-haspopup="true" aria-expanded="false">
+              &#x1F514; <span id="notificationLabel">Notifications</span> (<span id="notificationCount" class="notification-count-num">0</span>)
+              <span class="notification-badge" id="notificationBadge" style="display:none;">0</span>
+            </button>
+            <div class="notification-dropdown" id="notificationDropdown" role="menu">
+              <h3>Notifications</h3>
+              <ul id="notificationList"><li class="notif-empty">Loading…</li></ul>
+            </div>
+          </div>
+          <div class="profile-wrap">
+            <button type="button" class="btn-profile" id="btnProfile" aria-haspopup="true" aria-expanded="false">&#x1F464; <span id="profileName">Student</span> &#x25BC;</button>
+            <div class="profile-dropdown" id="profileDropdown" role="menu">
+              <span class="profile-dropdown-label" style="display:block;padding:0.5rem 1rem;font-size:0.78rem;color:var(--text-muted);font-weight:700;text-transform:uppercase;">Student menu</span>
+              <a href="profile.html">Profile</a>
+              <a href="profile.html#password">Change password</a>
+              <a href="notice-board.html">Notice board</a>
+              <div class="divider"></div>
+              <button type="button" id="btnAdminToolbarLogout">Logout</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="teacher-analytics-grid">
+        <div class="card teacher-analytics-card">
+          <h3>Overall attendance</h3>
+          <div class="value" style="font-size:2.1rem;font-weight:800;color:var(--primary);" id="attOverallPct">—</div>
+          <p class="text-muted" style="margin:0.35rem 0 0;font-size:0.85rem;">Present + late vs all marked sessions</p>
+        </div>
+        <div class="card teacher-analytics-card">
+          <h3>Subject / batch rate</h3>
+          <div id="attByBatchBars">
+            <p class="text-muted" style="margin:0;font-size:0.88rem;">Loading…</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="card mb-2">
+        <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:0.75rem;">
+          <h2 style="margin:0;font-size:1rem;">Monthly calendar</h2>
+          <div style="display:flex;gap:0.5rem;align-items:center;">
+            <button type="button" class="btn-primary" id="attCalPrev" style="padding:0.35rem 0.75rem;border-radius:8px;border:none;cursor:pointer;font-weight:700;">←</button>
+            <strong id="attCalTitle">—</strong>
+            <button type="button" class="btn-primary" id="attCalNext" style="padding:0.35rem 0.75rem;border-radius:8px;border:none;cursor:pointer;font-weight:700;">→</button>
+          </div>
+        </div>
+        <p class="text-muted" style="font-size:0.82rem;margin:0.5rem 0 0;">Green = present, yellow = late, red = absent. Hover a day for detail.</p>
+        <div class="stu-cal-wrap" id="attCalGrid" aria-hidden="false"></div>
+      </div>
+
+      <div class="card mb-2">
+        <h2 style="margin:0 0 0.75rem;font-size:1rem;">History (last 30 days)</h2>
+        <div id="attHistoryBars" class="stu-chart-grid"></div>
+      </div>
+
+      <div class="card mb-2">
+        <h2 style="margin:0 0 0.75rem;font-size:1rem;">Leave application</h2>
+        <p class="text-muted" style="font-size:0.85rem;margin-bottom:1rem;">Creates a pending request stored on the school server.</p>
+        <div class="settings-form-grid" style="max-width:28rem;">
+          <div class="settings-field">
+            <label for="leaveFrom">From</label>
+            <input type="date" id="leaveFrom">
+          </div>
+          <div class="settings-field">
+            <label for="leaveTo">To</label>
+            <input type="date" id="leaveTo">
+          </div>
+          <div class="settings-field">
+            <label for="leaveReason">Reason</label>
+            <textarea id="leaveReason" rows="2" maxlength="1000"></textarea>
+          </div>
+          <div>
+            <button type="button" class="btn-primary" id="leaveSubmit" style="padding:0.55rem 1.2rem;border-radius:8px;border:none;cursor:pointer;font-weight:700;">Submit request</button>
+            <span id="leaveMsg" class="text-muted" style="margin-left:0.75rem;font-size:0.86rem;"></span>
+          </div>
+        </div>
+        <h3 style="margin:1rem 0 0.5rem;font-size:0.9rem;">Your requests</h3>
+        <ul id="leaveHistory" style="list-style:none;padding:0;margin:0;font-size:0.88rem;"></ul>
+      </div>
+
+      <div class="card mb-2">
+        <h2 style="margin:0 0 0.75rem;font-size:1rem;">Recent log</h2>
+        <div class="table-wrap">
+          <table class="dashboard-table" style="width:100%;">
+            <thead>
+              <tr><th>Date</th><th>Batch</th><th>Status</th></tr>
+            </thead>
+            <tbody id="attBody">
+              <tr><td colspan="3" class="text-muted">Loading…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+  <script src="../assets/js/firebase-config.js"></script>
+  <script src="../assets/js/auth.js"></script>
+  <script src="../assets/js/school-api.js"></script>
+  <script src="../assets/js/content-firebase.js"></script>
+  <script src="../assets/js/student-context.js"></script>
+  <script src="../assets/js/admin-top-toolbar.js"></script>
+  <script src="../assets/js/lang-switcher.js"></script>
+  <script>
+    (function() {
+      var user = window.AcademyAuth && AcademyAuth.currentUser();
+      if (!user) { window.location.href = '../public-page/login.html?redirect=student/attendance.html'; return; }
+      if (window.AdminTopToolbar) AdminTopToolbar.init();
+
+      var calYear, calMonth;
+      function pad(n) { return String(n).padStart(2, '0'); }
+      function ymd(y, m, d) { return y + '-' + pad(m) + '-' + pad(d); }
+      function esc(s) {
+        return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;');
+      }
+
+      function setCal(y, m) {
+        calYear = y;
+        calMonth = m;
+        document.getElementById('attCalTitle').textContent =
+          new Date(y, m - 1, 1).toLocaleString('en-GB', { month: 'long', year: 'numeric' });
+        loadReport();
+      }
+
+      document.getElementById('attCalPrev').addEventListener('click', function() {
+        var m = calMonth - 1;
+        var y = calYear;
+        if (m < 1) { m = 12; y--; }
+        setCal(y, m);
+      });
+      document.getElementById('attCalNext').addEventListener('click', function() {
+        var m = calMonth + 1;
+        var y = calYear;
+        if (m > 12) { m = 1; y++; }
+        setCal(y, m);
+      });
+
+      var lastLogs = [];
+      function loadReport() {
+        StudentContext.resolve(function(sid) {
+          var tbody = document.getElementById('attBody');
+          if (!sid) {
+            tbody.innerHTML = '<tr><td colspan="3" class="text-muted">Set student ID on Dashboard.</td></tr>';
+            return;
+          }
+          var from = ymd(calYear, calMonth, 1);
+          var last = new Date(calYear, calMonth, 0).getDate();
+          var to = ymd(calYear, calMonth, last);
+          SchoolAPI.getStudentAttendanceReport(sid, null, { from: from, to: to }).then(function(r) {
+            if (!r || !r.ok) {
+              tbody.innerHTML = '<tr><td colspan="3" class="text-muted">No data or API error.</td></tr>';
+              return;
+            }
+            document.getElementById('attOverallPct').textContent =
+              r.attendance_percentage != null ? r.attendance_percentage + '%' : '—';
+            var by = r.by_batch || [];
+            var bb = document.getElementById('attByBatchBars');
+            if (!by.length) {
+              bb.innerHTML = '<p class="text-muted" style="margin:0;font-size:0.88rem;">No batch breakdown.</p>';
+            } else {
+              bb.innerHTML = by.map(function(b) {
+                var rate = Math.min(100, Math.max(0, Number(b.rate) || 0));
+                return '<div class="t-bar-row"><span>' + esc(b.batch_name || '').slice(0, 14) + '</span><div class="t-bar-track"><div class="t-bar-fill" style="width:' + Math.round(rate) + '%;"></div></div><span class="t-bar-val">' + Math.round(rate) + '%</span></div>';
+              }).join('');
+            }
+            var logsInMonth = (r.logs || []).filter(function(l) {
+              return l.date >= from && l.date <= to;
+            });
+            var byDate = {};
+            logsInMonth.forEach(function(l) {
+              var d = l.date;
+              if (!byDate[d]) byDate[d] = [];
+              byDate[d].push(l);
+            });
+            var firstDow = new Date(calYear, calMonth - 1, 1).getDay();
+            var daysInMonth = new Date(calYear, calMonth, 0).getDate();
+            var labels = ['Su','Mo','Tu','We','Th','Fr','Sa'];
+            var cells = labels.map(function(L) { return '<div class="stu-cal-h">' + L + '</div>'; });
+            for (var i = 0; i < firstDow; i++) {
+              cells.push('<div class="stu-cal-cell stu-cal-cell--muted"></div>');
+            }
+            for (var d = 1; d <= daysInMonth; d++) {
+              var ds = ymd(calYear, calMonth, d);
+              var entries = byDate[ds] || [];
+              var cls = 'stu-cal-cell';
+              var title = '';
+              if (entries.length) {
+                var st = entries.map(function(e) { return e.status; });
+                if (st.indexOf('absent') >= 0) cls += ' stu-cal-cell--absent';
+                else if (st.indexOf('late') >= 0) cls += ' stu-cal-cell--late';
+                else cls += ' stu-cal-cell--present';
+                title = entries.map(function(e) {
+                  return e.batch_name + ': ' + e.status;
+                }).join('; ');
+              }
+              cells.push('<div class="' + cls + '" title="' + esc(title) + '"><span>' + d + '</span></div>');
+            }
+            document.getElementById('attCalGrid').innerHTML = cells.join('');
+
+            tbody.innerHTML = (r.logs || []).slice(0, 40).map(function(l) {
+              var st = (l.status || '').toLowerCase();
+              var c = st === 'present' ? 'status-present' : st === 'absent' ? 'status-absent' : '';
+              return '<tr><td>' + esc(l.date) + '</td><td>' + esc(l.batch_name || '') + '</td><td class="' + c + '">' + esc(l.status) + '</td></tr>';
+            }).join('') || '<tr><td colspan="3" class="text-muted">No rows.</td></tr>';
+
+            lastLogs = r.logs || [];
+            renderHistory30();
+          }).catch(function() {
+            tbody.innerHTML = '<tr><td colspan="3" class="text-muted">Request failed.</td></tr>';
+          });
+        });
+      }
+
+      function renderHistory30() {
+        var now = new Date();
+        var buckets = {};
+        for (var i = 0; i < 30; i++) {
+          var dt = new Date(now);
+          dt.setDate(dt.getDate() - i);
+          var key = dt.getFullYear() + '-' + pad(dt.getMonth() + 1) + '-' + pad(dt.getDate());
+          buckets[key] = { present: 0, absent: 0, late: 0 };
+        }
+        lastLogs.forEach(function(l) {
+          if (!buckets[l.date]) return;
+          var st = (l.status || '').toLowerCase();
+          if (st === 'present') buckets[l.date].present++;
+          else if (st === 'absent') buckets[l.date].absent++;
+          else if (st === 'late') buckets[l.date].late++;
+        });
+        var keys = Object.keys(buckets).sort();
+        var el = document.getElementById('attHistoryBars');
+        el.innerHTML = keys.map(function(k) {
+          var b = buckets[k];
+          var tot = b.present + b.absent + b.late;
+          var good = tot ? Math.round((b.present + b.late) * 100 / tot) : 0;
+          return '<div class="t-bar-row"><span style="font-size:0.75rem;">' + k.slice(5) + '</span><div class="t-bar-track"><div class="t-bar-fill" style="width:' + good + '%;"></div></div><span class="t-bar-val">' + (tot ? good + '%' : '—') + '</span></div>';
+        }).join('');
+      }
+
+      function loadLeaves() {
+        StudentContext.resolve(function(sid) {
+          SchoolAPI.getWebExtra('student_leave_requests').then(function(r) {
+            var data = (r && r.ok && r.data) || [];
+            if (!Array.isArray(data)) data = [];
+            var mine = data.filter(function(x) { return String(x.student_id || '') === String(sid); }).slice(-8).reverse();
+            document.getElementById('leaveHistory').innerHTML = mine.length
+              ? mine.map(function(x) {
+                return '<li style="padding:0.45rem 0;border-bottom:1px solid var(--border);">' + esc(x.from) + ' → ' + esc(x.to) + ' · <em>' + esc(x.status || 'pending') + '</em></li>';
+              }).join('')
+              : '<li class="text-muted">None yet.</li>';
+          });
+        });
+      }
+
+      document.getElementById('leaveSubmit').addEventListener('click', function() {
+        var msg = document.getElementById('leaveMsg');
+        msg.textContent = '';
+        StudentContext.resolve(function(sid) {
+          if (!sid) {
+            msg.textContent = 'Set student ID on Dashboard.';
+            return;
+          }
+          var f = document.getElementById('leaveFrom').value;
+          var t = document.getElementById('leaveTo').value;
+          if (!f || !t) {
+            msg.textContent = 'Pick dates.';
+            return;
+          }
+          var row = {
+            id: 'l' + Date.now().toString(36),
+            student_id: sid,
+            from: f,
+            to: t,
+            reason: (document.getElementById('leaveReason').value || '').trim(),
+            status: 'pending',
+            submitted_at: new Date().toISOString()
+          };
+          SchoolAPI.getWebExtra('student_leave_requests').then(function(r) {
+            var data = (r && r.ok && r.data) || [];
+            if (!Array.isArray(data)) data = [];
+            data.push(row);
+            return SchoolAPI.saveWebExtra('student_leave_requests', data);
+          }).then(function(r) {
+            msg.textContent = r && r.ok ? 'Submitted.' : 'Failed.';
+            loadLeaves();
+          }).catch(function() {
+            msg.textContent = 'Network error.';
+          });
+        });
+      });
+
+      var n = new Date();
+      setCal(n.getFullYear(), n.getMonth() + 1);
+      loadLeaves();
+    })();
+  </script>
+  <script src="../assets/js/dashboard-sidebar.js" defer></script>
+</body>
+</html>

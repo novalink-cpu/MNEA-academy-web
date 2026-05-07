@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="my">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="../assets/js/desktop-layout-viewport.js"></script>
+  <title>Notice Board | Student | Myanmar New Era Academy</title>
+  <link rel="stylesheet" href="../assets/css/main.css">
+  <link rel="stylesheet" href="../assets/css/dashboard.css">
+  <link rel="stylesheet" href="../assets/css/teacher-portal.css">
+</head>
+<body class="admin-dashboard-glass" data-toolbar="student" data-notif-admin-base="../admin/">
+  <div class="dashboard-wrap glass-dashboard">
+    <aside class="dashboard-sidebar">
+      <a href="../public-page/index.html" class="logo-link"><span class="logo-brand-row"><img src="../photo/logo.png" alt="" class="logo-mark-img" width="72" decoding="async" /><span class="logo-headlines"><span class="logo-title-line">MYANMAR</span><span class="logo-title-line">NEW ERA</span></span></span></a>
+      <nav>
+        <a href="dashboard.html">Dashboard</a>
+        <a href="courses.html">My Courses</a>
+        <a href="attendance.html">Attendance</a>
+        <a href="exam-results.html">Exam Results</a>
+        <a href="notice-board.html" class="active">Notice Board</a>
+        <a href="../public-page/placement-test.html">Placement Test</a>
+        <a href="progress.html">Progress Report</a>
+        <a href="profile.html">Profile</a>
+      </nav>
+    </aside>
+    <main class="dashboard-main">
+      <div class="dashboard-header glass-toolbar">
+        <div>
+          <p class="dashboard-toolbar-title">Notice Board</p>
+          <p class="teacher-toolbar-sub">Official notices · <span id="teacherToolbarRole">Student</span></p>
+        </div>
+        <div class="auth-info">
+          <div class="notification-wrap">
+            <button type="button" class="btn-notification" id="btnNotification" aria-haspopup="true" aria-expanded="false">
+              &#x1F514; <span id="notificationLabel">Notifications</span> (<span id="notificationCount" class="notification-count-num">0</span>)
+              <span class="notification-badge" id="notificationBadge" style="display:none;">0</span>
+            </button>
+            <div class="notification-dropdown" id="notificationDropdown" role="menu">
+              <h3>Notifications</h3>
+              <ul id="notificationList"><li class="notif-empty">Loading…</li></ul>
+            </div>
+          </div>
+          <div class="profile-wrap">
+            <button type="button" class="btn-profile" id="btnProfile" aria-haspopup="true" aria-expanded="false">&#x1F464; <span id="profileName">Student</span> &#x25BC;</button>
+            <div class="profile-dropdown" id="profileDropdown" role="menu">
+              <span class="profile-dropdown-label" style="display:block;padding:0.5rem 1rem;font-size:0.78rem;color:var(--text-muted);font-weight:700;text-transform:uppercase;">Student menu</span>
+              <a href="profile.html">Profile</a>
+              <a href="profile.html#password">Change password</a>
+              <a href="notice-board.html">Notice board</a>
+              <div class="divider"></div>
+              <button type="button" id="btnAdminToolbarLogout">Logout</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="stu-notice-filters">
+        <div class="settings-field" style="margin:0;">
+          <label for="noticeSearch">Search</label>
+          <input type="search" id="noticeSearch" placeholder="Title or body…" autocomplete="off">
+        </div>
+        <div class="settings-field" style="margin:0;">
+          <label for="noticeCategory">Category</label>
+          <select id="noticeCategory">
+            <option value="">All categories</option>
+          </select>
+        </div>
+        <p class="text-muted" style="margin:0;font-size:0.82rem;align-self:center;">
+          <span id="noticeCountLabel">0</span> notice(s)
+        </p>
+      </div>
+
+      <div class="card mb-2">
+        <div id="noticeListWrap">
+          <p class="text-muted" id="noticeEmpty">Loading…</p>
+          <div id="noticeList" style="display:none;"></div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+  <script src="../assets/js/firebase-config.js"></script>
+  <script src="../assets/js/auth.js"></script>
+  <script src="../assets/js/school-api.js"></script>
+  <script src="../assets/js/content-firebase.js"></script>
+  <script src="../assets/js/student-context.js"></script>
+  <script src="../assets/js/admin-top-toolbar.js"></script>
+  <script src="../assets/js/lang-switcher.js"></script>
+  <script>
+    (function() {
+      var user = window.AcademyAuth && AcademyAuth.currentUser();
+      if (!user) { window.location.href = '../public-page/login.html?redirect=student/notice-board.html'; return; }
+      if (window.AdminTopToolbar) AdminTopToolbar.init();
+
+      var allNotices = [];
+      var prevLen = -1;
+
+      function esc(s) {
+        return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;');
+      }
+      function normCat(n) {
+        var c = (n && n.category) || (n && n.type) || 'General';
+        return String(c).trim() || 'General';
+      }
+      function fillCategories(list) {
+        var sel = document.getElementById('noticeCategory');
+        var cur = sel.value;
+        var set = {};
+        list.forEach(function(n) { set[normCat(n)] = true; });
+        var keys = Object.keys(set).sort();
+        sel.innerHTML = '<option value="">All categories</option>' +
+          keys.map(function(k) { return '<option value="' + esc(k) + '">' + esc(k) + '</option>'; }).join('');
+        if (cur && keys.indexOf(cur) >= 0) sel.value = cur;
+      }
+      function render() {
+        var q = (document.getElementById('noticeSearch').value || '').trim().toLowerCase();
+        var cat = (document.getElementById('noticeCategory').value || '').trim();
+        var filtered = allNotices.filter(function(n) {
+          if (cat && normCat(n) !== cat) return false;
+          if (!q) return true;
+          var blob = ((n.title || '') + ' ' + (n.body || '') + ' ' + (n.date || '')).toLowerCase();
+          return blob.indexOf(q) >= 0;
+        });
+        document.getElementById('noticeCountLabel').textContent = String(filtered.length);
+        var empty = document.getElementById('noticeEmpty');
+        var list = document.getElementById('noticeList');
+        if (!filtered.length) {
+          empty.style.display = 'block';
+          empty.textContent = 'No notices match your filters.';
+          list.style.display = 'none';
+          list.innerHTML = '';
+          return;
+        }
+        empty.style.display = 'none';
+        list.style.display = 'block';
+        list.innerHTML = filtered.map(function(n) {
+          var c = normCat(n);
+          return '<article class="stu-notice-item">' +
+            '<span class="stu-notice-cat">' + esc(c) + '</span>' +
+            '<h3 style="margin:0.25rem 0;font-size:1.05rem;">' + esc(n.title || 'Notice') + '</h3>' +
+            '<div class="text-muted" style="font-size:0.82rem;">' + esc(n.date || '') + '</div>' +
+            '<div style="margin-top:0.5rem;line-height:1.5;">' + esc(n.body || '') + '</div>' +
+            '</article>';
+        }).join('');
+      }
+
+      function load() {
+        function apply(list) {
+          allNotices = Array.isArray(list) ? list.slice() : [];
+          allNotices.sort(function(a, b) {
+            return String(b.date || '').localeCompare(String(a.date || ''));
+          });
+          if (prevLen >= 0 && allNotices.length > prevLen && window.__playAdminNotifSound) {
+            window.__playAdminNotifSound();
+          }
+          prevLen = allNotices.length;
+          fillCategories(allNotices);
+          render();
+        }
+        if (window.SchoolAPI && SchoolAPI.getNotices) {
+          SchoolAPI.getNotices().then(apply).catch(function() {
+            if (window.AcademyFirebase && AcademyFirebase.getNotices) {
+              AcademyFirebase.getNotices(apply);
+            } else apply([]);
+            });
+        } else if (window.AcademyFirebase && AcademyFirebase.getNotices) {
+          AcademyFirebase.getNotices(apply);
+        } else apply([]);
+      }
+
+      document.getElementById('noticeSearch').addEventListener('input', render);
+      document.getElementById('noticeCategory').addEventListener('change', render);
+      load();
+      setInterval(load, 40000);
+    })();
+  </script>
+  <script src="../assets/js/dashboard-sidebar.js" defer></script>
+</body>
+</html>

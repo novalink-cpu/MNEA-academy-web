@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="my">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="../assets/js/desktop-layout-viewport.js"></script>
+  <title>My Courses | Student | Myanmar New Era Academy</title>
+  <link rel="stylesheet" href="../assets/css/main.css">
+  <link rel="stylesheet" href="../assets/css/dashboard.css">
+  <link rel="stylesheet" href="../assets/css/teacher-portal.css">
+</head>
+<body class="admin-dashboard-glass" data-toolbar="student" data-notif-admin-base="../admin/">
+  <div class="dashboard-wrap glass-dashboard">
+    <aside class="dashboard-sidebar">
+      <a href="../public-page/index.html" class="logo-link"><span class="logo-brand-row"><img src="../photo/logo.png" alt="" class="logo-mark-img" width="72" decoding="async" /><span class="logo-headlines"><span class="logo-title-line">MYANMAR</span><span class="logo-title-line">NEW ERA</span></span></span></a>
+      <nav>
+        <a href="dashboard.html">Dashboard</a>
+        <a href="courses.html" class="active">My Courses</a>
+        <a href="attendance.html">Attendance</a>
+        <a href="exam-results.html">Exam Results</a>
+        <a href="notice-board.html">Notice Board</a>
+        <a href="../public-page/placement-test.html">Placement Test</a>
+        <a href="progress.html">Progress Report</a>
+        <a href="profile.html">Profile</a>
+      </nav>
+    </aside>
+    <main class="dashboard-main">
+      <div class="dashboard-header glass-toolbar">
+        <div>
+          <p class="dashboard-toolbar-title">My Courses</p>
+          <p class="teacher-toolbar-sub">Batches, materials, assignments · <span id="teacherToolbarRole">Student</span> · <strong id="stuHeaderName">—</strong></p>
+        </div>
+        <div class="auth-info">
+          <div class="notification-wrap">
+            <button type="button" class="btn-notification" id="btnNotification" aria-haspopup="true" aria-expanded="false">
+              &#x1F514; <span id="notificationLabel">Notifications</span> (<span id="notificationCount" class="notification-count-num">0</span>)
+              <span class="notification-badge" id="notificationBadge" style="display:none;">0</span>
+            </button>
+            <div class="notification-dropdown" id="notificationDropdown" role="menu">
+              <h3>Notifications</h3>
+              <ul id="notificationList"><li class="notif-empty">Loading…</li></ul>
+            </div>
+          </div>
+          <div class="profile-wrap">
+            <button type="button" class="btn-profile" id="btnProfile" aria-haspopup="true" aria-expanded="false">&#x1F464; <span id="profileName">Student</span> &#x25BC;</button>
+            <div class="profile-dropdown" id="profileDropdown" role="menu">
+              <span class="profile-dropdown-label" style="display:block;padding:0.5rem 1rem;font-size:0.78rem;color:var(--text-muted);font-weight:700;text-transform:uppercase;">Student menu</span>
+              <a href="profile.html">Profile</a>
+              <a href="profile.html#password">Change password</a>
+              <a href="notice-board.html">Notice board</a>
+              <div class="divider"></div>
+              <button type="button" id="btnAdminToolbarLogout">Logout</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="stu-tabs" role="tablist" aria-label="Course views">
+        <button type="button" class="is-active" data-tab="current" aria-selected="true">Current courses</button>
+        <button type="button" data-tab="done" aria-selected="false">Completed</button>
+        <button type="button" data-tab="materials" aria-selected="false">Materials</button>
+        <button type="button" data-tab="assign" aria-selected="false">Submit assignment</button>
+      </div>
+
+      <div id="paneCurrent" class="card mb-2">
+        <h2 style="margin:0 0 0.75rem;font-size:1rem;">Current courses</h2>
+        <ul id="courseCurrentList" style="list-style:none;padding:0;margin:0;">
+          <li class="text-muted">Loading…</li>
+        </ul>
+      </div>
+      <div id="paneDone" class="card mb-2" style="display:none;">
+        <h2 style="margin:0 0 0.75rem;font-size:1rem;">Completed courses</h2>
+        <p class="text-muted" style="font-size:0.88rem;">Batches that ended and still list you as a member.</p>
+        <ul id="courseDoneList" style="list-style:none;padding:0;margin:0;">
+          <li class="text-muted">Loading…</li>
+        </ul>
+      </div>
+      <div id="paneMaterials" class="card mb-2" style="display:none;">
+        <h2 style="margin:0 0 0.75rem;font-size:1rem;">Download materials</h2>
+        <p class="text-muted" style="font-size:0.85rem;margin-bottom:0.75rem;">From teachers’ shared list (matched to your batch names).</p>
+        <ul id="matStudentList" style="list-style:none;padding:0;margin:0;">
+          <li class="text-muted">Loading…</li>
+        </ul>
+      </div>
+      <div id="paneAssign" class="card mb-2" style="display:none;">
+        <h2 style="margin:0 0 0.75rem;font-size:1rem;">Assignment submission</h2>
+        <p class="text-muted" style="font-size:0.85rem;margin-bottom:1rem;">Sends a record to the school server (visible to admins).</p>
+        <div class="settings-form-grid" style="max-width:32rem;">
+          <div class="settings-field">
+            <label for="asgTitle">Title</label>
+            <input type="text" id="asgTitle" maxlength="200" placeholder="e.g. Unit 4 essay">
+          </div>
+          <div class="settings-field">
+            <label for="asgBatch">Batch / class (optional)</label>
+            <input type="text" id="asgBatch" maxlength="120" placeholder="Your batch name">
+          </div>
+          <div class="settings-field">
+            <label for="asgLink">Link (Drive, etc.)</label>
+            <input type="url" id="asgLink" placeholder="https://…">
+          </div>
+          <div class="settings-field">
+            <label for="asgNotes">Notes</label>
+            <textarea id="asgNotes" rows="3" maxlength="2000" placeholder="Short description"></textarea>
+          </div>
+          <div>
+            <button type="button" class="btn-primary" id="asgSubmit" style="padding:0.55rem 1.2rem;border-radius:8px;border:none;cursor:pointer;font-weight:700;">Submit</button>
+            <span id="asgMsg" class="text-muted" style="margin-left:0.75rem;font-size:0.86rem;"></span>
+          </div>
+        </div>
+        <h3 style="margin:1.25rem 0 0.5rem;font-size:0.95rem;">Your submissions</h3>
+        <ul id="asgHistory" style="list-style:none;padding:0;margin:0;font-size:0.88rem;"></ul>
+      </div>
+    </main>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+  <script src="../assets/js/firebase-config.js"></script>
+  <script src="../assets/js/auth.js"></script>
+  <script src="../assets/js/school-api.js"></script>
+  <script src="../assets/js/content-firebase.js"></script>
+  <script src="../assets/js/student-context.js"></script>
+  <script src="../assets/js/admin-top-toolbar.js"></script>
+  <script src="../assets/js/lang-switcher.js"></script>
+  <script>
+    (function() {
+      var user = window.AcademyAuth && AcademyAuth.currentUser();
+      if (!user) { window.location.href = '../public-page/login.html?redirect=student/courses.html'; return; }
+      AcademyAuth.getUserProfile(user.uid, function(p) {
+        var el = document.getElementById('stuHeaderName');
+        if (el) el.textContent = (p && p.displayName) || user.email || 'Student';
+      });
+      if (window.AdminTopToolbar) AdminTopToolbar.init();
+
+      function esc(s) {
+        return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;');
+      }
+      function todayStr() {
+        var d = new Date();
+        return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+      }
+      function batchEnded(b) {
+        var e = (b && b.end_date || '').trim();
+        if (!e) return false;
+        return e < todayStr();
+      }
+
+      document.querySelectorAll('.stu-tabs button').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          var tab = btn.getAttribute('data-tab');
+          document.querySelectorAll('.stu-tabs button').forEach(function(b) {
+            b.classList.toggle('is-active', b === btn);
+            b.setAttribute('aria-selected', b === btn ? 'true' : 'false');
+          });
+          document.getElementById('paneCurrent').style.display = tab === 'current' ? '' : 'none';
+          document.getElementById('paneDone').style.display = tab === 'done' ? '' : 'none';
+          document.getElementById('paneMaterials').style.display = tab === 'materials' ? '' : 'none';
+          document.getElementById('paneAssign').style.display = tab === 'assign' ? '' : 'none';
+        });
+      });
+
+      function renderCourseCard(b, extra) {
+        var name = esc(b.name || b.id);
+        var course = esc(b.course_name || '');
+        var level = esc(b.level_name || '');
+        var sched = esc((b.schedule || '').trim());
+        return '<li style="padding:1rem 0;border-bottom:1px solid var(--border);">' +
+          '<strong>' + name + '</strong>' + (course ? ' — ' + course : '') + (level ? ' · ' + level : '') +
+          (sched ? '<div class="text-muted" style="font-size:0.85rem;margin-top:0.35rem;">' + sched + '</div>' : '') +
+          (extra ? '<div class="text-muted" style="font-size:0.82rem;margin-top:0.35rem;">' + extra + '</div>' : '') +
+          '</li>';
+      }
+
+      function materialVisibleForBatch(note, batchNames) {
+        var n = (note || '').trim().toLowerCase();
+        if (!n) return true;
+        var parts = n.split(/[,;]+/).map(function(x) { return x.trim().toLowerCase(); }).filter(Boolean);
+        if (!batchNames.length) return true;
+        return parts.some(function(p) {
+          return batchNames.some(function(bn) { return bn && bn.toLowerCase().indexOf(p) >= 0; });
+        });
+      }
+
+      function loadAll() {
+        StudentContext.resolve(function(sid) {
+          var curEl = document.getElementById('courseCurrentList');
+          var doneEl = document.getElementById('courseDoneList');
+          if (!window.SchoolAPI) {
+            curEl.innerHTML = '<li class="text-muted">API unavailable.</li>';
+            return;
+          }
+          Promise.all([
+            SchoolAPI.getStudent(sid),
+            SchoolAPI.getBatches()
+          ]).then(function(pair) {
+            var gr = pair[0];
+            var br = pair[1];
+            var st = gr && gr.ok && gr.student ? gr.student : {};
+            var batches = (br && br.ok && br.batches) ? br.batches : [];
+            var myBid = st.batch_id != null ? Number(st.batch_id) : null;
+            var batchNames = [];
+            var currentHtml = '';
+            if (myBid != null && !isNaN(myBid)) {
+              var b = batches.find(function(x) { return Number(x.id) === myBid; });
+              if (b) {
+                batchNames.push(String(b.name || ''));
+                var ended = batchEnded(b);
+                currentHtml = ended
+                  ? '<li class="text-muted">Your assigned batch has ended. See <strong>Completed</strong> if listed.</li>'
+                  : renderCourseCard(b, 'Teacher: ' + esc(b.teacher_name || '—'));
+              } else {
+                currentHtml = '<li class="text-muted">Batch ID ' + myBid + ' not found in timetable data.</li>';
+              }
+            } else {
+              currentHtml = '<li class="text-muted">No batch assigned in student record. Ask the office to link your class.</li>';
+            }
+            curEl.innerHTML = currentHtml || '<li class="text-muted">—</li>';
+
+            var endedBatches = batches.filter(batchEnded);
+            if (!sid || !endedBatches.length) {
+              doneEl.innerHTML = '<li class="text-muted">No completed batches to scan.</li>';
+              loadMaterials(batchNames);
+              return;
+            }
+            Promise.all(endedBatches.slice(0, 20).map(function(b) {
+              return SchoolAPI.getBatchStudents(b.id).then(function(sr) {
+                var studs = sr && sr.ok && sr.students ? sr.students : [];
+                var ok = studs.some(function(s) {
+                  return String(s.student_id || s.id || '') === String(sid);
+                });
+                return ok ? b : null;
+              }).catch(function() { return null; });
+            })).then(function(found) {
+              var list = found.filter(Boolean);
+              doneEl.innerHTML = list.length
+                ? list.map(function(b) { return renderCourseCard(b, 'Ended: ' + esc(b.end_date || '')); }).join('')
+                : '<li class="text-muted">No past batches found for your ID.</li>';
+              loadMaterials(batchNames);
+            });
+          }).catch(function() {
+            curEl.innerHTML = '<li class="text-muted">Could not load courses.</li>';
+          });
+
+          function loadMaterials(batchNames) {
+            var ul = document.getElementById('matStudentList');
+            SchoolAPI.getWebExtra('teacher_materials').then(function(r) {
+              var data = (r && r.ok && r.data) || [];
+              if (!Array.isArray(data)) data = [];
+              var items = data.filter(function(m) {
+                return materialVisibleForBatch(m.batches_note, batchNames);
+              });
+              if (!items.length) {
+                ul.innerHTML = '<li class="text-muted">No materials matched to your batches yet.</li>';
+                return;
+              }
+              ul.innerHTML = items.map(function(m) {
+                var href = m.url || m.file_data_url || '';
+                var title = esc(m.title || 'Material');
+                var meta = esc(m.kind || 'file') + ' · ' + esc(m.teacher_username || '');
+                var btn = href
+                  ? ' <a href="' + esc(href) + '" target="_blank" rel="noopener" style="font-weight:700;">Open</a>'
+                  : '';
+                return '<li style="padding:0.75rem 0;border-bottom:1px solid var(--border);"><strong>' + title + '</strong><div class="text-muted" style="font-size:0.82rem;">' + meta + '</div>' + btn + '</li>';
+              }).join('');
+            }).catch(function() {
+              ul.innerHTML = '<li class="text-muted">Could not load materials.</li>';
+            });
+          }
+        });
+      }
+
+      function loadAssignments() {
+        StudentContext.resolve(function(sid) {
+          SchoolAPI.getWebExtra('student_assignments').then(function(r) {
+            var data = (r && r.ok && r.data) || [];
+            if (!Array.isArray(data)) data = [];
+            var mine = data.filter(function(x) { return String(x.student_id || '') === String(sid); }).slice(-12).reverse();
+            var ul = document.getElementById('asgHistory');
+            ul.innerHTML = mine.length
+              ? mine.map(function(a) {
+                return '<li style="padding:0.5rem 0;border-bottom:1px solid var(--border);"><strong>' + esc(a.title || '—') + '</strong> · ' + esc(a.submitted_at || '') +
+                  (a.link ? ' · <a href="' + esc(a.link) + '" target="_blank" rel="noopener">link</a>' : '') + '</li>';
+              }).join('')
+              : '<li class="text-muted">No submissions yet.</li>';
+          });
+        });
+      }
+
+      document.getElementById('asgSubmit').addEventListener('click', function() {
+        var msg = document.getElementById('asgMsg');
+        msg.textContent = '';
+        StudentContext.resolve(function(sid) {
+          if (!sid) {
+            msg.textContent = 'Set student ID on Dashboard first.';
+            return;
+          }
+          var title = (document.getElementById('asgTitle').value || '').trim();
+          if (!title) {
+            msg.textContent = 'Title required.';
+            return;
+          }
+          var row = {
+            id: 'a' + Date.now().toString(36),
+            student_id: sid,
+            title: title,
+            batch: (document.getElementById('asgBatch').value || '').trim(),
+            link: (document.getElementById('asgLink').value || '').trim(),
+            notes: (document.getElementById('asgNotes').value || '').trim(),
+            submitted_at: new Date().toISOString()
+          };
+          SchoolAPI.getWebExtra('student_assignments').then(function(r) {
+            var data = (r && r.ok && r.data) || [];
+            if (!Array.isArray(data)) data = [];
+            data.push(row);
+            return SchoolAPI.saveWebExtra('student_assignments', data);
+          }).then(function(r) {
+            msg.textContent = r && r.ok ? 'Submitted.' : 'Save failed.';
+            if (r && r.ok) {
+              document.getElementById('asgTitle').value = '';
+              document.getElementById('asgLink').value = '';
+              document.getElementById('asgNotes').value = '';
+              loadAssignments();
+            }
+          }).catch(function() {
+            msg.textContent = 'Network error.';
+          });
+        });
+      });
+
+      loadAll();
+      loadAssignments();
+    })();
+  </script>
+  <script src="../assets/js/dashboard-sidebar.js" defer></script>
+</body>
+</html>

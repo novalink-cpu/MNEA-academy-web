@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="my">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="../assets/js/desktop-layout-viewport.js"></script>
+  <title>Inquiries | Admin</title>
+  <link rel="stylesheet" href="../assets/css/main.css">
+  <link rel="stylesheet" href="../assets/css/dashboard.css">
+</head>
+<body class="admin-dashboard-glass">
+  <div class="dashboard-wrap glass-dashboard">
+    <aside class="dashboard-sidebar">
+      <a href="../public-page/index.html" class="logo-link"><span class="logo-brand-row"><img src="../photo/logo.png" alt="" class="logo-mark-img" width="72" decoding="async" /><span class="logo-headlines"><span class="logo-title-line">MYANMAR</span><span class="logo-title-line">NEW ERA</span></span></span></a>
+      <nav>
+        <a href="dashboard.html">Dashboard</a>
+        <a href="admissions.html">Admission Management</a>
+        <a href="students.html">Student Management</a>
+        <a href="teachers.html">Teacher Management</a>
+        <a href="academic.html">Academic Management</a>
+        <a href="attendance.html">Attendance Management</a>
+        <a href="exams.html">Exam Management</a>
+        <a href="gpa-transcript.html">GPA & Transcript Management</a>
+        <a href="inquiries.html" class="active">Communication <span class="nav-inquiry-badge" id="navInquiryCount"></span></a>
+        <a href="content-management.html">Page Content Management</a>
+        <a href="question-bank.html">Question Bank Management</a>
+        <a href="reports.html">Reports & Analytics</a>
+        <a href="settings.html">Settings & Configuration</a>
+      </nav>
+    </aside>
+    <main class="dashboard-main">
+      <div class="dashboard-header glass-toolbar">
+        <p class="dashboard-toolbar-title" data-lang-en="Communication" data-lang-my="Communication">Communication</p>
+        <div class="auth-info">
+          <div class="notification-wrap">
+            <button type="button" class="btn-notification" id="btnNotification" aria-haspopup="true" aria-expanded="false">
+              &#x1F514; <span id="notificationLabel">Notifications</span> (<span id="notificationCount" class="notification-count-num">0</span>)
+              <span class="notification-badge" id="notificationBadge" style="display:none;">0</span>
+            </button>
+            <div class="notification-dropdown" id="notificationDropdown" role="menu">
+              <h3>Notifications</h3>
+              <ul id="notificationList"><li><a href="inquiries.html">No new notifications</a></li></ul>
+            </div>
+          </div>
+          <div class="profile-wrap">
+            <button type="button" class="btn-profile" id="btnProfile" aria-haspopup="true" aria-expanded="false">&#x1F464; <span id="profileName">Admin</span> &#x25BC;</button>
+            <div class="profile-dropdown" id="profileDropdown" role="menu">
+              <a href="settings.html">Profile</a>
+              <a href="settings.html#password">Change Password</a>
+              <div class="divider"></div>
+              <button type="button" id="btnAdminToolbarLogout">Logout</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="mgmt-cards">
+        <a href="inquiries.html" class="mgmt-card active">
+          <div class="icon">&#x1F4E7;</div>
+          <h3>Inquiries</h3>
+        </a>
+      </div>
+
+      <div class="mgmt-view-card inquiries-data-card">
+        <h2>Inquiries</h2>
+        <div class="mgmt-toolbar">
+          <select id="filterStatus">
+            <option value="">All Status</option>
+            <option value="new">New</option>
+            <option value="opened">Opened</option>
+            <option value="replied">Replied</option>
+          </select>
+          <input type="text" id="searchInquiries" placeholder="Search by name or email" style="max-width:220px;">
+          <button type="button" class="btn-primary" id="btnSearchInquiries">Search</button>
+          <span class="total" style="margin-left:auto;">Total: <span id="inquiriesTotal">0</span></span>
+        </div>
+        <div class="table-wrap">
+          <table class="dashboard-table inquiries-table">
+            <thead>
+              <tr>
+                <th>NO.</th>
+                <th>DATE</th>
+                <th>NAME</th>
+                <th>STATUS</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="inquiriesBody">
+              <tr><td colspan="5" class="text-muted">No contact messages yet. Messages from the website contact form will appear here.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div id="inquiryDetailModal" class="modal-overlay inquiry-detail-overlay" style="display:none;">
+        <div class="modal-box inquiry-detail-box" style="max-width:640px;">
+          <div class="modal-header inquiry-modal-header">
+            <h3>Inquiry Detail</h3>
+            <button type="button" class="modal-close inquiry-modal-close" id="inquiryDetailClose" aria-label="Close">&times;</button>
+          </div>
+          <div class="modal-body">
+            <table class="detail-table" style="width:100%; border-collapse:collapse;">
+              <tr><th style="text-align:left; padding:.4rem .6rem; width:160px;">Date</th><td id="inqDetailDate" style="padding:.4rem .6rem;">—</td></tr>
+              <tr><th style="text-align:left; padding:.4rem .6rem;">Name</th><td id="inqDetailName" style="padding:.4rem .6rem;">—</td></tr>
+              <tr><th style="text-align:left; padding:.4rem .6rem;">Phone</th><td id="inqDetailPhone" style="padding:.4rem .6rem;">—</td></tr>
+              <tr><th style="text-align:left; padding:.4rem .6rem;">Email</th><td id="inqDetailEmail" style="padding:.4rem .6rem;">—</td></tr>
+              <tr><th style="text-align:left; padding:.4rem .6rem;">Status</th><td id="inqDetailStatus" style="padding:.4rem .6rem;">—</td></tr>
+              <tr><th style="text-align:left; padding:.4rem .6rem; vertical-align:top;">Message</th><td id="inqDetailMessage" style="padding:.4rem .6rem; white-space:pre-wrap;">—</td></tr>
+              <tr><th style="text-align:left; padding:.4rem .6rem; vertical-align:top;">Reply</th><td id="inqDetailReply" style="padding:.4rem .6rem; white-space:pre-wrap;">—</td></tr>
+            </table>
+            <div style="margin-top:1rem;">
+              <label for="inqReplyText" style="display:block; margin-bottom:.35rem; font-weight:600;">Reply Message</label>
+              <textarea id="inqReplyText" rows="4" style="width:100%; box-sizing:border-box;" placeholder="Type your reply message..."></textarea>
+              <div class="inquiry-detail-actions">
+                <a id="inqSendSmsBtn" href="#" class="inq-action-sms" aria-label="Send SMS">SMS</a>
+                <a id="inqSendEmailBtn" href="#" class="inq-action-pill inq-action-email">Send Email</a>
+                <button type="button" id="inqDeleteBtn" class="inq-action-pill inq-action-delete">Delete</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+  <script src="../assets/js/firebase-config.js"></script>
+  <script src="../assets/js/content-firebase.js"></script>
+  <script src="../assets/js/school-api.js"></script>
+  <script src="../assets/js/lang-switcher.js"></script>
+  <script src="../assets/js/auth.js"></script>
+  <script src="../assets/js/admin-top-toolbar.js"></script>
+  <script>
+    var u = window.AcademyAuth && AcademyAuth.currentUser();
+    if (!u) window.location.href = '../public-page/login.html';
+    else {
+      AcademyAuth.getUserProfile(u.uid, function(p) { if ((p && p.role) !== 'admin') window.location.href = '../student/dashboard.html'; });
+      if (window.AdminTopToolbar) AdminTopToolbar.init();
+    }
+
+    (function loadInquiries() {
+      var tbody = document.getElementById('inquiriesBody');
+      var totalEl = document.getElementById('inquiriesTotal');
+      var filterStatus = document.getElementById('filterStatus');
+      var searchInput = document.getElementById('searchInquiries');
+      var detailModal = document.getElementById('inquiryDetailModal');
+      var detailClose = document.getElementById('inquiryDetailClose');
+      var detailDate = document.getElementById('inqDetailDate');
+      var detailName = document.getElementById('inqDetailName');
+      var detailPhone = document.getElementById('inqDetailPhone');
+      var detailEmail = document.getElementById('inqDetailEmail');
+      var detailStatus = document.getElementById('inqDetailStatus');
+      var detailMessage = document.getElementById('inqDetailMessage');
+      var detailReply = document.getElementById('inqDetailReply');
+      var replyText = document.getElementById('inqReplyText');
+      var sendSmsBtn = document.getElementById('inqSendSmsBtn');
+      var sendEmailBtn = document.getElementById('inqSendEmailBtn');
+      var deleteBtn = document.getElementById('inqDeleteBtn');
+      var currentInquiry = null;
+      var unsubscribeLive = null;
+      var hasLiveInquirySubscription = false;
+      var apiInquiryCache = [];
+      var fbInquiryCache = [];
+      var fetchToken = 0;
+      function getSeenKeys(key) {
+        try {
+          var raw = localStorage.getItem(key) || '[]';
+          var arr = JSON.parse(raw);
+          return Array.isArray(arr) ? arr : [];
+        } catch (e) { return []; }
+      }
+      function addSeenKey(key, value) {
+        if (!value) return;
+        var arr = getSeenKeys(key);
+        if (arr.indexOf(value) >= 0) return;
+        arr.push(value);
+        try { localStorage.setItem(key, JSON.stringify(arr)); } catch (e) {}
+      }
+      function getPlacementQuickCount() {
+        var seen = {};
+        function addMany(list) {
+          (Array.isArray(list) ? list : []).forEach(function(it) {
+            if (!it) return;
+            var key = String(it.client_submission_id || '') || String((it.name || it.student_name || '') + '|' + (it.phone || '') + '|' + (it.submittedAt || ''));
+            if (!key || seen[key]) return;
+            seen[key] = true;
+          });
+        }
+        try { addMany(JSON.parse(localStorage.getItem('placement_test_submissions') || '[]')); } catch (e) {}
+        try {
+          var rawOne = localStorage.getItem('placement_test_submission');
+          if (rawOne) addMany([JSON.parse(rawOne)]);
+        } catch (e) {}
+        return Object.keys(seen).length;
+      }
+      function syncTopNotificationFromPageData() {
+        if (typeof window.__refreshAdminNotifications === 'function') {
+          window.__refreshAdminNotifications();
+        }
+      }
+
+      function render(list) {
+        if (!tbody) return;
+        var statusFilter = (filterStatus && filterStatus.value) || '';
+        var q = (searchInput && searchInput.value || '').toLowerCase().trim();
+        var filtered = (list || []).filter(function(row) {
+          if (statusFilter && (row.status || 'new') !== statusFilter) return false;
+          if (q) {
+            var name = (row.name || '').toLowerCase();
+            var email = (row.email || '').toLowerCase();
+            var msg = (row.message || '').toLowerCase();
+            if (name.indexOf(q) === -1 && email.indexOf(q) === -1 && msg.indexOf(q) === -1) return false;
+          }
+          return true;
+        });
+        if (totalEl) totalEl.textContent = filtered.length;
+        if (filtered.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="5" class="text-muted inquiries-table-empty">No contact messages yet. Messages from the website contact form will appear here.</td></tr>';
+          return;
+        }
+        tbody.innerHTML = filtered.map(function(row, i) {
+          var date = row.createdAt ? new Date(row.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '—';
+          var status = (row.status || 'new');
+          return '<tr><td>' + (i + 1) + '</td><td>' + date + '</td><td>' + escapeHtml(row.name || '') + '</td><td><span class="status-badge status-' + status + '">' + status + '</span></td><td class="inquiry-col-actions"><button type="button" class="btn-inq-row btn-inq-view btn-view-inquiry" data-idx="' + i + '" aria-label="View inquiry">View</button><button type="button" class="btn-inq-row btn-inq-del btn-delete-inquiry" data-idx="' + i + '" aria-label="Delete inquiry">Delete</button></td></tr>';
+        }).join('');
+        tbody.querySelectorAll('.btn-view-inquiry').forEach(function(btn) {
+          btn.addEventListener('click', function() {
+            var idx = parseInt(btn.getAttribute('data-idx'), 10);
+            if (isNaN(idx) || idx < 0 || idx >= filtered.length) return;
+            openInquiryDetail(filtered[idx]);
+          });
+        });
+        tbody.querySelectorAll('.btn-delete-inquiry').forEach(function(btn) {
+          btn.addEventListener('click', function() {
+            var idx = parseInt(btn.getAttribute('data-idx'), 10);
+            if (isNaN(idx) || idx < 0 || idx >= filtered.length) return;
+            deleteInquiry(filtered[idx]);
+          });
+        });
+        syncTopNotificationFromPageData();
+      }
+      function escapeHtml(s) {
+        if (!s) return '';
+        var d = document.createElement('div');
+        d.textContent = s;
+        return d.innerHTML;
+      }
+
+      function mergeInquiries(primaryList, secondaryList) {
+        var out = [];
+        var seen = {};
+        // Deduplicate across API/Firebase copies of the same logical submission.
+        (primaryList || []).concat(secondaryList || []).forEach(function(it) {
+          if (!it) return;
+          var key = inquiryKey(it);
+          if (seen[key]) return;
+          seen[key] = true;
+          out.push(it);
+        });
+        out.sort(function(a, b) { return (b.createdAt || 0) - (a.createdAt || 0); });
+        return out;
+      }
+      function saveInquiryCache(list) {
+        try {
+          localStorage.setItem('mnea_admin_inquiries_cache', JSON.stringify(Array.isArray(list) ? list : []));
+        } catch (e) {}
+      }
+      function getInquiryCache() {
+        try {
+          var raw = localStorage.getItem('mnea_admin_inquiries_cache');
+          var arr = raw ? JSON.parse(raw) : [];
+          return Array.isArray(arr) ? arr : [];
+        } catch (e) { return []; }
+      }
+      function refreshInquiriesView() {
+        window._inquiriesList = mergeInquiries(apiInquiryCache || [], fbInquiryCache || []);
+        saveInquiryCache(window._inquiriesList || []);
+        render(window._inquiriesList);
+        if (typeof window.__refreshAdminNotifications === 'function') window.__refreshAdminNotifications();
+      }
+      function getApiInquiries() {
+        if (!window.SchoolAPI || !SchoolAPI.getWebExtra) return Promise.resolve([]);
+        return SchoolAPI.getWebExtra('contact_inquiries').then(function(r) {
+          return (r && r.ok && Array.isArray(r.data)) ? r.data : [];
+        }).catch(function() { return []; });
+      }
+      function withTimeout(promise, ms, fallback) {
+        return new Promise(function(resolve) {
+          var done = false;
+          var timer = setTimeout(function() {
+            if (done) return;
+            done = true;
+            resolve(fallback);
+          }, Math.max(100, parseInt(ms, 10) || 2500));
+          Promise.resolve(promise).then(function(val) {
+            if (done) return;
+            done = true;
+            clearTimeout(timer);
+            resolve(val);
+          }).catch(function() {
+            if (done) return;
+            done = true;
+            clearTimeout(timer);
+            resolve(fallback);
+          });
+        });
+      }
+      function inquiryKey(it) {
+        it = it || {};
+        if (it.client_submission_id) return 'cid:' + String(it.client_submission_id);
+        var created = (it.createdAt != null && it.createdAt !== '') ? it.createdAt : (it.created_at || '');
+        var hasSignatureParts = !!(it.email || it.phone || it.message || created || it.name);
+        if (hasSignatureParts) {
+          return [
+            'sig',
+            String(it.email || ''),
+            String(it.phone || ''),
+            String(it.message || ''),
+            String(created),
+            String(it.name || '')
+          ].join('|');
+        }
+        if (it._id) return 'id:' + String(it._id);
+        if (it.id) return 'id:' + String(it.id);
+        return [
+          'legacy',
+          String(it.email || ''),
+          String(it.phone || ''),
+          String(it.message || ''),
+          String(it.createdAt || ''),
+          String(it.name || '')
+        ].join('|');
+      }
+      function removeFirebaseInquiry(row) {
+        if (!row || typeof firebase === 'undefined' || !firebase.database) return Promise.resolve(true);
+        var key = inquiryKey(row);
+        var directId = row._id ? String(row._id) : '';
+        function removeById(id) {
+          return firebase.database().ref('inquiries/' + id).remove().then(function() { return true; }).catch(function() { return false; });
+        }
+        try {
+          if (directId && directId.indexOf('api_') !== 0) {
+            return removeById(directId);
+          }
+          return firebase.database().ref('inquiries').once('value').then(function(snap) {
+            var val = (snap && snap.val && snap.val()) || {};
+            var ids = Object.keys(val).filter(function(id) {
+              var item = Object.assign({ _id: id }, val[id] || {});
+              return inquiryKey(item) === key;
+            });
+            if (!ids.length) return true;
+            return Promise.all(ids.map(removeById)).then(function(rs) {
+              return rs.every(function(ok) { return ok !== false; });
+            });
+          }).catch(function() { return false; });
+        } catch (e) {
+          return Promise.resolve(false);
+        }
+      }
+      /** Contact form also saves to web_extra contact_inquiries; must delete there or the next fetch() brings the row back. */
+      function removeApiInquiry(row) {
+        if (!window.SchoolAPI || !SchoolAPI.getWebExtra || !SchoolAPI.saveWebExtra) return Promise.resolve(true);
+        var key = inquiryKey(row);
+        function removeFromBucket(bucket) {
+          return SchoolAPI.getWebExtra(bucket).then(function(r) {
+            var list = (r && r.ok && Array.isArray(r.data)) ? r.data : [];
+            var next = list.filter(function(it) { return inquiryKey(it) !== key; });
+            if (next.length === list.length) return true;
+            return SchoolAPI.saveWebExtra(bucket, next).then(function(saved) {
+              return !!(saved && saved.ok);
+            });
+          }).catch(function() { return false; });
+        }
+        return Promise.all([
+          removeFromBucket('contact_inquiries'),
+          removeFromBucket('inquiries')
+        ]).then(function(results) {
+          return results[0] !== false && results[1] !== false;
+        });
+      }
+      function updateFirebaseInquiryStatus(row, nextStatus, extraPatch) {
+        if (!row || typeof firebase === 'undefined' || !firebase.database) return Promise.resolve(true);
+        var key = inquiryKey(row);
+        var directId = row._id ? String(row._id) : '';
+        var patch = {};
+        if (nextStatus) patch.status = nextStatus;
+        if (extraPatch && typeof extraPatch === 'object') Object.assign(patch, extraPatch);
+        if (!Object.keys(patch).length) return Promise.resolve(true);
+        function updateById(id) {
+          return firebase.database().ref('inquiries/' + id).update(patch).then(function() { return true; }).catch(function() { return false; });
+        }
+        try {
+          if (directId && directId.indexOf('api_') !== 0) {
+            return updateById(directId);
+          }
+          return firebase.database().ref('inquiries').once('value').then(function(snap) {
+            var val = (snap && snap.val && snap.val()) || {};
+            var ids = Object.keys(val).filter(function(id) {
+              var item = Object.assign({ _id: id }, val[id] || {});
+              return inquiryKey(item) === key;
+            });
+            if (!ids.length) return true;
+            return Promise.all(ids.map(updateById)).then(function(rs) {
+              return rs.every(function(ok) { return ok !== false; });
+            });
+          }).catch(function() { return false; });
+        } catch (e) {
+          return Promise.resolve(false);
+        }
+      }
+      function updateApiInquiryStatus(row, nextStatus, extraPatch) {
+        if (!window.SchoolAPI || !SchoolAPI.getWebExtra || !SchoolAPI.saveWebExtra) return Promise.resolve(true);
+        var key = inquiryKey(row);
+        var patch = {};
+        if (nextStatus) patch.status = nextStatus;
+        if (extraPatch && typeof extraPatch === 'object') Object.assign(patch, extraPatch);
+        if (!Object.keys(patch).length) return Promise.resolve(true);
+        function updateBucket(bucket) {
+          return SchoolAPI.getWebExtra(bucket).then(function(r) {
+            var list = (r && r.ok && Array.isArray(r.data)) ? r.data : [];
+            var changed = false;
+            var next = list.map(function(it) {
+              if (inquiryKey(it) !== key) return it;
+              changed = true;
+              return Object.assign({}, it, patch);
+            });
+            if (!changed) return true;
+            return SchoolAPI.saveWebExtra(bucket, next).then(function(saved) {
+              return !!(saved && saved.ok);
+            });
+          }).catch(function() { return false; });
+        }
+        return Promise.all([
+          updateBucket('contact_inquiries'),
+          updateBucket('inquiries')
+        ]).then(function(results) {
+          return results[0] !== false && results[1] !== false;
+        });
+      }
+      function updateInquiryStatusInCaches(row, nextStatus, extraPatch) {
+        var key = inquiryKey(row);
+        var patch = {};
+        if (nextStatus) patch.status = nextStatus;
+        if (extraPatch && typeof extraPatch === 'object') Object.assign(patch, extraPatch);
+        if (!Object.keys(patch).length) return;
+        function patchList(list) {
+          return (list || []).map(function(it) {
+            if (inquiryKey(it) !== key) return it;
+            return Object.assign({}, it, patch);
+          });
+        }
+        apiInquiryCache = patchList(apiInquiryCache);
+        fbInquiryCache = patchList(fbInquiryCache);
+        if (currentInquiry && inquiryKey(currentInquiry) === key) {
+          currentInquiry = Object.assign({}, currentInquiry, patch);
+        }
+        refreshInquiriesView();
+        if (detailStatus && currentInquiry && inquiryKey(currentInquiry) === key) {
+          detailStatus.textContent = currentInquiry.status || 'new';
+        }
+        if (detailReply && currentInquiry && inquiryKey(currentInquiry) === key) {
+          detailReply.textContent = inquiryReplyText(currentInquiry) || '—';
+        }
+      }
+      function inquiryReplyText(row) {
+        row = row || {};
+        return (row.reply_message || row.replyMessage || '').toString();
+      }
+      function markInquiryStatus(row, nextStatus, opts) {
+        if (!row || !nextStatus) return;
+        var current = String(row.status || '').trim().toLowerCase();
+        var extraPatch = {};
+        var replyVal = opts && typeof opts.replyMessage === 'string' ? opts.replyMessage.trim() : '';
+        if (replyVal) {
+          extraPatch.reply_message = replyVal;
+          extraPatch.replyMessage = replyVal;
+          extraPatch.replied_at = Date.now();
+        }
+        if (current === nextStatus && !Object.keys(extraPatch).length) return;
+        // "opened" should only apply to unread/new rows.
+        if (nextStatus === 'opened' && !(current === '' || current === 'new' || current === 'pending')) return;
+        updateInquiryStatusInCaches(row, nextStatus, extraPatch);
+        Promise.all([
+          updateFirebaseInquiryStatus(row, nextStatus, extraPatch),
+          updateApiInquiryStatus(row, nextStatus, extraPatch)
+        ]).then(function(results) {
+          if (results[0] === false || results[1] === false) {
+            setTimeout(fetch, 500);
+          }
+        });
+      }
+      function deleteInquiry(row) {
+        if (!row) return;
+        if (!confirm('Delete this inquiry?')) return;
+        var key = inquiryKey(row);
+        var prevApi = (apiInquiryCache || []).slice();
+        var prevFb = (fbInquiryCache || []).slice();
+        apiInquiryCache = (apiInquiryCache || []).filter(function(it) { return inquiryKey(it) !== key; });
+        fbInquiryCache = (fbInquiryCache || []).filter(function(it) { return inquiryKey(it) !== key; });
+        if (currentInquiry && inquiryKey(currentInquiry) === key) closeInquiryDetail();
+        refreshInquiriesView();
+        Promise.all([removeFirebaseInquiry(row), removeApiInquiry(row)]).then(function(results) {
+          if (results && (results[0] === false || results[1] === false)) {
+            apiInquiryCache = prevApi;
+            fbInquiryCache = prevFb;
+            refreshInquiriesView();
+            alert('Could not update the server copy of inquiries. The row may come back after refresh — check network or API permissions.');
+          }
+        });
+      }
+      function openInquiryDetail(row) {
+        currentInquiry = row || null;
+        if (!currentInquiry) return;
+        markInquiryStatus(currentInquiry, 'opened');
+        addSeenKey('mnea_seen_inquiry_keys', inquiryKey(currentInquiry));
+        try {
+          if (window.AcademyFirebase && AcademyFirebase.markInquiryNotificationRead) {
+            var rk = currentInquiry._id
+              ? String(currentInquiry._id).replace(/[.#$\[\]\/]/g, '_').slice(0, 240)
+              : ('h:' + inquiryKey(currentInquiry)).replace(/[.#$\[\]\/]/g, '_').slice(0, 240);
+            AcademyFirebase.markInquiryNotificationRead(rk, function() {});
+          }
+        } catch (e) {}
+        var dt = currentInquiry.createdAt ? new Date(currentInquiry.createdAt).toLocaleString('en-GB') : '—';
+        if (detailDate) detailDate.textContent = dt;
+        if (detailName) detailName.textContent = currentInquiry.name || '—';
+        if (detailPhone) detailPhone.textContent = currentInquiry.phone || '—';
+        if (detailEmail) detailEmail.textContent = currentInquiry.email || '—';
+        if (detailStatus) detailStatus.textContent = currentInquiry.status || 'new';
+        if (detailMessage) detailMessage.textContent = currentInquiry.message || '—';
+        var savedReply = inquiryReplyText(currentInquiry);
+        if (detailReply) detailReply.textContent = savedReply || '—';
+        if (replyText) replyText.value = savedReply;
+        updateReplyLinks();
+        if (detailModal) detailModal.style.display = 'flex';
+        syncTopNotificationFromPageData();
+        if (typeof window.__refreshAdminNotifications === 'function') window.__refreshAdminNotifications();
+      }
+      function closeInquiryDetail() {
+        if (detailModal) detailModal.style.display = 'none';
+        currentInquiry = null;
+      }
+      function updateReplyLinks() {
+        var row = currentInquiry || {};
+        var msg = (replyText && replyText.value || '').trim();
+        var smsBody = encodeURIComponent(msg || 'Hello, this is a reply from Myanmar New Era.');
+        var emailBody = encodeURIComponent(msg || 'Hello,\n\nThank you for your inquiry.');
+        var subject = encodeURIComponent('Re: Your inquiry');
+        var phone = (row.phone || '').toString().trim();
+        var email = (row.email || '').toString().trim();
+        if (sendSmsBtn) sendSmsBtn.href = phone ? ('sms:' + phone + '?body=' + smsBody) : '#';
+        if (sendEmailBtn) {
+          if (email) {
+            var mailtoUrl = 'mailto:' + email + '?subject=' + subject + '&body=' + emailBody;
+            var gmailUrl = 'https://mail.google.com/mail/?view=cm&fs=1&to=' + encodeURIComponent(email) + '&su=' + subject + '&body=' + emailBody;
+            sendEmailBtn.href = gmailUrl;
+            sendEmailBtn.target = '_blank';
+            sendEmailBtn.rel = 'noopener';
+            sendEmailBtn.setAttribute('data-mailto-fallback', mailtoUrl);
+            sendEmailBtn.setAttribute('title', 'Open Gmail compose');
+          } else {
+            sendEmailBtn.href = '#';
+            sendEmailBtn.removeAttribute('target');
+            sendEmailBtn.removeAttribute('rel');
+            sendEmailBtn.removeAttribute('data-mailto-fallback');
+            sendEmailBtn.removeAttribute('title');
+          }
+        }
+      }
+      if (replyText) replyText.addEventListener('input', updateReplyLinks);
+      if (sendSmsBtn) sendSmsBtn.addEventListener('click', function() {
+        if (currentInquiry) markInquiryStatus(currentInquiry, 'replied', { replyMessage: (replyText && replyText.value) || '' });
+      });
+      if (sendEmailBtn) sendEmailBtn.addEventListener('click', function(e) {
+        if (!currentInquiry) return;
+        markInquiryStatus(currentInquiry, 'replied', { replyMessage: (replyText && replyText.value) || '' });
+        var href = sendEmailBtn.getAttribute('href') || '';
+        var fallback = sendEmailBtn.getAttribute('data-mailto-fallback') || '';
+        if (href.indexOf('https://mail.google.com/') === 0) {
+          var opened = null;
+          try { opened = window.open(href, '_blank', 'noopener'); } catch (err) { opened = null; }
+          if (opened) {
+            e.preventDefault();
+            return;
+          }
+          if (fallback) {
+            sendEmailBtn.href = fallback;
+            return;
+          }
+        }
+      });
+      if (deleteBtn) deleteBtn.addEventListener('click', function() { if (currentInquiry) deleteInquiry(currentInquiry); });
+      if (detailClose) detailClose.addEventListener('click', closeInquiryDetail);
+      if (detailModal) detailModal.addEventListener('click', function(e) { if (e.target === detailModal) closeInquiryDetail(); });
+      function fetch() {
+        var token = ++fetchToken;
+        var apiPromise = getApiInquiries();
+        withTimeout(apiPromise, 1800, null).then(function(apiList) {
+          if (token !== fetchToken) return;
+          if (Array.isArray(apiList)) {
+            apiInquiryCache = apiList;
+            refreshInquiriesView();
+          }
+        });
+        if (hasLiveInquirySubscription) return;
+        var fbPromise = new Promise(function(resolve) {
+          if (!window.AcademyFirebase || !AcademyFirebase.getInquiries) {
+            resolve([]);
+            return;
+          }
+          AcademyFirebase.getInquiries(function(list) { resolve(list || []); });
+        });
+        withTimeout(fbPromise, 1800, null).then(function(fbList) {
+          if (token !== fetchToken) return;
+          if (Array.isArray(fbList)) {
+            fbInquiryCache = fbList;
+            refreshInquiriesView();
+          }
+        });
+      }
+
+      if (filterStatus) filterStatus.addEventListener('change', function() { render(window._inquiriesList || []); });
+      if (searchInput) searchInput.addEventListener('input', function() { render(window._inquiriesList || []); });
+      var btnSearch = document.getElementById('btnSearchInquiries');
+      if (btnSearch) btnSearch.addEventListener('click', function() { render(window._inquiriesList || []); });
+      apiInquiryCache = getInquiryCache();
+      fbInquiryCache = [];
+      refreshInquiriesView();
+      fetch();
+      if (window.AcademyFirebase && AcademyFirebase.subscribeInquiries) {
+        hasLiveInquirySubscription = true;
+        unsubscribeLive = AcademyFirebase.subscribeInquiries(function(list) {
+          fbInquiryCache = Array.isArray(list) ? list : [];
+          window._inquiriesList = mergeInquiries(apiInquiryCache || [], fbInquiryCache || []);
+          render(window._inquiriesList);
+          saveInquiryCache(window._inquiriesList || []);
+          if (typeof window.__refreshAdminNotifications === 'function') window.__refreshAdminNotifications();
+        });
+      }
+      window.addEventListener('storage', function(ev) {
+        if (ev && (ev.key === 'placement_test_submission' || ev.key === 'placement_test_submissions')) fetch();
+      });
+      setInterval(fetch, 5000);
+    })();
+  </script>
+  <script src="../assets/js/admin-badge.js"></script>
+  <script src="../assets/js/dashboard-sidebar.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,1087 @@
+<!DOCTYPE html>
+<html lang="my">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="../assets/js/desktop-layout-viewport.js"></script>
+  <title>Admin Dashboard | Myanmar New Era Academy</title>
+  <link rel="stylesheet" href="../assets/css/main.css">
+  <link rel="stylesheet" href="../assets/css/dashboard.css">
+</head>
+<body class="admin-dashboard-glass">
+  <div class="dashboard-wrap glass-dashboard">
+    <aside class="dashboard-sidebar">
+      <a href="../public-page/index.html" class="logo-link"><span class="logo-brand-row"><img src="../photo/logo.png" alt="" class="logo-mark-img" width="72" decoding="async" /><span class="logo-headlines"><span class="logo-title-line">MYANMAR</span><span class="logo-title-line">NEW ERA</span></span></span></a>
+      <nav>
+        <a href="dashboard.html" class="active">Dashboard</a>
+        <a href="admissions.html">Admission Management</a>
+        <a href="students.html">Student Management</a>
+        <a href="teachers.html">Teacher Management</a>
+        <a href="academic.html">Academic Management</a>
+        <a href="attendance.html">Attendance Management</a>
+        <a href="exams.html">Exam Management</a>
+        <a href="gpa-transcript.html">GPA & Transcript Management</a>
+        <a href="inquiries.html">Communication <span class="nav-inquiry-badge" id="navInquiryCount"></span></a>
+        <a href="content-management.html">Page Content Management</a>
+        <a href="question-bank.html">Question Bank Management</a>
+        <a href="reports.html">Reports & Analytics</a>
+        <a href="settings.html">Settings & Configuration</a>
+      </nav>
+    </aside>
+    <main class="dashboard-main">
+      <div class="dashboard-header glass-toolbar">
+        <p class="dashboard-toolbar-title" data-lang-en="Dashboard" data-lang-my="Dashboard">Dashboard</p>
+        <div class="auth-info">
+          <div class="notification-wrap">
+            <button type="button" class="btn-notification" id="btnNotification" aria-haspopup="true" aria-expanded="false">
+              &#x1F514; <span id="notificationLabel">Notifications</span> (<span id="notificationCount" class="notification-count-num">0</span>)
+              <span class="notification-badge" id="notificationBadge" style="display:none;">0</span>
+            </button>
+            <div class="notification-dropdown" id="notificationDropdown" role="menu">
+              <h3>Notifications</h3>
+              <ul id="notificationList">
+                <li><a href="inquiries.html">No new notifications</a></li>
+              </ul>
+            </div>
+          </div>
+          <div class="profile-wrap">
+            <button type="button" class="btn-profile" id="btnProfile" aria-haspopup="true" aria-expanded="false">&#x1F464; <span id="profileName">Admin</span> &#x25BC;</button>
+            <div class="profile-dropdown" id="profileDropdown" role="menu">
+              <a href="settings.html">Profile</a>
+              <a href="settings.html#password">Change Password</a>
+              <div class="divider"></div>
+              <button type="button" id="btnAdminToolbarLogout">Logout</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="score-cards mb-2">
+        <div class="score-card">
+          <div class="score-card-content">
+            <div class="score-card-copy">
+              <div class="value" id="statStudents">—</div>
+              <h3 data-lang-en="Students" data-lang-my="Students">Students</h3>
+            </div>
+            <span class="score-card-icon" aria-hidden="true">&#x1F393;</span>
+          </div>
+        </div>
+
+        <div class="score-card">
+          <div class="score-card-content">
+            <div class="score-card-copy">
+              <div class="value" id="statTeachers">—</div>
+              <h3 data-lang-en="Teachers" data-lang-my="Teachers">Teachers</h3>
+            </div>
+            <span class="score-card-icon" aria-hidden="true">&#x1F469;&#x200D;&#x1F3EB;</span>
+          </div>
+        </div>
+
+        <div class="score-card">
+          <div class="score-card-content">
+            <div class="score-card-copy">
+              <div class="value" id="statClasses">—</div>
+              <h3 data-lang-en="Classes" data-lang-my="Classes">Classes</h3>
+            </div>
+            <span class="score-card-icon" aria-hidden="true">&#x1F4DA;</span>
+          </div>
+        </div>
+
+        <div class="score-card">
+          <div class="score-card-content">
+            <div class="score-card-copy">
+              <div class="value" id="statAdmissions">—</div>
+              <h3 data-lang-en="Admissions" data-lang-my="Admissions">Admissions</h3>
+            </div>
+            <span class="score-card-icon" aria-hidden="true">&#x1F4DD;</span>
+          </div>
+        </div>
+      </div>
+
+      <section class="dashboard-quick-chart-row mb-2" aria-label="Quick actions and program enrollment">
+        <div class="card quick-actions-panel">
+          <h2 style="margin-bottom:0.75rem; color: var(--primary);" data-lang-en="Quick Actions" data-lang-my="Quick Actions">Quick Actions</h2>
+          <div class="quick-actions quick-actions--two-col">
+            <a href="students.html?view=registration" class="btn-quick"><span class="icon">&#x2B;</span> Add Student</a>
+            <a href="teachers.html?view=registration" class="btn-quick"><span class="icon">&#x2B;</span> Add Teacher</a>
+            <a href="admin-content.html?page=home" class="btn-quick"><span class="icon">&#x2B;</span> Create Home Page</a>
+            <a href="admin-content.html?page=news" class="btn-quick"><span class="icon">&#x2B;</span> Create Resources</a>
+          </div>
+        </div>
+        <div class="card student-gender-card" aria-label="Students by gender">
+          <div class="student-gender-head">
+            <h2>Students</h2>
+          </div>
+          <div class="student-gender-ring-wrap">
+            <div class="student-gender-ring" id="studentGenderRing" style="--male-pct: 50;">
+              <div class="student-gender-center" aria-hidden="true">
+                <span class="student-gender-icon student-gender-icon-male">&#9794;</span>
+                <span class="student-gender-icon student-gender-icon-female">&#9792;</span>
+              </div>
+            </div>
+          </div>
+          <div class="student-gender-stats">
+            <div class="student-gender-stat">
+              <span class="dot dot-male" aria-hidden="true"></span>
+              <strong id="studentGenderMaleCount">0</strong>
+              <span id="studentGenderMalePct">0%</span>
+            </div>
+            <div class="student-gender-stat">
+              <span class="dot dot-female" aria-hidden="true"></span>
+              <strong id="studentGenderFemaleCount">0</strong>
+              <span id="studentGenderFemalePct">0%</span>
+            </div>
+          </div>
+        </div>
+        <div class="card program-chart-card">
+          <div class="program-chart-head">
+            <span class="program-chart-sub" data-lang-en="Enrollment overview" data-lang-my="Enrollment overview">Enrollment overview</span>
+            <h2 data-lang-en="Students by program" data-lang-my="Students by program">Students by program</h2>
+            <div class="program-chart-head-right">
+              <label class="program-chart-year-label" for="programChartYear">Year</label>
+              <select id="programChartYear" class="program-chart-year-select" title="Filter by enrollment year" aria-label="Enrollment year">
+                <option value="all">All years</option>
+              </select>
+            </div>
+          </div>
+          <div class="program-chart-body" id="programChartRoot">
+            <p class="program-chart-empty" id="programChartPlaceholder">Loading chart…</p>
+          </div>
+        </div>
+      </section>
+
+      <div class="card mb-2">
+        <div class="attendance-overview-head">
+          <div class="attendance-overview-copy">
+            <h2 style="margin-bottom:0.75rem; color: var(--primary);">Student Attendance</h2>
+            <div class="attendance-filter-row" style="display:flex;flex-wrap:wrap;gap:0.85rem;align-items:center;margin-bottom:0.9rem;">
+              <label for="admAttDate" style="font-weight:700;font-size:1rem;">Date</label>
+              <input type="date" id="admAttDate" style="padding:0.7rem 0.85rem;border:1px solid var(--border);border-radius:12px;font-size:1rem;min-height:50px;">
+              <select id="admAttPeriod" style="padding:0.7rem 0.85rem;border:1px solid var(--border);border-radius:12px;font-size:1rem;min-height:50px;">
+                <option value="daily">Daily</option>
+                <option value="weekly">Weekly</option>
+                <option value="yearly">Yearly</option>
+              </select>
+              <select id="admAttProgram" style="padding:0.7rem 0.85rem;border:1px solid var(--border);border-radius:12px;font-size:1rem;min-height:50px;min-width:220px;">
+                <option value="all">All programs</option>
+              </select>
+            </div>
+          </div>
+          <div class="attendance-donut-card" aria-label="Attendance summary">
+            <div class="attendance-donut" id="attendanceDonut" style="--present-pct:0;">
+              <span id="attendanceDonutLabel">0%</span>
+            </div>
+            <div class="attendance-donut-legend">
+              <span><i class="dot dot-present" aria-hidden="true"></i>Present</span>
+              <span><i class="dot dot-absent" aria-hidden="true"></i>Absent</span>
+            </div>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table class="dashboard-table attendance-overview-table" style="width:100%;">
+            <thead>
+              <tr>
+                <th>Program</th>
+                <th>Class</th>
+                <th>Teacher</th>
+                <th>&#x1F7E2;</th>
+                <th>&#x1F534;</th>
+                <th>&#x1F7E1;</th>
+                <th>Total</th>
+              </tr>
+            </thead>
+            <tbody id="admAttTodayBody">
+              <tr><td colspan="6" class="text-muted">Loading…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="dashboard-grid dashboard-grid-half mb-2 dashboard-recent-two-col">
+        <section class="dashboard-recent-col-1">
+        <div class="card">
+          <h2 class="upcoming-birthdays-title" style="margin-bottom:0.75rem; color: var(--primary);" data-lang-en="Upcoming Birthdays (30 days)" data-lang-my="Upcoming Birthdays (30 days)">Upcoming Birthdays (30 days)</h2>
+          <p class="text-muted" id="birthdaysEmpty">No upcoming birthdays this month.</p>
+          <ul id="birthdaysItems" style="list-style:none; padding:0; margin:0; display:none;"></ul>
+        </div>
+        <div class="card recent-inquiries-card">
+          <h2 style="margin-bottom:0.75rem; color: var(--primary);" data-lang-en="Recent Inquiries" data-lang-my="Recent Inquiries">Recent Inquiries</h2>
+          <div class="table-wrap">
+            <table class="dashboard-table">
+              <thead>
+                <tr><th data-lang-en="Name" data-lang-my="Name">Name</th><th>Email</th><th data-lang-en="Date" data-lang-my="Date">Date</th></tr>
+              </thead>
+              <tbody id="recentInquiriesBody">
+                <tr><td colspan="3" class="text-muted">No inquiries yet.</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="text-muted mt-1"><a href="inquiries.html" data-lang-en="View all" data-lang-my="View all">View all</a></p>
+        </div>
+        <section id="reports" class="dashboard-report-panel">
+          <div id="submissionsList" class="card recent-placement-card">
+            <h2 style="margin-bottom:1rem; color: #111827;" data-lang-en="Recent Placement Test" data-lang-my="Recent Placement Test">Recent Placement Test</h2>
+            <p class="text-muted" id="submissionsEmpty" data-lang-en="No submissions yet." data-lang-my="No submissions yet.">No submissions yet.</p>
+            <ul id="submissionsItems" style="list-style:none; padding:0; margin:0; display:none;"></ul>
+            <p class="text-muted mt-1"><a href="admissions.html" data-lang-en="View all" data-lang-my="View all">View all</a></p>
+          </div>
+        </section>
+        </section>
+        <aside class="dashboard-recent-col-2">
+          <div class="card top-program-card-panel">
+            <h2 style="margin-bottom:0.9rem; color:#111827;">Top Students by Program</h2>
+            <p class="text-muted" id="programTopCardsEmpty">No student data yet.</p>
+            <div id="programTopCards" class="program-top-cards" style="display:none;"></div>
+          </div>
+        </aside>
+      </div>
+    </main>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+  <script src="../assets/js/firebase-config.js"></script>
+  <script src="../assets/js/auth.js"></script>
+  <script src="../assets/js/school-api.js"></script>
+  <script src="../assets/js/content-firebase.js"></script>
+  <script src="../assets/js/admin-top-toolbar.js"></script>
+  <script src="../assets/js/lang-switcher.js"></script>
+  <script>
+    (function() {
+      var PROGRAM_CHART_COLORS = ['#ff1a1a', '#2d9cdb', '#9fc78a', '#f0de97', '#dc8be3', '#7dd3fc', '#f7b7b7', '#9adbc9'];
+      /** Same list as SchoolAPI.CANONICAL_PROGRAM_OPTIONS (registration). */
+      var CANONICAL_PROGRAM_NAMES = (window.SchoolAPI && Array.isArray(SchoolAPI.CANONICAL_PROGRAM_OPTIONS))
+        ? SchoolAPI.CANONICAL_PROGRAM_OPTIONS.slice()
+        : [
+            'IGCSE',
+            'Pre-IGCSE',
+            'Global Primary Learning Program',
+            'English 4 Skills (PEIC, UK)',
+            'Chinese Language Program',
+            'Business & Management',
+            'Coding & Robotics',
+            'Online Class'
+          ];
+      function escChart(s) {
+        return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
+      }
+      var programChartState = { students: [], batches: [] };
+      function parseYearFromValue(v) {
+        if (v == null || v === '') return null;
+        if (typeof v === 'number') {
+          if (v > 1900 && v < 3000) return v;
+          var dn = new Date(v);
+          return isNaN(dn.getTime()) ? null : dn.getFullYear();
+        }
+        var str = String(v).trim();
+        if (!str) return null;
+        var m = str.match(/\b(20\d{2})\b/);
+        if (m) return parseInt(m[1], 10);
+        var d2 = new Date(str);
+        return isNaN(d2.getTime()) ? null : d2.getFullYear();
+      }
+      function getStudentEnrollmentYear(s, batchById) {
+        if (!s) return null;
+        var candidates = [
+          s.enrollment_date, s.admission_date, s.admitted_at, s.date_joined, s.join_date,
+          s.start_date, s.created_at, s.registration_date, s.enrolled_at, s.date_registered
+        ];
+        for (var i = 0; i < candidates.length; i++) {
+          var y = parseYearFromValue(candidates[i]);
+          if (y) return y;
+        }
+        var bid = s.batch_id != null ? String(s.batch_id) : '';
+        if (bid && batchById && batchById[bid]) {
+          var b = batchById[bid];
+          var bc = [
+            b.start_date, b.enrollment_date, b.academic_year_start, b.created_at,
+            b.academic_year, b.year, b.start_year
+          ];
+          for (var j = 0; j < bc.length; j++) {
+            var y2 = parseYearFromValue(bc[j]);
+            if (y2) return y2;
+          }
+        }
+        return null;
+      }
+      function buildBatchById(batches) {
+        var o = {};
+        (batches || []).forEach(function(b) {
+          if (b && b.id != null) o[String(b.id)] = b;
+        });
+        return o;
+      }
+      function collectEnrollmentYearsFromStudents(students, batchById) {
+        var ys = {};
+        (students || []).forEach(function(s) {
+          var y = getStudentEnrollmentYear(s, batchById);
+          if (y) ys[y] = true;
+        });
+        var arr = Object.keys(ys).map(function(k) { return parseInt(k, 10); }).filter(function(y) { return !isNaN(y); });
+        arr.sort(function(a, b) { return b - a; });
+        if (!arr.length) arr.push(new Date().getFullYear());
+        return arr;
+      }
+      function ensureProgramChartYearListener() {
+        if (window._mneaProgramChartYearListener) return;
+        var sel = document.getElementById('programChartYear');
+        if (!sel) return;
+        window._mneaProgramChartYearListener = true;
+        sel.addEventListener('change', function() {
+          try { localStorage.setItem('mnea_program_chart_year', this.value); } catch (e) {}
+          refreshProgramChart();
+        });
+      }
+      function populateProgramChartYearSelect(students, batches) {
+        var sel = document.getElementById('programChartYear');
+        if (!sel) return;
+        var batchById = buildBatchById(batches);
+        var years = collectEnrollmentYearsFromStudents(students, batchById);
+        var saved = 'all';
+        try { saved = localStorage.getItem('mnea_program_chart_year') || 'all'; } catch (e) {}
+        sel.innerHTML = '<option value="all">All years</option>' +
+          years.map(function(y) {
+            return '<option value="' + y + '">' + y + '</option>';
+          }).join('');
+        if (saved !== 'all') {
+          var yNum = parseInt(saved, 10);
+          if (!isNaN(yNum) && years.indexOf(yNum) >= 0) sel.value = String(yNum);
+          else sel.value = 'all';
+        } else {
+          sel.value = 'all';
+        }
+      }
+      function refreshProgramChart() {
+        var sel = document.getElementById('programChartYear');
+        var yearVal = sel && sel.value ? sel.value : 'all';
+        var stu = programChartState.students || [];
+        var bat = programChartState.batches || [];
+        var batchById = buildBatchById(bat);
+        var filtered = stu;
+        if (yearVal !== 'all') {
+          var yNum = parseInt(yearVal, 10);
+          if (!isNaN(yNum)) {
+            filtered = stu.filter(function(s) {
+              return getStudentEnrollmentYear(s, batchById) === yNum;
+            });
+          }
+        }
+        drawProgramEnrollmentChartBody(filtered, bat);
+      }
+      function setProgramChartDataAndRefresh(students, batches) {
+        programChartState.students = students || [];
+        programChartState.batches = batches || [];
+        ensureProgramChartYearListener();
+        var sel = document.getElementById('programChartYear');
+        if (sel) sel.disabled = false;
+        populateProgramChartYearSelect(programChartState.students, programChartState.batches);
+        if (sel) sel.title = 'Filter by enrollment year';
+        refreshProgramChart();
+      }
+      function classifyGenderValue(raw) {
+        var s = String(raw == null ? '' : raw).trim().toLowerCase();
+        if (!s) return '';
+        if (s === 'm' || s === 'male' || s === 'boy' || s.indexOf('ကျား') >= 0) return 'male';
+        if (s === 'f' || s === 'female' || s === 'girl' || s.indexOf('မ') >= 0) return 'female';
+        return '';
+      }
+      function renderStudentGenderCard(students) {
+        var list = Array.isArray(students) ? students : [];
+        var male = 0;
+        var female = 0;
+        list.forEach(function(s) {
+          if (!s) return;
+          var g = classifyGenderValue(s.gender || s.sex || s.student_gender);
+          if (g === 'male') male++;
+          else if (g === 'female') female++;
+        });
+        var total = male + female;
+        var malePct = total > 0 ? Math.round((male * 100) / total) : 0;
+        var femalePct = total > 0 ? (100 - malePct) : 0;
+        var ring = document.getElementById('studentGenderRing');
+        if (ring) ring.style.setProperty('--male-pct', String(malePct));
+        var el = document.getElementById('studentGenderMaleCount'); if (el) el.textContent = String(male);
+        el = document.getElementById('studentGenderFemaleCount'); if (el) el.textContent = String(female);
+        el = document.getElementById('studentGenderMalePct'); if (el) el.textContent = malePct + '%';
+        el = document.getElementById('studentGenderFemalePct'); if (el) el.textContent = femalePct + '%';
+      }
+      function parseDobMonthDay(raw) {
+        var s = String(raw == null ? '' : raw).trim();
+        if (!s) return null;
+        var m = s.match(/^(\d{4})[-\/](\d{1,2})[-\/](\d{1,2})$/);
+        if (m) return { month: parseInt(m[2], 10), day: parseInt(m[3], 10) };
+        m = s.match(/^(\d{1,2})[-\/](\d{1,2})[-\/](\d{4})$/);
+        if (m) return { day: parseInt(m[1], 10), month: parseInt(m[2], 10) };
+        return null;
+      }
+      function nextBirthdayDate(month, day) {
+        var now = new Date();
+        var y = now.getFullYear();
+        var next = new Date(y, month - 1, day);
+        next.setHours(0, 0, 0, 0);
+        var today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        if (next < today) next = new Date(y + 1, month - 1, day);
+        return next;
+      }
+      function renderUpcomingBirthdays(students) {
+        var emptyEl = document.getElementById('birthdaysEmpty');
+        var listEl = document.getElementById('birthdaysItems');
+        if (!emptyEl || !listEl) return;
+        var now = new Date();
+        var today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        var weekLater = new Date(today);
+        weekLater.setDate(today.getDate() + 6);
+        var rows = [];
+        (Array.isArray(students) ? students : []).forEach(function(s) {
+          var dob = parseDobMonthDay(s && (s.date_of_birth || s.dob));
+          if (!dob || !dob.month || !dob.day) return;
+          var when = nextBirthdayDate(dob.month, dob.day);
+          var diff = Math.floor((when - today) / 86400000);
+          if (diff < 0 || diff > 30) return;
+          var name = (s && (s.name || s.student_id)) ? String(s.name || s.student_id) : '—';
+          var program = String((s && (s.program || s.course || s.grade || s.class || s.batch_name)) || '—');
+          rows.push({
+            name: name,
+            program: program,
+            date: when,
+            diff: diff
+          });
+        });
+        rows.sort(function(a, b) { return a.date - b.date; });
+        if (!rows.length) {
+          emptyEl.style.display = 'block';
+          listEl.style.display = 'none';
+          listEl.innerHTML = '';
+          return;
+        }
+        emptyEl.style.display = 'none';
+        listEl.style.display = 'block';
+        listEl.innerHTML = rows.map(function(r) {
+          var d = r.date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
+          var badge = r.diff === 0 ? 'Today' : (r.diff === 1 ? 'Tomorrow' : ('In ' + r.diff + ' days'));
+          return '<li style="display:grid;grid-template-columns:minmax(120px,1fr) minmax(120px,1fr) auto;align-items:center;gap:0.75rem;padding:0.55rem 0.7rem;margin-bottom:0.45rem;border:1px solid var(--border);border-radius:10px;background:#ffffff;">' +
+            '<span style="font-weight:600;">' + String(r.name).replace(/</g, '&lt;') + '</span>' +
+            '<span class="text-muted">' + String(r.program).replace(/</g, '&lt;') + '</span>' +
+            '<span class="text-muted" style="text-align:right;">' + d + ' · ' + badge + '</span>' +
+            '</li>';
+        }).join('');
+      }
+      function studentProgramHaystack(s, batchById) {
+        var parts = [
+          s && s.course, s && s.grade, s && s.level, s && s.batch_name, s && s.class,
+          s && s.program, s && s.programme
+        ];
+        var bid = s && s.batch_id != null ? String(s.batch_id) : '';
+        if (bid && batchById[bid]) {
+          var b = batchById[bid];
+          parts.push(b.name, b.batch_name, b.course_name, b.level_name, b.course, b.course_title);
+        }
+        return parts.filter(function(x) { return x != null && String(x).trim() !== ''; }).map(function(x) { return String(x).toLowerCase(); }).join(' ');
+      }
+      /** Returns bucket index 0..7 for CANONICAL_PROGRAM_NAMES. */
+      function classifyStudentProgram(s, batchById) {
+        var hay = studentProgramHaystack(s, batchById);
+        if (!hay) return 7;
+        if (/pre[-\s]?igcse|pre\s*igcse|preigcse/.test(hay)) return 1;
+        if (/\bigcse\b|igcse\s/.test(hay) || hay.indexOf('igcse') >= 0) return 0;
+        if (/global primary|gplp|\bgpl\b|primary learning program/.test(hay)) return 2;
+        if (/peic|english 4 skills|english four skills|e4s|uk\s*peic/.test(hay)) return 3;
+        if (/chinese|mandarin|中文|汉语/.test(hay)) return 4;
+        if (/business|management|b\s*&\s*m|commerce/.test(hay)) return 5;
+        if (/coding|robotics|programming|scratch|python|stem|robot/.test(hay)) return 6;
+        if (/online|zoom|virtual|remote|distance learning|e-?learning/.test(hay)) return 7;
+        return 7;
+      }
+      function toSortableTime(v) {
+        if (v == null || v === '') return 0;
+        var n = Number(v);
+        if (!isNaN(n) && n > 0) return n > 1e12 ? n : n * 1000;
+        var d = new Date(v);
+        return isNaN(d.getTime()) ? 0 : d.getTime();
+      }
+      function toNumericScore(v) {
+        if (v == null || v === '') return null;
+        var n = Number(v);
+        if (!isNaN(n)) return n;
+        var m = String(v).match(/-?\d+(\.\d+)?/);
+        return m ? Number(m[0]) : null;
+      }
+      function extractStudentScore(s) {
+        if (!s) return null;
+        var candidates = [
+          s.totalScore, s.total_score, s.score, s.exam_score, s.final_score,
+          s.average_score, s.avg_score, s.percentage, s.percent, s.gpa
+        ];
+        for (var i = 0; i < candidates.length; i++) {
+          var n = toNumericScore(candidates[i]);
+          if (n != null && !isNaN(n)) return n;
+        }
+        return null;
+      }
+      function extractStudentPhotoUrl(s) {
+        if (!s) return '';
+        var keys = [
+          s.photo_data, s.photo_base64, s.image_data,
+          s.photo_url, s.profile_photo, s.profile_image, s.student_photo,
+          s.avatar, s.avatar_url, s.image_url, s.photo, s.image
+        ];
+        for (var i = 0; i < keys.length; i++) {
+          var val = keys[i];
+          if (val && typeof val === 'object') {
+            val = val.url || val.src || val.path || '';
+          }
+          var raw = String(val == null ? '' : val).trim();
+          if (!raw) continue;
+          if (/^https?:\/\//i.test(raw) || /^data:image\//i.test(raw) || /^blob:/i.test(raw)) return raw;
+          if (raw.indexOf('/') >= 0 || raw.indexOf('\\') >= 0 || /^(\.\.\/|\.\/|\/)/.test(raw)) return raw;
+          if (/\.(png|jpg|jpeg|webp|gif|bmp|svg)(\?.*)?$/i.test(raw)) return raw;
+          if (/^[A-Za-z0-9+/=\r\n]+$/.test(raw) && raw.length > 120) {
+            return 'data:image/jpeg;base64,' + raw.replace(/\s+/g, '');
+          }
+        }
+        return '';
+      }
+      function initialOfName(name) {
+        var t = String(name == null ? '' : name).trim();
+        return t ? t.charAt(0).toUpperCase() : '?';
+      }
+      function renderTopStudentsByProgram(students, batches) {
+        var emptyEl = document.getElementById('programTopCardsEmpty');
+        var listEl = document.getElementById('programTopCards');
+        if (!emptyEl || !listEl) return;
+        var stu = Array.isArray(students) ? students : [];
+        var bat = Array.isArray(batches) ? batches : [];
+        var batchById = buildBatchById(bat);
+        var bestByProgram = {};
+        stu.forEach(function(s) {
+          if (!s) return;
+          var pIdx = classifyStudentProgram(s, batchById);
+          var programName = CANONICAL_PROGRAM_NAMES[pIdx] || 'Other';
+          var candidate = {
+            name: String((s.name || s.student_id || '—')),
+            program: programName,
+            score: extractStudentScore(s),
+            time: toSortableTime(s.updated_at || s.created_at || s.enrollment_date || s.admission_date || ''),
+            photo: extractStudentPhotoUrl(s)
+          };
+          var prev = bestByProgram[programName];
+          if (!prev) {
+            bestByProgram[programName] = candidate;
+            return;
+          }
+          var prevScore = prev.score == null ? -Infinity : prev.score;
+          var nextScore = candidate.score == null ? -Infinity : candidate.score;
+          if (nextScore > prevScore) {
+            bestByProgram[programName] = candidate;
+            return;
+          }
+          if (nextScore === prevScore && candidate.time > prev.time) {
+            bestByProgram[programName] = candidate;
+          }
+        });
+        var rows = (CANONICAL_PROGRAM_NAMES || []).map(function(programName) {
+          if (bestByProgram[programName]) return bestByProgram[programName];
+          return {
+            name: '—',
+            program: programName,
+            score: null,
+            time: 0,
+            photo: '',
+            empty: true
+          };
+        });
+        var hasAnyData = rows.some(function(r) { return !r.empty; });
+        if (!rows.length) {
+          emptyEl.style.display = 'block';
+          listEl.style.display = 'none';
+          listEl.innerHTML = '';
+          return;
+        }
+        var palette = [
+          'linear-gradient(160deg,#ecfdf5,#dcfce7)',
+          'linear-gradient(160deg,#eef2ff,#e0e7ff)',
+          'linear-gradient(160deg,#f0f9ff,#e0f2fe)',
+          'linear-gradient(160deg,#fffbeb,#fef3c7)',
+          'linear-gradient(160deg,#fdf2f8,#fce7f3)',
+          'linear-gradient(160deg,#f0fdfa,#ccfbf1)'
+        ];
+        emptyEl.style.display = hasAnyData ? 'none' : 'block';
+        listEl.style.display = 'grid';
+        listEl.innerHTML = rows.slice(0, 8).map(function(r, i) {
+          var safeName = escChart(r.name || '—');
+          var safeProgram = escChart(r.program || '—');
+          var rank = r.empty ? 'No data yet' : '1st';
+          var avatarHtml = r.photo
+            ? '<img src="' + escChart(r.photo) + '" alt="" class="program-top-avatar-img" loading="lazy" decoding="async" />'
+            : '<span class="program-top-avatar-fallback">' + escChart(r.empty ? initialOfName(r.program) : initialOfName(r.name)) + '</span>';
+          return (
+            '<article class="program-top-card' + (r.empty ? ' is-empty' : '') + '" style="background:' + palette[i % palette.length] + ';">' +
+              '<div class="program-top-avatar">' + avatarHtml + '</div>' +
+              '<div class="program-top-name">' + safeName + '</div>' +
+              '<div class="program-top-program">' + safeProgram + '</div>' +
+              '<div class="program-top-rank">' + rank + '</div>' +
+            '</article>'
+          );
+        }).join('');
+      }
+      function seriesFromCanonicalCounts(bucket) {
+        return CANONICAL_PROGRAM_NAMES.map(function(name, i) {
+          return { name: name, count: bucket[i] || 0, color: PROGRAM_CHART_COLORS[i % PROGRAM_CHART_COLORS.length] };
+        });
+      }
+      function buildProgramSeries(students, batches) {
+        students = Array.isArray(students) ? students : [];
+        batches = Array.isArray(batches) ? batches : [];
+        if (!students.length && !batches.length) {
+          return seriesFromCanonicalCounts([0, 0, 0, 0, 0, 0, 0, 0]);
+        }
+        var batchById = buildBatchById(batches);
+        var bucket = [0, 0, 0, 0, 0, 0, 0, 0];
+        students.forEach(function(s) {
+          if (!s) return;
+          var idx = classifyStudentProgram(s, batchById);
+          bucket[idx]++;
+        });
+        return seriesFromCanonicalCounts(bucket);
+      }
+      function drawProgramEnrollmentChartBody(students, batches) {
+        var root = document.getElementById('programChartRoot');
+        if (!root) return;
+        var series = buildProgramSeries(students, batches);
+        var maxCount = 0;
+        series.forEach(function(s) { if (s.count > maxCount) maxCount = s.count; });
+        var maxY = Math.max(10, Math.ceil(Math.max(maxCount, 1) / 2) * 2);
+        var step = Math.max(1, Math.round(maxY / 5));
+        var ticks = [];
+        for (var t = maxY; t >= 0; t -= step) ticks.push(t);
+        var leg = series.map(function(s) {
+          return '<div class="program-chart-legend-row"><span class="dot" style="background:' + escChart(s.color) + '"></span><span class="lbl" title="' + escChart(s.name) + '">' + escChart(s.name) + '</span><span class="val">' + String(s.count) + '</span></div>';
+        }).join('');
+        var gridSvg = '';
+        for (var gi = 1; gi < ticks.length; gi++) {
+          var tv = ticks[gi];
+          var yPct = (1 - tv / maxY) * 100;
+          gridSvg += '<line x1="0" y1="' + yPct + '" x2="100" y2="' + yPct + '" stroke="#dbe1e8" stroke-width="1" />';
+        }
+        var bars = series.map(function(s) {
+          var h = maxY > 0 ? Math.max(2, Math.min(100, (s.count / maxY) * 100)) : 2;
+          return '<div class="program-bar-flat" title="' + escChart(s.name) + ': ' + String(s.count) + '"><div class="program-bar-flat-inner" style="height:' + h + '%;background:' + escChart(s.color) + ';"></div></div>';
+        }).join('');
+        var ytickHtml = ticks.map(function(t) {
+          return '<span>' + t + '</span>';
+        }).join('');
+        root.innerHTML =
+          '<div class="program-chart-legend">' + leg + '</div>' +
+          '<div class="program-chart-plot program-chart-plot-flat">' +
+            '<div class="program-chart-yaxis">' +
+              '<div class="program-chart-yticks">' + ytickHtml + '</div>' +
+              '<div class="program-chart-bars-wrap program-chart-bars-wrap-flat">' +
+                '<svg class="program-chart-grid-svg" viewBox="0 0 100 100" preserveAspectRatio="none" width="100%" height="100%" style="position:absolute;left:0;right:0;top:0;bottom:1.5rem" aria-hidden="true">' + gridSvg + '</svg>' +
+                '<div class="program-chart-bars program-chart-bars-flat">' + bars + '</div>' +
+              '</div>' +
+            '</div>' +
+          '</div>';
+      }
+      function render() {
+        function setStatValue(id, value) {
+          var el = document.getElementById(id);
+          if (!el) return;
+          if (value == null || value === '' || isNaN(Number(value))) {
+            el.textContent = '—';
+            return;
+          }
+          el.textContent = String(value);
+        }
+        var user = window.AcademyAuth && AcademyAuth.currentUser();
+        if (!user) {
+          window.location.href = '../public-page/login.html?redirect=admin/dashboard.html';
+          return;
+        }
+        AcademyAuth.getUserProfile(user.uid, function(profile) {
+          var role = (profile && profile.role) || 'student';
+          if (role !== 'admin') {
+            window.location.href = '../student/dashboard.html';
+            return;
+          }
+        });
+        if (window.AdminTopToolbar) AdminTopToolbar.init();
+
+        if (window.SchoolAPI && SchoolAPI.isAvailable) {
+          SchoolAPI.isAvailable().then(function(ok) {
+            var recentStudBody = document.getElementById('recentAdmissionsBody');
+            if (!ok) {
+              setStatValue('statStudents', null);
+              setStatValue('statTeachers', null);
+              setStatValue('statAdmissions', null);
+              setStatValue('statClasses', null);
+              renderStudentGenderCard([]);
+              renderTopStudentsByProgram([], []);
+              if (recentStudBody) recentStudBody.innerHTML = '<tr><td colspan="3" class="text-muted">School API not connected — student list unavailable.</td></tr>';
+              setProgramChartDataAndRefresh([], []);
+              return;
+            }
+            SchoolAPI.getDashboard().then(function(r) {
+              if (r && r.ok) {
+                setStatValue('statStudents', r.total_students);
+                setStatValue('statTeachers', r.total_teachers);
+                setStatValue('statAdmissions', r.new_admissions_this_month);
+                var alerts = r.priority_alerts || [];
+                var notifList = document.getElementById('notifList'); if (notifList && alerts.length) {
+                  notifList.innerHTML = alerts.slice(0, 5).map(function(a) {
+                    return '<li style="padding:0.5rem 0; border-bottom:1px solid var(--border);">' + (a.message || '') + '</li>';
+                  }).join('');
+                }
+              }
+            });
+            var attendanceBatches = [];
+            Promise.all([SchoolAPI.getStudents(), SchoolAPI.getBatches()]).then(function(pair) {
+              var r = pair[0];
+              var br = pair[1];
+              var tbody = document.getElementById('recentAdmissionsBody');
+              if (tbody) {
+                if (r && r.ok && r.students && r.students.length) {
+                  var rows = r.students.slice(0, 10).map(function(s) {
+                    var name = (s.name || s.student_id || '—').replace(/</g, '&lt;');
+                    var cls = (s.grade || s.class || '—').replace(/</g, '&lt;');
+                    var status = s.status || 'Approved';
+                    return '<tr><td>' + name + '</td><td>' + cls + '</td><td>' + status + '</td></tr>';
+                  });
+                  tbody.innerHTML = rows.join('');
+                } else {
+                  tbody.innerHTML = '<tr><td colspan="3" class="text-muted">No students yet. Add them under Student Management.</td></tr>';
+                }
+              }
+              var stu = (r && r.ok && r.students) ? r.students : [];
+              var bat = (br && br.ok && br.batches) ? br.batches : [];
+              renderStudentGenderCard(stu);
+              renderUpcomingBirthdays(stu);
+              renderTopStudentsByProgram(stu, bat);
+              if (br && br.ok) {
+                setStatValue('statClasses', Array.isArray(bat) ? bat.length : null);
+              }
+              setProgramChartDataAndRefresh(stu, bat);
+              attendanceBatches = bat;
+              populateAttendanceProgramOptions();
+              loadAttendanceOverview();
+            }).catch(function() {
+              var tbody = document.getElementById('recentAdmissionsBody');
+              if (tbody) tbody.innerHTML = '<tr><td colspan="3" class="text-muted">Could not load students.</td></tr>';
+              setStatValue('statClasses', null);
+              renderStudentGenderCard([]);
+              renderUpcomingBirthdays([]);
+              renderTopStudentsByProgram([], []);
+              setProgramChartDataAndRefresh([], []);
+              attendanceBatches = [];
+              populateAttendanceProgramOptions();
+              loadAttendanceOverview();
+            });
+
+            var admAttDate = document.getElementById('admAttDate');
+            var admAttPeriod = document.getElementById('admAttPeriod');
+            var admAttProgram = document.getElementById('admAttProgram');
+            var admAttBody = document.getElementById('admAttTodayBody');
+            function setAttendanceDonut(present, absent, total) {
+              var donut = document.getElementById('attendanceDonut');
+              var label = document.getElementById('attendanceDonutLabel');
+              var pct = (total > 0) ? Math.round((present * 100) / total) : 0;
+              if (donut) donut.style.setProperty('--present-pct', String(pct));
+              if (label) label.textContent = total > 0 ? (pct + '%') : '0%';
+            }
+            function toIsoDate(d) {
+              return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+            }
+            function parseIsoDate(v) {
+              var m = String(v || '').trim().match(/^(\d{4})-(\d{2})-(\d{2})$/);
+              if (!m) return null;
+              var dt = new Date(parseInt(m[1], 10), parseInt(m[2], 10) - 1, parseInt(m[3], 10));
+              return isNaN(dt.getTime()) ? null : dt;
+            }
+            function escapeText(s) {
+              return String(s == null ? '' : s).replace(/</g, '&lt;');
+            }
+            function buildBatchByIdMap() {
+              var by = {};
+              (attendanceBatches || []).forEach(function(b) {
+                if (b && b.id != null) by[String(b.id)] = b;
+              });
+              return by;
+            }
+            function programNameOfBatch(batch) {
+              return String(batch && (batch.course_name || batch.course || batch.program || batch.level_name || '') || '').trim();
+            }
+            function populateAttendanceProgramOptions() {
+              if (!admAttProgram) return;
+              var seen = {};
+              var options = ['<option value="all">All programs</option>'];
+              (CANONICAL_PROGRAM_NAMES || []).forEach(function(p) {
+                var name = String(p || '').trim();
+                if (!name || seen[name]) return;
+                seen[name] = true;
+                var esc = escapeText(name);
+                options.push('<option value="' + esc + '">' + esc + '</option>');
+              });
+              (attendanceBatches || []).forEach(function(b) {
+                var p = programNameOfBatch(b);
+                if (!p || seen[p]) return;
+                seen[p] = true;
+                var esc = escapeText(p);
+                options.push('<option value="' + esc + '">' + esc + '</option>');
+              });
+              var keep = admAttProgram.value || 'all';
+              admAttProgram.innerHTML = options.join('');
+              if (keep !== 'all' && seen[keep]) admAttProgram.value = keep;
+              else admAttProgram.value = 'all';
+            }
+            function inPeriod(entryDate, selectedDate, period) {
+              if (!entryDate || !selectedDate) return false;
+              if (period === 'yearly') return entryDate.getFullYear() === selectedDate.getFullYear();
+              if (period === 'weekly') {
+                var start = new Date(selectedDate);
+                start.setDate(selectedDate.getDate() - 6);
+                start.setHours(0, 0, 0, 0);
+                var end = new Date(selectedDate);
+                end.setHours(23, 59, 59, 999);
+                return entryDate >= start && entryDate <= end;
+              }
+              return toIsoDate(entryDate) === toIsoDate(selectedDate);
+            }
+            function recordArray(records) {
+              if (Array.isArray(records)) return records;
+              if (records && typeof records === 'object') {
+                return Object.keys(records).map(function(k) {
+                  var r = records[k];
+                  return (r && typeof r === 'object') ? r : { student_id: k, status: r };
+                });
+              }
+              return [];
+            }
+            function loadAttendanceOverview() {
+              if (!admAttBody || !SchoolAPI.getWebExtra) return;
+              if (admAttDate && !admAttDate.value) admAttDate.value = toIsoDate(new Date());
+              var selectedDate = parseIsoDate(admAttDate && admAttDate.value) || new Date();
+              var period = (admAttPeriod && admAttPeriod.value) || 'daily';
+              var program = (admAttProgram && admAttProgram.value) || 'all';
+              var byBatch = buildBatchByIdMap();
+              SchoolAPI.getWebExtra('attendance_entries').then(function(ar) {
+                var list = (ar && ar.ok && Array.isArray(ar.data)) ? ar.data : [];
+                var grouped = {};
+                list.forEach(function(e) {
+                  if (!e) return;
+                  var dt = parseIsoDate(e.date || e.attendance_date || '');
+                  if (!inPeriod(dt, selectedDate, period)) return;
+                  var bid = String(e.class_id != null ? e.class_id : (e.batch_id != null ? e.batch_id : ''));
+                  var batch = byBatch[bid] || null;
+                  var pg = programNameOfBatch(batch);
+                  if (program !== 'all' && pg !== program) return;
+                  var key = bid || ('b:' + String(e.batch_name || 'unknown'));
+                  if (!grouped[key]) {
+                    grouped[key] = {
+                      programName: String(programNameOfBatch(batch) || e.program || e.course_name || '—'),
+                      className: String((batch && (batch.batch_name || batch.name || batch.level_name)) || e.batch_name || (bid ? ('Batch ' + bid) : '—')),
+                      teacher: String((batch && (batch.assigned_teacher || batch.teacher_name || batch.teacher)) || e.teacher_name || e.teacher_username || '—'),
+                      present: 0,
+                      absent: 0,
+                      late: 0
+                    };
+                  }
+                  var recs = recordArray(e.records);
+                  if (recs.length) {
+                    recs.forEach(function(r) {
+                      var st = String(r && r.status != null ? r.status : '').trim().toLowerCase();
+                      if (st === 'present') grouped[key].present += 1;
+                      else if (st === 'late') grouped[key].late += 1;
+                      else if (st === 'absent') grouped[key].absent += 1;
+                    });
+                  } else {
+                    grouped[key].present += parseInt(e.present, 10) || 0;
+                    grouped[key].absent += parseInt(e.absent, 10) || 0;
+                    grouped[key].late += parseInt(e.late, 10) || 0;
+                  }
+                });
+                var rows = Object.keys(grouped).map(function(k) {
+                  var g = grouped[k];
+                  g.total = g.present + g.absent + g.late;
+                  return g;
+                });
+                if (!rows.length) {
+                  setAttendanceDonut(0, 0, 0);
+                  admAttBody.innerHTML = '<tr><td colspan="7" class="text-muted">No attendance found for selected filters.</td></tr>';
+                  return;
+                }
+                var presentTotal = 0;
+                var absentTotal = 0;
+                admAttBody.innerHTML = rows.map(function(x) {
+                  presentTotal += x.present;
+                  absentTotal += x.absent + x.late;
+                  return '<tr><td>' + escapeText(x.programName) + '</td><td>' + escapeText(x.className) + '</td><td>' + escapeText(x.teacher) + '</td><td>' + x.present + '</td><td>' + x.absent + '</td><td>' + x.late + '</td><td>' + x.total + '</td></tr>';
+                }).join('');
+                setAttendanceDonut(presentTotal, absentTotal, presentTotal + absentTotal);
+              }).catch(function() {
+                setAttendanceDonut(0, 0, 0);
+                admAttBody.innerHTML = '<tr><td colspan="7" class="text-muted">Could not load attendance data.</td></tr>';
+              });
+            }
+            if (admAttDate && !admAttDate.value) admAttDate.value = toIsoDate(new Date());
+            if (admAttDate) admAttDate.addEventListener('change', loadAttendanceOverview);
+            if (admAttPeriod) admAttPeriod.addEventListener('change', loadAttendanceOverview);
+            if (admAttProgram) admAttProgram.addEventListener('change', loadAttendanceOverview);
+          });
+        } else {
+          setStatValue('statStudents', null);
+          setStatValue('statTeachers', null);
+          setStatValue('statAdmissions', null);
+          setStatValue('statClasses', null);
+          renderStudentGenderCard([]);
+          renderUpcomingBirthdays([]);
+          renderTopStudentsByProgram([], []);
+          var rsb = document.getElementById('recentAdmissionsBody');
+          if (rsb) rsb.innerHTML = '<tr><td colspan="3" class="text-muted">School API not loaded.</td></tr>';
+          setProgramChartDataAndRefresh([], []);
+        }
+
+        function loadRecentPlacementTestCard() {
+          var emptyEl = document.getElementById('submissionsEmpty');
+          var listEl = document.getElementById('submissionsItems');
+          if (!emptyEl || !listEl) return;
+          function withTimeout(promise, ms, fallback) {
+            return new Promise(function(resolve) {
+              var done = false;
+              var t = setTimeout(function() {
+                if (done) return;
+                done = true;
+                resolve(fallback);
+              }, Math.max(200, parseInt(ms, 10) || 3500));
+              Promise.resolve(promise).then(function(v) {
+                if (done) return;
+                done = true;
+                clearTimeout(t);
+                resolve(v);
+              }).catch(function() {
+                if (done) return;
+                done = true;
+                clearTimeout(t);
+                resolve(fallback);
+              });
+            });
+          }
+          function esc(s) { return String(s == null ? '' : s).replace(/</g, '&lt;'); }
+          function toMillis(v) {
+            if (v == null || v === '') return 0;
+            var n = Number(v);
+            if (!isNaN(n) && n > 0) return n > 1e12 ? n : n * 1000;
+            var d = new Date(v);
+            return isNaN(d.getTime()) ? 0 : d.getTime();
+          }
+          function normalize(item) {
+            var it = item || {};
+            return {
+              _id: it._id || '',
+              client_submission_id: it.client_submission_id || '',
+              application_id: it.application_id || '',
+              name: it.name || it.student_name || '',
+              email: it.email || '',
+              phone: it.phone || '',
+              totalScore: it.totalScore != null ? it.totalScore : it.total_score,
+              submittedAt: it.submittedAt || it.submitted_at || it.applied_date || it.createdAt || it.created_at || ''
+            };
+          }
+          function keyOf(it) {
+            if (it.client_submission_id) return 'cid:' + it.client_submission_id;
+            if (it.application_id) return 'aid:' + it.application_id;
+            if (it._id) return 'id:' + it._id;
+            return 'legacy:' + [it.name || '', it.phone || '', it.email || '', String(it.submittedAt || '')].join('|');
+          }
+          function renderList(list) {
+            if (!list || !list.length) {
+              emptyEl.style.display = 'block';
+              listEl.style.display = 'none';
+              listEl.innerHTML = '';
+              return;
+            }
+            emptyEl.style.display = 'none';
+            listEl.style.display = 'block';
+            listEl.innerHTML = list.slice(0, 2).map(function(s) {
+              var ms = toMillis(s.submittedAt);
+              var d = ms ? new Date(ms).toLocaleString('en-GB') : '—';
+              var name = esc(s.name || s.email || '—');
+              var score = s.totalScore != null && s.totalScore !== '' ? ' · Score: ' + esc(s.totalScore) : '';
+              return '<li style="padding:0.6rem 0; border-bottom:1px solid var(--border);"><strong>' + name + '</strong> — ' + d + score + '</li>';
+            }).join('');
+          }
+          function getPlacementLocalFallback() {
+            var out = [];
+            try {
+              var many = JSON.parse(localStorage.getItem('placement_test_submissions') || '[]');
+              if (Array.isArray(many)) out = out.concat(many);
+            } catch (e) {}
+            try {
+              var oneRaw = localStorage.getItem('placement_test_submission');
+              if (oneRaw) {
+                var one = JSON.parse(oneRaw);
+                if (one && typeof one === 'object') out.push(one);
+              }
+            } catch (e2) {}
+            return out;
+          }
+          var apiPromise = (window.SchoolAPI && SchoolAPI.getWebExtra)
+            ? Promise.all([
+                SchoolAPI.getWebExtra('placement_test_results').then(function(r) {
+                  return (r && r.ok && Array.isArray(r.data)) ? r.data : [];
+                }).catch(function() { return []; }),
+                SchoolAPI.getWebExtra('admission_applications').then(function(r) {
+                  return (r && r.ok && Array.isArray(r.data)) ? r.data : [];
+                }).catch(function() { return []; })
+              ]).then(function(parts) {
+                return (parts[0] || []).concat(parts[1] || []);
+              })
+            : Promise.resolve([]);
+          var fbPromise = new Promise(function(resolve) {
+            if (window.AcademyFirebase && AcademyFirebase.getSubmissions) {
+              AcademyFirebase.getSubmissions(function(list) { resolve(Array.isArray(list) ? list : []); });
+            } else resolve([]);
+          });
+          Promise.all([
+            withTimeout(apiPromise, 4000, []),
+            withTimeout(fbPromise, 4000, [])
+          ]).then(function(parts) {
+            var merged = [];
+            var seen = {};
+            (parts[0] || []).concat(parts[1] || []).concat(getPlacementLocalFallback()).map(normalize).forEach(function(it) {
+              var k = keyOf(it);
+              if (seen[k]) return;
+              seen[k] = true;
+              merged.push(it);
+            });
+            merged.sort(function(a, b) { return toMillis(b.submittedAt) - toMillis(a.submittedAt); });
+            renderList(merged);
+          }).catch(function() {
+            renderList([]);
+          });
+        }
+        loadRecentPlacementTestCard();
+        if (!window.__mneaPlacementCardTimer) {
+          window.__mneaPlacementCardTimer = setInterval(loadRecentPlacementTestCard, 4000);
+        }
+        if (!window.__mneaPlacementCardStorageBound) {
+          window.__mneaPlacementCardStorageBound = true;
+          window.addEventListener('storage', function(ev) {
+            if (!ev) return;
+            if (ev.key === 'placement_test_submission' || ev.key === 'placement_test_submissions') {
+              loadRecentPlacementTestCard();
+            }
+          });
+          document.addEventListener('visibilitychange', function() {
+            if (document.visibilityState === 'visible') loadRecentPlacementTestCard();
+          });
+        }
+      }
+      if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', render);
+      else render();
+    })();
+  </script>
+  <script src="../assets/js/admin-badge.js"></script>
+  <script src="../assets/js/dashboard-sidebar.js" defer></script>
+</body>
+</html>
+

@@ -1,0 +1,1086 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="../assets/js/desktop-layout-viewport.js"></script>
+  <title>Attendance Management | Admin</title>
+  <link rel="stylesheet" href="../assets/css/main.css">
+  <link rel="stylesheet" href="../assets/css/dashboard.css">
+  <style>
+    .att-admin-page .dashboard-main {
+      background: linear-gradient(180deg, #eef2f7 0%, #f7f8fb 40%, #f8fafc 100%);
+      min-height: 100vh;
+    }
+    .warn-banner { background: rgba(254,243,199,0.55); border: 1px solid #fcd34d; color: #92400e; padding: 0.85rem 1rem; border-radius: 12px; margin-bottom: 1.25rem; font-size: 0.92rem; line-height: 1.55; }
+    .att-mgmt-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-bottom: 1.35rem; }
+    @media (max-width: 900px) { .att-mgmt-cards { grid-template-columns: 1fr; } }
+    .att-mgmt-card {
+      position: relative;
+      border-radius: 18px; padding: 1.25rem 1.1rem; text-align: center; cursor: pointer;
+      border: 3px solid transparent; transition: transform .2s, box-shadow .22s, border-color .2s;
+      box-shadow: 0 6px 20px rgba(15, 23, 42, 0.08);
+    }
+    .att-mgmt-card:nth-child(1) { background: linear-gradient(145deg, #fff9c4 0%, #fdd835 55%, #fbc02d 100%); }
+    .att-mgmt-card:nth-child(2) { background: linear-gradient(145deg, #e8f5e9 0%, #81c784 45%, #4caf50 100%); color: #1b5e20; }
+    .att-mgmt-card:nth-child(2) h3 { color: #1b5e20; }
+    .att-mgmt-card:nth-child(3) { background: linear-gradient(145deg, #e3f2fd 0%, #64b5f6 50%, #42a5f5 100%); color: #0d47a1; }
+    .att-mgmt-card:nth-child(3) h3 { color: #0d47a1; }
+    .att-mgmt-card .icon { font-size: 2.1rem; margin-bottom: 0.45rem; line-height: 1; filter: drop-shadow(0 1px 2px rgba(0,0,0,.12)); }
+    .att-mgmt-card h3 { margin: 0; font-size: 1.02rem; font-weight: 800; color: #263238; letter-spacing: -0.02em; }
+    .att-mgmt-card:hover { transform: translateY(-3px); box-shadow: 0 14px 32px rgba(15, 23, 42, 0.12); }
+    .att-mgmt-card.active { transform: translateY(-2px); }
+    .att-mgmt-card:nth-child(1).active { border-color: #f9a825; box-shadow: 0 12px 36px rgba(251, 192, 45, 0.45); }
+    .att-mgmt-card:nth-child(2).active { border-color: #2e7d32; box-shadow: 0 12px 36px rgba(76, 175, 80, 0.4); }
+    .att-mgmt-card:nth-child(3).active { border-color: #1565c0; box-shadow: 0 12px 36px rgba(66, 165, 245, 0.45); }
+    .att-view { display: none; }
+    .att-view.show { display: block; }
+    .att-view.card {
+      background: #fff;
+      border-radius: 18px;
+      padding: 1.25rem 1.35rem 1.5rem;
+      border: 1px solid rgba(148, 163, 184, 0.22);
+      box-shadow: 0 8px 28px rgba(15, 23, 42, 0.06);
+      margin-bottom: 1.25rem;
+    }
+    .att-filter-card {
+      border-radius: 16px; padding: 1.1rem 1.2rem 1.2rem; margin-bottom: 1.15rem;
+      background: #fff; border: 1px solid rgba(148, 163, 184, 0.2);
+      box-shadow: 0 4px 18px rgba(15, 23, 42, 0.05);
+    }
+    .att-filter-card > h3, .att-filter-card-header h3 {
+      margin: 0 0 1rem; font-size: 1rem; font-weight: 800; color: #1e293b;
+      display: flex; align-items: center; gap: 0.45rem;
+    }
+    .att-filter-card-header {
+      display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; flex-wrap: wrap;
+      margin-bottom: 0.75rem;
+    }
+    .att-filter-card-header h3 { margin-bottom: 0; }
+    .att-filter-card-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 0.55rem; }
+    .att-toolbar { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 0.85rem 1rem; }
+    .att-toolbar-records { flex-direction: column; align-items: stretch; gap: 0.75rem; }
+    .att-toolbar-records > .att-toolbar-row { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 0.85rem 1rem; }
+    .att-toolbar .form-group { margin: 0; }
+    .att-toolbar label { display: block; font-size: 0.76rem; font-weight: 700; color: #64748b; margin-bottom: 0.3rem; text-transform: uppercase; letter-spacing: 0.04em; }
+    .att-toolbar select, .att-toolbar input[type="date"] {
+      padding: 0.52rem 0.7rem; border: 1px solid #e2e8f0; border-radius: 10px; min-width: 10rem;
+      box-sizing: border-box; min-height: 2.65rem; background: #fff; font-size: 0.9rem; color: #1e293b;
+    }
+    .att-btn-load {
+      padding: 0.52rem 1.35rem !important; min-height: 2.65rem !important; border-radius: 12px !important;
+      border: none !important; background: linear-gradient(180deg, #66bb6a, #43a047) !important;
+      color: #fff !important; font-weight: 700 !important; font-size: 0.9rem !important;
+      box-shadow: 0 4px 14px rgba(67, 160, 71, 0.35); cursor: pointer;
+      display: inline-flex !important; align-items: center; justify-content: center; gap: 0.35rem;
+    }
+    .att-btn-load:hover { filter: brightness(1.05); }
+    .att-btn-load:active { transform: scale(0.98); }
+    .att-toolbar #recLoad, .att-toolbar #detLoad { min-width: 7.5rem; }
+    .att-toolbar #repLoad { width: 100%; max-width: 100%; margin-top: 0.35rem; }
+    .att-btn-export-csv {
+      padding: 0.5rem 1rem; border-radius: 10px; border: none; background: linear-gradient(180deg, #42a5f5, #1e88e5);
+      color: #fff; font-weight: 700; font-size: 0.86rem; cursor: pointer;
+      box-shadow: 0 3px 12px rgba(30, 136, 229, 0.35); display: inline-flex; align-items: center; gap: 0.35rem;
+    }
+    .att-btn-export-pdf {
+      padding: 0.5rem 1rem; border-radius: 10px; border: none; background: linear-gradient(180deg, #ef5350, #e53935);
+      color: #fff; font-weight: 700; font-size: 0.86rem; cursor: pointer;
+      box-shadow: 0 3px 12px rgba(229, 57, 53, 0.35); display: inline-flex; align-items: center; gap: 0.35rem;
+    }
+    .att-report-toolbar { display: grid; grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr)); gap: 0.85rem 1rem; align-items: end; }
+    .att-report-load-row { margin-top: 0.5rem; }
+    .att-section-title { font-size: 1.08rem; font-weight: 800; margin: 0 0 0.85rem; display: flex; align-items: center; gap: 0.4rem; color: #1e293b; }
+    .att-panel-title { font-size: 1rem; font-weight: 800; color: #1e293b; margin: 0 0 0.75rem; }
+    .att-summary { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 0.75rem 0 1rem; }
+    .att-summary .chip { padding: 0.38rem 0.8rem; border-radius: 999px; font-size: 0.82rem; font-weight: 700; }
+    .chip-p { background: #e8f5e9; color: #2e7d32; }
+    .chip-a { background: #ffebee; color: #c62828; }
+    .chip-l { background: #fff8e1; color: #f57f17; }
+    .chip-n { background: #e3f2fd; color: #1565c0; }
+    .att-table-wrap { overflow-x: auto; border-radius: 12px; border: 1px solid #e8ecf1; background: #fff; }
+    .att-table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+    .att-table th, .att-table td { padding: 0.65rem 0.75rem; border-bottom: 1px solid #eef1f5; vertical-align: middle; }
+    .att-table thead th { text-align: center; }
+    .att-table td { text-align: left; }
+    /* Attendance records list: center all columns except Teacher */
+    #viewRecords table.att-table tbody td { text-align: center; vertical-align: middle; }
+    #viewRecords table.att-table thead th.att-rec-teacher,
+    #viewRecords table.att-table tbody td.att-rec-teacher {
+      text-align: left;
+    }
+    #viewRecords table.att-table tbody td.att-rec-session .att-lock-hint { text-align: center; }
+    .att-table th { background: var(--table-header-bg); color: var(--table-header-text); font-weight: 700; }
+    .att-table tbody tr:hover td { background: #fafbfc; }
+    /* Present / Absent / Late — circular badges (match reference icons) */
+    .att-ico-round {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 1.85rem;
+      height: 1.85rem;
+      border-radius: 50%;
+      flex-shrink: 0;
+      box-sizing: border-box;
+    }
+    .att-ico-round .att-ico-sym {
+      font-size: 0.95rem;
+      font-weight: 900;
+      line-height: 1;
+      font-family: system-ui, 'Segoe UI', sans-serif;
+    }
+    .att-ico-round--present {
+      background: #d4f4e3;
+      color: #1b5e20;
+    }
+    .att-ico-round--present .att-ico-sym {
+      font-size: 0.88rem;
+      transform: translateY(0.02em);
+    }
+    .att-ico-round--absent {
+      background: #ffe0e5;
+      color: #e53935;
+    }
+    .att-ico-round--late {
+      background: #fff9c4;
+      color: #f57c00;
+    }
+    .att-ico-round--late .att-ico-late-svg {
+      display: block;
+      width: 14px;
+      height: 14px;
+    }
+    .att-th-icon-cell {
+      text-align: center;
+      vertical-align: middle !important;
+    }
+    .att-th-icon-cell .att-ico-round {
+      margin: 0 auto;
+    }
+    .att-sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+    .att-num { font-weight: 800; font-variant-numeric: tabular-nums; }
+    .att-num--p { color: #2e7d32; }
+    .att-num--a { color: #c62828; }
+    .att-num--l { color: #f57f17; }
+    .att-rate { font-weight: 800; color: #1565c0; font-variant-numeric: tabular-nums; }
+    .teacher-cell .t-name { font-weight: 600; display: block; color: #334155; }
+    .att-pill { display: inline-block; padding: 0.22rem 0.65rem; border-radius: 999px; font-weight: 700; font-size: 0.78rem; }
+    .att-pill--done { background: #e8f5e9; color: #2e7d32; }
+    .att-pill--open { background: #fff8e1; color: #f57f17; }
+    .att-lock-hint { display: block; font-size: 0.72rem; font-weight: 600; color: #94a3b8; margin-top: 0.15rem; }
+    .att-actions-cell { white-space: nowrap; }
+    .att-link-view {
+      background: none; border: none; padding: 0; color: #1976d2; font-weight: 700; font-size: 0.88rem;
+      cursor: pointer; text-decoration: underline; text-underline-offset: 2px;
+    }
+    .att-link-view:hover { color: #0d47a1; }
+    /* Records table actions only: View=blue, Lock=green, Unlock=red; same box size */
+    #viewRecords .att-actions-cell .rec-detail,
+    #viewRecords .att-actions-cell .rec-lock,
+    #viewRecords .att-actions-cell .rec-unlock {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 5.25rem;
+      width: 5.25rem;
+      height: 2.35rem;
+      padding: 0;
+      box-sizing: border-box;
+      border-radius: 8px;
+      font-size: 0.82rem;
+      font-weight: 700;
+      text-decoration: none;
+      cursor: pointer;
+      margin-right: 0.35rem;
+      margin-bottom: 0;
+      vertical-align: middle;
+      border: none;
+    }
+    #viewRecords .att-actions-cell .rec-detail {
+      background: #1976d2;
+      color: #fff;
+    }
+    #viewRecords .att-actions-cell .rec-detail:hover { background: #1565c0; color: #fff; }
+    #viewRecords .att-actions-cell .rec-lock {
+      background: #2e7d32;
+      color: #fff;
+    }
+    #viewRecords .att-actions-cell .rec-lock:hover { background: #1b5e20; color: #fff; }
+    #viewRecords .att-actions-cell .rec-unlock {
+      background: #c62828;
+      color: #fff;
+    }
+    #viewRecords .att-actions-cell .rec-unlock:hover { background: #b71c1c; color: #fff; }
+    .btn-sm { font-size: 0.78rem; padding: 0.32rem 0.55rem; border-radius: 8px; border: 1px solid var(--border); background: #fff; cursor: pointer; margin-right: 0.25rem; margin-bottom: 0.25rem; }
+    .btn-unlock { background: #fff8e1; border-color: #ffb300; color: #e65100; font-weight: 700; }
+    .btn-lock { background: #e3f2fd; border-color: #42a5f5; color: #0d47a1; font-weight: 700; }
+    .btn-back { background: #f1f5f9; font-weight: 600; }
+    .legend-note {
+      font-size: 0.84rem; color: #64748b; margin-top: 1rem; padding: 0.65rem 0.85rem;
+      background: #f8fafc; border-radius: 10px; border: 1px solid #e8ecf1;
+      display: flex; flex-wrap: wrap; align-items: center; gap: 1rem 1.5rem;
+    }
+    .legend-note .leg-item { display: inline-flex; align-items: center; gap: 0.35rem; }
+    .legend-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+    .legend-dot--lock { background: #43a047; }
+    .legend-dot--unlock { background: #e53935; }
+    .det-detail-header {
+      border: 1px solid #e8ecf1; border-radius: 16px; padding: 1rem 1.2rem; margin-bottom: 1rem;
+      background: linear-gradient(180deg, #fff 0%, #f8fafc 100%); line-height: 1.5;
+    }
+    .det-detail-line1 { margin: 0 0 0.5rem; font-size: 1.08rem; font-weight: 800; color: #1e293b; }
+    .det-detail-line2 { margin: 0; font-size: 0.9rem; color: #64748b; display: flex; flex-wrap: wrap; align-items: center; gap: 0.35rem 0.5rem; }
+    .det-detail-sep { opacity: 0.45; }
+    .det-footer-summary {
+      margin: 1rem 0 0; padding: 0.8rem 1rem; border-radius: 12px; border: 1px solid #e8ecf1;
+      background: #f1f5f9; font-size: 0.92rem; font-weight: 700; color: #334155;
+    }
+    .det-name-main { font-weight: 700; color: #1e293b; display: block; }
+    .det-name-sub { font-size: 0.82rem; color: #94a3b8; font-weight: 500; margin-top: 0.12rem; }
+    .det-st { display: inline-flex; align-items: center; gap: 0.45rem; font-weight: 700; font-size: 0.88rem; }
+    .det-st-label { color: #334155; }
+    .det-st-present .det-st-label { color: #1b5e20; }
+    .det-st-absent .det-st-label { color: #b71c1c; }
+    .det-st-late .det-st-label { color: #e65100; }
+    .det-st-unmarked { color: #94a3b8; font-weight: 600; }
+    /* Student roster (detail): centre Status (✓ Present) and Recorded at */
+    #viewDetail table.att-table tbody td:nth-child(2),
+    #viewDetail table.att-table tbody td:nth-child(3) {
+      text-align: center;
+      vertical-align: middle;
+    }
+    #viewDetail table.att-table tbody td:nth-child(2) {
+      white-space: nowrap;
+    }
+    #viewDetail table.att-table tbody td:nth-child(2) .det-st {
+      justify-content: center;
+    }
+    #viewDetail table.att-table tbody td:nth-child(3) {
+      font-variant-numeric: tabular-nums;
+    }
+    .att-table tr.row-late td { background: rgba(255, 248, 225, 0.35); }
+    .det-actions {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      align-items: center;
+      gap: 0.5rem;
+      margin-top: 1rem;
+      padding: 1rem;
+      border: 1px dashed #cfd8dc;
+      border-radius: 12px;
+      background: #fafbfc;
+    }
+    .att-empty-state {
+      text-align: center; padding: 2.5rem 1.5rem; color: #94a3b8; border: 2px dashed #e2e8f0; border-radius: 16px;
+      background: #fafbfc; margin-top: 0.5rem;
+    }
+    .att-empty-state .att-empty-ic { font-size: 2.75rem; opacity: 0.55; margin-bottom: 0.75rem; }
+    .att-empty-state p { margin: 0; font-size: 0.95rem; font-weight: 600; max-width: 22rem; margin-left: auto; margin-right: auto; line-height: 1.5; }
+    .att-hint { margin-top: 0.65rem; font-size: 0.88rem; color: #64748b; }
+    #printArea { background: #fff; }
+    @media print { .dashboard-sidebar, .dashboard-sidebar-toggle, .dashboard-sidebar-backdrop, .dashboard-header .auth-info, .att-mgmt-cards, .no-print, .att-filter-card, .att-empty-state { display: none !important; } }
+  </style>
+</head>
+<body class="admin-dashboard-glass att-admin-page">
+  <div class="dashboard-wrap glass-dashboard">
+    <aside class="dashboard-sidebar">
+      <a href="../public-page/index.html" class="logo-link"><span class="logo-brand-row"><img src="../photo/logo.png" alt="" class="logo-mark-img" width="72" decoding="async" /><span class="logo-headlines"><span class="logo-title-line">MYANMAR</span><span class="logo-title-line">NEW ERA</span></span></span></a>
+      <nav>
+        <a href="dashboard.html">Dashboard</a>
+        <a href="admissions.html">Admission Management</a>
+        <a href="students.html">Student Management</a>
+        <a href="teachers.html">Teacher Management</a>
+        <a href="academic.html">Academic Management</a>
+        <a href="attendance.html" class="active">Attendance Management</a>
+        <a href="exams.html">Exam Management</a>
+        <a href="gpa-transcript.html">GPA & Transcript Management</a>
+        <a href="inquiries.html">Communication <span class="nav-inquiry-badge" id="navInquiryCount"></span></a>
+        <a href="content-management.html">Page Content Management</a>
+        <a href="question-bank.html">Question Bank Management</a>
+        <a href="reports.html">Reports & Analytics</a>
+        <a href="settings.html">Settings & Configuration</a>
+      </nav>
+    </aside>
+    <main class="dashboard-main">
+      <div class="dashboard-header glass-toolbar no-print">
+        <p class="dashboard-toolbar-title" data-lang-en="Attendance Management" data-lang-my="Attendance Management">Attendance Management</p>
+        <div class="auth-info">
+          <div class="notification-wrap">
+            <button type="button" class="btn-notification" id="btnNotification" aria-haspopup="true" aria-expanded="false">
+              &#x1F514; <span id="notificationLabel">Notifications</span> (<span id="notificationCount" class="notification-count-num">0</span>)
+              <span class="notification-badge" id="notificationBadge" style="display:none;">0</span>
+            </button>
+            <div class="notification-dropdown" id="notificationDropdown" role="menu">
+              <h3>Notifications</h3>
+              <ul id="notificationList">
+                <li><a href="inquiries.html">No new notifications</a></li>
+              </ul>
+            </div>
+          </div>
+          <div class="profile-wrap">
+            <button type="button" class="btn-profile" id="btnProfile" aria-haspopup="true" aria-expanded="false">&#x1F464; <span id="profileName">Admin</span> &#x25BC;</button>
+            <div class="profile-dropdown" id="profileDropdown" role="menu">
+              <a href="settings.html">Profile</a>
+              <a href="settings.html#password">Change Password</a>
+              <div class="divider"></div>
+              <button type="button" id="btnAdminToolbarLogout">Logout</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="att-mgmt-cards no-print">
+        <div class="att-mgmt-card active" data-view="records" data-title="Attendance records">
+          <div class="icon">📊</div>
+          <h3>Attendance records</h3>
+        </div>
+        <div class="att-mgmt-card" data-view="detail" data-title="Detail by date">
+          <div class="icon">📋</div>
+          <h3>Detail by date</h3>
+        </div>
+        <div class="att-mgmt-card" data-view="report" data-title="Student report">
+          <div class="icon">👤</div>
+          <h3>Student report</h3>
+        </div>
+      </div>
+
+      <div id="viewRecords" class="att-view show card">
+        <div class="att-filter-card no-print">
+          <h3><span aria-hidden="true">🔽</span> Filters</h3>
+          <div class="att-toolbar att-toolbar-records">
+            <div class="att-toolbar-row">
+              <div class="form-group">
+                <label for="recBatch">Batch</label>
+                <select id="recBatch"><option value="">All</option></select>
+              </div>
+              <div class="form-group">
+                <label for="recTeacher">Teacher</label>
+                <select id="recTeacher"><option value="">All</option></select>
+              </div>
+              <div class="form-group">
+                <label for="recFrom">From</label>
+                <input type="date" id="recFrom" lang="en-GB" placeholder="dd/mm/yyyy">
+              </div>
+              <div class="form-group">
+                <label for="recTo">To</label>
+                <input type="date" id="recTo" lang="en-GB" placeholder="dd/mm/yyyy">
+              </div>
+              <button type="button" class="att-btn-load" id="recLoad"><span aria-hidden="true">⚡</span> Load</button>
+            </div>
+            <div class="att-toolbar-row">
+              <div class="form-group">
+                <label for="recStatus">Row filter</label>
+                <select id="recStatus">
+                  <option value="all">All days</option>
+                  <option value="has_absent">Days with absences</option>
+                  <option value="has_late">Days with late</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <h2 class="att-section-title"><span aria-hidden="true">📊</span> Attendance records</h2>
+        <div class="att-summary" id="recTotals" style="display:none;">
+          <span class="chip chip-n" id="totRows">Total rows: 0</span>
+          <span class="chip chip-p" id="totP">🟢 Present: 0</span>
+          <span class="chip chip-a" id="totA">🔴 Absent: 0</span>
+          <span class="chip chip-l" id="totL">🟡 Late: 0</span>
+        </div>
+        <div class="att-table-wrap">
+          <table class="att-table">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Batch</th>
+                <th class="att-rec-teacher">Teacher</th>
+                <th class="att-th-icon-cell" scope="col"><span class="att-ico-round att-ico-round--present" title="Present"><span class="att-ico-sym" aria-hidden="true">✓</span><span class="att-sr-only">Present</span></span></th>
+                <th class="att-th-icon-cell" scope="col"><span class="att-ico-round att-ico-round--absent" title="Absent"><span class="att-ico-sym" aria-hidden="true">✕</span><span class="att-sr-only">Absent</span></span></th>
+                <th class="att-th-icon-cell" scope="col"><span class="att-ico-round att-ico-round--late" title="Late"><svg class="att-ico-late-svg" viewBox="0 0 24 24" width="14" height="14" aria-hidden="true" focusable="false"><path d="M12 4L21 20H3L12 4z" fill="#f57c00"/><path d="M11 10h2v3.5h-2V10zm0 4.75h2v2h-2v-2z" fill="#1a237e"/></svg><span class="att-sr-only">Late</span></span></th>
+                <th>Rate</th>
+                <th>Session</th>
+                <th class="no-print">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="recBody"></tbody>
+          </table>
+        </div>
+        <div class="legend-note no-print" role="note">
+          <span class="leg-item"><span class="legend-dot legend-dot--lock" aria-hidden="true"></span><span><strong>Locked</strong> — session finalized; teacher cannot submit changes</span></span>
+          <span class="leg-item"><span class="legend-dot legend-dot--unlock" aria-hidden="true"></span><span><strong>Unlocked</strong> — teacher can edit and record attendance</span></span>
+        </div>
+        <p class="att-hint" id="recHint">Set filters and click <strong>Load</strong>.</p>
+      </div>
+
+      <div id="viewDetail" class="att-view card">
+        <div class="att-filter-card no-print">
+          <h3><span aria-hidden="true">📋</span> Detail by date</h3>
+          <div class="att-toolbar">
+            <div class="form-group">
+              <label for="detBatch">Batch</label>
+              <select id="detBatch"></select>
+            </div>
+            <div class="form-group">
+              <label for="detDate">Date</label>
+              <input type="date" id="detDate" lang="en-GB" placeholder="dd/mm/yyyy">
+            </div>
+            <button type="button" class="att-btn-load" id="detLoad"><span aria-hidden="true">⚡</span> Load</button>
+          </div>
+        </div>
+        <div id="detMetaCard" class="det-detail-header" style="display:none;">
+          <p class="det-detail-line1" id="detHeadLine1"></p>
+          <p class="det-detail-line2" id="detHeadLine2"></p>
+        </div>
+        <h3 class="att-panel-title">Student roster</h3>
+        <div class="att-table-wrap">
+          <table class="att-table">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Status</th>
+                <th>Recorded at</th>
+                <th>Remarks</th>
+              </tr>
+            </thead>
+            <tbody id="detBody"></tbody>
+          </table>
+        </div>
+        <p class="det-footer-summary" id="detFooterSummary" style="display:none;" aria-live="polite"></p>
+        <div class="det-actions no-print" id="detActions" style="display:none;">
+          <button type="button" class="btn-sm btn-lock" id="detBtnLock">🔒 Lock</button>
+          <button type="button" class="btn-sm btn-unlock" id="detBtnUnlock">🔓 Unlock</button>
+          <button type="button" class="btn-sm btn-back" id="detBtnBack">← Back to records</button>
+        </div>
+        <p class="warn-banner no-print" id="detUnlockWarn" style="display:none;margin-top:1rem;">
+          ⚠️ Unlock will allow the teacher to edit and resave this attendance.
+        </p>
+        <p class="att-hint" id="detHint">Choose batch and date, then load the roster.</p>
+      </div>
+
+      <div id="viewReport" class="att-view card">
+        <div class="att-filter-card no-print">
+          <div class="att-filter-card-header">
+            <h3><span aria-hidden="true">🔍</span> Report filters</h3>
+            <div class="att-filter-card-actions">
+              <button type="button" class="att-btn-export-csv no-print" id="repExport"><span aria-hidden="true">⬇</span> Export CSV</button>
+              <button type="button" class="att-btn-export-pdf no-print" id="repExportPdf"><span aria-hidden="true">⬇</span> Export PDF</button>
+            </div>
+          </div>
+          <div class="att-report-toolbar">
+            <div class="form-group">
+              <label for="repStudent">Student</label>
+              <select id="repStudent"></select>
+            </div>
+            <div class="form-group">
+              <label for="repFrom">From</label>
+              <input type="date" id="repFrom" lang="en-GB" placeholder="dd/mm/yyyy">
+            </div>
+            <div class="form-group">
+              <label for="repTo">To</label>
+              <input type="date" id="repTo" lang="en-GB" placeholder="dd/mm/yyyy">
+            </div>
+            <div class="form-group">
+              <label for="repLogBatch">Batch scope</label>
+              <select id="repLogBatch"><option value="">All batches in range</option></select>
+            </div>
+            <div class="form-group">
+              <label for="repLogStatus">Detail tag</label>
+              <select id="repLogStatus" title="Filter rows in the Detailed log table">
+                <option value="all">All records</option>
+                <option value="absent">Absent only</option>
+                <option value="present">Present only</option>
+                <option value="late">Late only</option>
+              </select>
+            </div>
+          </div>
+          <div class="att-report-load-row">
+            <button type="button" class="att-btn-load" id="repLoad" style="width:100%;max-width:none;"><span aria-hidden="true">⚡</span> Load report</button>
+          </div>
+          <p class="att-hint" style="margin-top:0.65rem;margin-bottom:0;">Uses saved attendance rows only.</p>
+        </div>
+        <div id="repEmptyState" class="att-empty-state no-print">
+          <div class="att-empty-ic" aria-hidden="true">📄</div>
+          <p>Select a student and date range, then click <strong>Load report</strong> to view attendance data.</p>
+        </div>
+        <div id="printArea">
+          <div id="repPanel" style="display:none;margin-top:0.5rem;padding:1rem;border-radius:12px;background:rgba(255,255,255,.5);border:1px solid var(--border);">
+            <p style="margin:0 0 0.35rem;font-size:1.15rem;font-weight:700;display:flex;align-items:center;gap:0.35rem;"><span>📊</span> <span id="repName"></span></p>
+            <p class="text-muted" style="margin:0 0 0.75rem;" id="repId"></p>
+            <ul style="margin:0 0 1rem;padding-left:1.2rem;line-height:1.8;">
+              <li>Marked sessions in range: <strong id="repTotal">0</strong></li>
+              <li>🟢 Present: <strong id="repPres">0</strong> · 🔴 Absent: <strong id="repAbs">0</strong> · 🟡 Late: <strong id="repLate">0</strong></li>
+              <li>Attendance % (present + late): <strong id="repPct">0</strong>%</li>
+            </ul>
+            <p id="repOverallTrend" style="margin:0 0 1rem;font-size:0.95rem;line-height:1.5;"></p>
+            <h3 class="att-section-title"><span>📈</span> By batch</h3>
+            <div class="att-table-wrap">
+              <table class="att-table">
+                <thead>
+                  <tr><th>Batch</th><th>🟢</th><th>🔴</th><th>🟡</th><th>Total</th><th>Rate</th><th>Trend</th></tr>
+                </thead>
+                <tbody id="repByBatchBody"></tbody>
+              </table>
+            </div>
+            <h3 class="att-section-title" style="margin-top:1.25rem;"><span>📅</span> Detailed log</h3>
+            <div class="att-table-wrap">
+              <table class="att-table">
+                <thead>
+                  <tr><th>Date</th><th>Batch</th><th>Status</th><th>Remark</th></tr>
+                </thead>
+                <tbody id="repLogBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+        <p class="att-hint no-print" id="repHint" style="display:none;"></p>
+      </div>
+    </main>
+  </div>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+  <script src="../assets/js/firebase-config.js"></script>
+  <script src="../assets/js/auth.js"></script>
+  <script src="../assets/js/school-api.js"></script>
+  <script src="../assets/js/lang-switcher.js"></script>
+  <script src="../assets/js/content-firebase.js"></script>
+  <script src="../assets/js/admin-top-toolbar.js"></script>
+  <script>
+    var u = window.AcademyAuth && AcademyAuth.currentUser();
+    if (!u) window.location.href = '../public-page/login.html';
+    else AcademyAuth.getUserProfile(u.uid, function(p) {
+      if ((p && p.role) !== 'admin') window.location.href = '../student/dashboard.html';
+      else if (window.AdminTopToolbar) AdminTopToolbar.init();
+    });
+  </script>
+  <script src="../assets/js/admin-badge.js"></script>
+  <script>
+    (function() {
+      function esc(s) {
+        if (s == null) return '';
+        return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+      }
+
+      function fmtTime12(raw) {
+        if (!raw) return '—';
+        // Accept: ISO datetime, "YYYY-MM-DD HH:MM:SS", epoch ms, or plain "HH:MM".
+        var s = String(raw).trim();
+
+        // epoch milliseconds (number or numeric string)
+        if (typeof raw === 'number' || (/^\d{10,13}$/.test(s))) {
+          var ms = typeof raw === 'number' ? raw : parseInt(s, 10);
+          var d0 = new Date(ms);
+          if (!isNaN(d0.getTime())) {
+            return d0.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+          }
+        }
+
+        // ISO-like datetime
+        if (/[T]/.test(s) || /^\d{4}-\d{2}-\d{2}\s+\d{1,2}:\d{2}/.test(s)) {
+          var iso = s.replace(' ', 'T');
+          var d1 = new Date(iso);
+          if (!isNaN(d1.getTime())) {
+            return d1.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+          }
+        }
+
+        // plain HH:MM (fallback)
+        var m = s.match(/(\d{1,2}):(\d{2})/);
+        if (!m) return s;
+        var h = parseInt(m[1], 10), mi = m[2];
+        var suf = h >= 12 ? 'PM' : 'AM';
+        var h12 = h % 12;
+        if (h12 === 0) h12 = 12;
+        return h12 + ':' + mi + ' ' + suf;
+      }
+
+      function longDate(iso) {
+        if (!iso) return '—';
+        var d = new Date(iso.slice(0, 10) + 'T12:00:00');
+        if (isNaN(d.getTime())) return iso;
+        return d.toLocaleDateString('en-GB', { weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric' });
+      }
+
+      function detailHeadDate(iso) {
+        if (!iso) return '—';
+        var d = new Date(iso.slice(0, 10) + 'T12:00:00');
+        if (isNaN(d.getTime())) return iso;
+        return d.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' });
+      }
+
+      var LATE_STATUS_SVG = '<svg class="att-ico-late-svg" viewBox="0 0 24 24" width="14" height="14" aria-hidden="true" focusable="false"><path d="M12 4L21 20H3L12 4z" fill="#f57c00"/><path d="M11 10h2v3.5h-2V10zm0 4.75h2v2h-2v-2z" fill="#1a237e"/></svg>';
+
+      function statusDetailCell(st) {
+        st = (st || '').toLowerCase();
+        if (!st) {
+          return '<span class="det-st det-st-unmarked">Not marked</span>';
+        }
+        if (st === 'present') {
+          return '<span class="det-st det-st-present"><span class="att-ico-round att-ico-round--present" aria-hidden="true"><span class="att-ico-sym">✓</span></span><span class="det-st-label">Present</span></span>';
+        }
+        if (st === 'absent') {
+          return '<span class="det-st det-st-absent"><span class="att-ico-round att-ico-round--absent" aria-hidden="true"><span class="att-ico-sym">✕</span></span><span class="det-st-label">Absent</span></span>';
+        }
+        if (st === 'late') {
+          return '<span class="det-st det-st-late"><span class="att-ico-round att-ico-round--late" aria-hidden="true">' + LATE_STATUS_SVG + '</span><span class="det-st-label">Late</span></span>';
+        }
+        return '<span class="det-st">' + esc(st) + '</span>';
+      }
+
+      function statusEmojiLabel(st) {
+        st = (st || '').toLowerCase();
+        if (st === 'present') return '🟢 Present';
+        if (st === 'absent') return '🔴 Absent';
+        if (st === 'late') return '🟡 Late';
+        return esc(st);
+      }
+
+      function buildOverallTrend(logs, batchFilter) {
+        var L = (logs || []).filter(function(x) {
+          return !batchFilter || String(x.batch_id) === batchFilter;
+        }).slice().sort(function(a, b) { return String(a.date).localeCompare(String(b.date)); });
+        var last3 = L.slice(-3);
+        if (!last3.length) return '';
+        var words = last3.map(function(x) {
+          var s = (x.status || '').toLowerCase();
+          if (s === 'present') return 'Present';
+          if (s === 'absent') return 'Absent';
+          if (s === 'late') return 'Late';
+          return s || '?';
+        });
+        var arrow = words.join(' → ');
+        var first = (last3[0].status || '').toLowerCase();
+        var last = (last3[last3.length - 1].status || '').toLowerCase();
+        var emoji = '📊';
+        var label = 'Mixed';
+        if (last3.every(function(x) { return (x.status || '').toLowerCase() === 'present'; })) {
+          emoji = '🟢'; label = 'All present (last ' + last3.length + ')';
+        } else if (first === 'absent' && last === 'present') {
+          emoji = '🟢'; label = 'Improving';
+        } else if (first === 'present' && last === 'absent') {
+          emoji = '🔴'; label = 'Declining';
+        }
+        return '📈 Overall trend: ' + emoji + ' <strong>' + label + '</strong> (last ' + last3.length + ': ' + arrow + ')';
+      }
+
+      var batches = [];
+      var students = [];
+      var lastReport = null;
+      var lastDetailCtx = { batchId: null, date: null, hasRows: false };
+
+      function fillBatchSelects() {
+        var optsRec = '<option value="">All</option>' +
+          batches.map(function(b) {
+            return '<option value="' + esc(b.id) + '">' + esc((b.name || '') + ' · ' + (b.course_name || '') + ' · ' + (b.level_name || '')) + '</option>';
+          }).join('');
+        var recEl = document.getElementById('recBatch');
+        var recKeep = recEl.value;
+        recEl.innerHTML = optsRec;
+        if (recKeep && batches.some(function(b) { return String(b.id) === recKeep; })) recEl.value = recKeep;
+
+        var detEl = document.getElementById('detBatch');
+        var detKeep = detEl.value;
+        detEl.innerHTML = '<option value="">Select batch</option>' +
+          batches.map(function(b) {
+            return '<option value="' + esc(b.id) + '">' + esc((b.name || '') + ' — ' + (b.course_name || '')) + '</option>';
+          }).join('');
+        if (detKeep && batches.some(function(b) { return String(b.id) === detKeep; })) detEl.value = detKeep;
+      }
+
+      function fillRecTeacherSelect() {
+        var sel = document.getElementById('recTeacher');
+        if (!sel) return;
+        var keep = sel.value;
+        var seen = {};
+        var list = [];
+        batches.forEach(function(b) {
+          var u = (b.teacher_username || '').trim();
+          if (!u) return;
+          if (seen[u]) return;
+          seen[u] = true;
+          var name = (b.teacher_name || '').trim();
+          var label = name && name !== u ? name + ' (' + u + ')' : u;
+          list.push({ u: u, label: label });
+        });
+        list.sort(function(a, b) { return a.label.localeCompare(b.label); });
+        sel.innerHTML = '<option value="">All</option>' + list.map(function(x) {
+          return '<option value="' + esc(x.u) + '">' + esc(x.label) + '</option>';
+        }).join('');
+        if (keep && seen[keep]) sel.value = keep;
+      }
+
+      function fillStudentSelect() {
+        var list = students.slice().sort(function(a, b) {
+          return (a.name || '').localeCompare(b.name || '');
+        });
+        document.getElementById('repStudent').innerHTML =
+          '<option value="">Select student</option>' +
+          list.map(function(s) {
+            var id = s.student_id || s.id || '';
+            var n = s.name || s.student_name || id;
+            return '<option value="' + esc(id) + '">' + esc(n + ' (' + id + ')') + '</option>';
+          }).join('');
+      }
+
+      function switchView(view) {
+        document.querySelectorAll('.att-mgmt-card').forEach(function(c) {
+          c.classList.toggle('active', c.getAttribute('data-view') === view);
+        });
+        document.querySelectorAll('.att-view').forEach(function(v) { v.classList.remove('show'); });
+        var map = { records: 'viewRecords', detail: 'viewDetail', report: 'viewReport' };
+        var el = document.getElementById(map[view] || 'viewRecords');
+        if (el) el.classList.add('show');
+        if (view === 'report') {
+          var panel = document.getElementById('repPanel');
+          var emptySt = document.getElementById('repEmptyState');
+          var loaded = panel && panel.style.display !== 'none' && window.getComputedStyle(panel).display !== 'none';
+          if (emptySt) emptySt.style.display = loaded ? 'none' : 'block';
+        }
+      }
+
+      document.querySelectorAll('.att-mgmt-card').forEach(function(card) {
+        card.addEventListener('click', function() {
+          switchView(card.getAttribute('data-view') || 'records');
+        });
+      });
+
+      function loadBatchesAndStudents() {
+        if (!window.SchoolAPI) return Promise.resolve();
+        return Promise.all([
+          SchoolAPI.getBatches ? SchoolAPI.getBatches() : Promise.resolve({ ok: false }),
+          SchoolAPI.getStudents ? SchoolAPI.getStudents() : Promise.resolve({ ok: false })
+        ]).then(function(rs) {
+          batches = rs[0] && rs[0].ok && Array.isArray(rs[0].batches) ? rs[0].batches : [];
+          students = rs[1] && rs[1].ok && Array.isArray(rs[1].students) ? rs[1].students : [];
+          fillBatchSelects();
+          fillRecTeacherSelect();
+          fillStudentSelect();
+        });
+      }
+
+      var end = new Date();
+      var start = new Date();
+      start.setMonth(start.getMonth() - 1);
+      document.getElementById('recTo').value = end.toISOString().slice(0, 10);
+      document.getElementById('recFrom').value = start.toISOString().slice(0, 10);
+      document.getElementById('detDate').value = new Date().toISOString().slice(0, 10);
+      document.getElementById('repTo').value = end.toISOString().slice(0, 10);
+      document.getElementById('repFrom').value = start.toISOString().slice(0, 10);
+
+      function wireRecRowActions() {
+        document.querySelectorAll('.rec-detail').forEach(function(btn) {
+          btn.addEventListener('click', function() {
+            document.getElementById('detBatch').value = btn.getAttribute('data-bid');
+            document.getElementById('detDate').value = btn.getAttribute('data-d');
+            switchView('detail');
+            document.getElementById('detLoad').click();
+          });
+        });
+        document.querySelectorAll('.rec-unlock').forEach(function(btn) {
+          btn.addEventListener('click', function() {
+            var obid = btn.getAttribute('data-bid');
+            var od = btn.getAttribute('data-d');
+            if (!confirm('Unlock batch ' + obid + ' on ' + od + '? Teacher can save again.')) return;
+            SchoolAPI.unlockAttendanceSession(obid, od).then(function(ur) {
+              alert((ur && ur.ok) ? 'Unlocked.' : ((ur && ur.error) || 'Failed.'));
+              document.getElementById('recLoad').click();
+            });
+          });
+        });
+        document.querySelectorAll('.rec-lock').forEach(function(btn) {
+          btn.addEventListener('click', function() {
+            var obid = btn.getAttribute('data-bid');
+            var od = btn.getAttribute('data-d');
+            if (!confirm('Lock this session? Teacher will not be able to edit until unlocked.')) return;
+            SchoolAPI.lockAttendanceSession(obid, od).then(function(ur) {
+              alert((ur && ur.ok) ? 'Locked.' : ((ur && ur.error) || 'Failed.'));
+              document.getElementById('recLoad').click();
+            });
+          });
+        });
+      }
+
+      document.getElementById('recLoad').addEventListener('click', function() {
+        var bid = document.getElementById('recBatch').value;
+        var f = document.getElementById('recFrom').value;
+        var t = document.getElementById('recTo').value;
+        var sf = document.getElementById('recStatus').value;
+        var tun = (document.getElementById('recTeacher') && document.getElementById('recTeacher').value) || '';
+        var opts = {};
+        if (sf && sf !== 'all') opts.statusFilter = sf;
+        if (tun) opts.teacherUsername = tun;
+        SchoolAPI.getAttendanceRecords(bid || null, f || null, t || null, opts).then(function(r) {
+          if (!r || !r.ok) {
+            document.getElementById('recHint').textContent = (r && r.error) || 'Failed.';
+            document.getElementById('recBody').innerHTML = '';
+            document.getElementById('recTotals').style.display = 'none';
+            return;
+          }
+          var days = r.days || [];
+          if (!days.length) {
+            document.getElementById('recHint').textContent = 'No rows in this range.';
+            document.getElementById('recBody').innerHTML = '';
+            document.getElementById('recTotals').style.display = 'none';
+            return;
+          }
+          document.getElementById('recHint').textContent = '';
+          var tp = 0, ta = 0, tl = 0;
+          document.getElementById('recBody').innerHTML = days.map(function(row) {
+            tp += row.present || 0; ta += row.absent || 0; tl += row.late || 0;
+            var tcell = '<div class="teacher-cell"><span class="t-name">' + esc((row.teacher_name || '').trim() || '—') + '</span></div>';
+            var stHtml = row.locked
+              ? '<span class="att-pill att-pill--done">Completed</span><span class="att-lock-hint">Locked · no teacher edits</span>'
+              : '<span class="att-pill att-pill--open">In progress</span><span class="att-lock-hint">Unlocked · teacher can edit</span>';
+            var act = '<button type="button" class="att-link-view rec-detail no-print" data-bid="' + esc(row.batch_id) + '" data-d="' + esc(row.date) + '">View</button>';
+            if (row.locked) {
+              act += ' <button type="button" class="btn-sm btn-unlock rec-unlock no-print" data-bid="' + esc(row.batch_id) + '" data-d="' + esc(row.date) + '">Unlock</button>';
+            } else {
+              act += ' <button type="button" class="btn-sm btn-lock rec-lock no-print" data-bid="' + esc(row.batch_id) + '" data-d="' + esc(row.date) + '">Lock</button>';
+            }
+            var rateStr = row.rate != null ? '<span class="att-rate">' + row.rate + '%</span>' : '—';
+            return '<tr><td>' + esc(row.date) + '</td><td>' + esc(row.batch_name || '') + '</td><td class="att-rec-teacher">' + tcell + '</td><td class="att-num att-num--p">' + row.present + '</td><td class="att-num att-num--a">' + row.absent + '</td><td class="att-num att-num--l">' + row.late + '</td><td>' + rateStr + '</td><td class="att-rec-session">' + stHtml + '</td><td class="no-print att-actions-cell">' + act + '</td></tr>';
+          }).join('');
+          document.getElementById('totRows').textContent = 'Total rows: ' + days.length;
+          document.getElementById('totP').textContent = '🟢 Present: ' + tp;
+          document.getElementById('totA').textContent = '🔴 Absent: ' + ta;
+          document.getElementById('totL').textContent = '🟡 Late: ' + tl;
+          document.getElementById('recTotals').style.display = 'flex';
+          wireRecRowActions();
+        });
+      });
+
+      function updateDetailActions() {
+        var has = lastDetailCtx.hasRows;
+        var locked = lastDetailCtx.locked;
+        document.getElementById('detActions').style.display = has ? 'flex' : 'none';
+        document.getElementById('detUnlockWarn').style.display = has ? 'block' : 'none';
+        document.getElementById('detBtnLock').style.display = has && !locked ? 'inline-block' : 'none';
+        document.getElementById('detBtnUnlock').style.display = has && locked ? 'inline-block' : 'none';
+      }
+
+      function reloadDetail() {
+        var bid = lastDetailCtx.batchId;
+        var d = lastDetailCtx.date;
+        if (!bid || !d) return;
+        SchoolAPI.getBatchAttendanceSession(bid, d, {}).then(function(r) {
+          if (!r || !r.ok) return;
+          renderDetailView(r);
+        });
+      }
+
+      function renderDetailView(data) {
+        var studentsList = data.students || [];
+        var summary = data.summary || {};
+        var batch = data.batch || {};
+        var bid = String(batch.id != null ? batch.id : document.getElementById('detBatch').value);
+        var d = data.date || document.getElementById('detDate').value;
+        var hasData = studentsList.some(function(s) { return s.record_id != null; });
+        lastDetailCtx = { batchId: bid, date: d, hasRows: hasData, locked: !!data.locked };
+
+        var batchTitle = (batch.name || '').trim() || ((batch.course_name || '') + (batch.level_name ? ' · ' + batch.level_name : '')).trim() || '—';
+        document.getElementById('detMetaCard').style.display = 'block';
+        document.getElementById('detHeadLine1').innerHTML = '<span aria-hidden="true">📅</span> ' + esc(detailHeadDate(d)) + ' <span class="det-detail-sep">—</span> ' + esc(batchTitle);
+        var tn = (batch.teacher_name || '').trim();
+        var lockPart = data.locked
+          ? '<span aria-hidden="true">🔒</span> Locked'
+          : '<span aria-hidden="true">🔓</span> Unlocked';
+        document.getElementById('detHeadLine2').innerHTML =
+          '<span aria-hidden="true">👤</span> Taken by: <strong>' + esc(tn || '—') + '</strong>' +
+          ' <span class="det-detail-sep">·</span> ' + lockPart;
+
+        var p = summary.present || 0, a = summary.absent || 0, l = summary.late || 0;
+        var tot = p + a + l;
+        var rate = tot ? Math.round((p + l) * 1000 / tot) / 10 : 0;
+        var foot = document.getElementById('detFooterSummary');
+        if (studentsList.length) {
+          foot.textContent = '📊 Present: ' + p + ' | Absent: ' + a + ' | Late: ' + l + ' | Rate: ' + rate + '%';
+          foot.style.display = 'block';
+        } else {
+          foot.textContent = '';
+          foot.style.display = 'none';
+        }
+
+        document.getElementById('detBody').innerHTML = studentsList.map(function(s) {
+          var st = (s.status || '').toLowerCase();
+          var uat = s.updated_at != null && s.updated_at !== '' ? s.updated_at : (s.updatedAt != null && s.updatedAt !== '' ? s.updatedAt : null);
+          var rid = s.record_id != null ? s.record_id : s.id;
+          var timeCell = '—';
+          if (uat) {
+            var tShow = fmtTime12(uat);
+            timeCell = esc(tShow !== '—' ? tShow : String(uat));
+          } else if (rid != null && rid !== '' && data.session_recorded_at) {
+            timeCell = esc(fmtTime12(data.session_recorded_at));
+          }
+          var rm = (s.remark || '').trim();
+          var nm = (s.name || '').trim() || '—';
+          var sub = (s.name_mm || s.name_myanmar || s.burmese_name || s.name_my || '').toString().trim();
+          var nameCell = '<span class="det-name-main">' + esc(nm) + '</span>' +
+            (sub ? '<span class="det-name-sub">' + esc(sub) + '</span>' : '');
+          var remDisp = rm ? esc(rm) : '—';
+          return '<tr class="' + (st === 'late' ? 'row-late' : '') + '"><td>' + nameCell + '</td><td>' + statusDetailCell(st) + '</td><td>' + timeCell + '</td><td>' + remDisp + '</td></tr>';
+        }).join('');
+
+        document.getElementById('detHint').textContent = studentsList.length ? '' : 'No students in this batch or no data loaded.';
+        updateDetailActions();
+      }
+
+      document.getElementById('detLoad').addEventListener('click', function() {
+        var bid = document.getElementById('detBatch').value;
+        var d = document.getElementById('detDate').value;
+        if (!bid || !d) { alert('Batch and date required.'); return; }
+        SchoolAPI.getBatchAttendanceSession(bid, d, {}).then(function(r) {
+          if (!r || !r.ok) {
+            document.getElementById('detHint').textContent = (r && r.error) || 'Failed.';
+            document.getElementById('detMetaCard').style.display = 'none';
+            document.getElementById('detFooterSummary').style.display = 'none';
+            document.getElementById('detFooterSummary').textContent = '';
+            document.getElementById('detBody').innerHTML = '';
+            document.getElementById('detActions').style.display = 'none';
+            return;
+          }
+          document.getElementById('detHint').textContent = '';
+          renderDetailView(r);
+        });
+      });
+
+      document.getElementById('detBtnBack').addEventListener('click', function() {
+        switchView('records');
+      });
+      document.getElementById('detBtnUnlock').addEventListener('click', function() {
+        if (!lastDetailCtx.batchId || !lastDetailCtx.date) return;
+        if (!confirm('Unlock this session for the teacher?')) return;
+        SchoolAPI.unlockAttendanceSession(lastDetailCtx.batchId, lastDetailCtx.date).then(function(ur) {
+          alert((ur && ur.ok) ? 'Unlocked.' : ((ur && ur.error) || 'Failed.'));
+          reloadDetail();
+        });
+      });
+      document.getElementById('detBtnLock').addEventListener('click', function() {
+        if (!lastDetailCtx.batchId || !lastDetailCtx.date) return;
+        if (!confirm('Lock this session?')) return;
+        SchoolAPI.lockAttendanceSession(lastDetailCtx.batchId, lastDetailCtx.date).then(function(ur) {
+          alert((ur && ur.ok) ? 'Locked.' : ((ur && ur.error) || 'Failed.'));
+          reloadDetail();
+        });
+      });
+
+      function fillRepLogBatchOptions(byBatchList) {
+        var el = document.getElementById('repLogBatch');
+        var v = el.value;
+        el.innerHTML = '<option value="">All batches in range</option>' +
+          (byBatchList || []).map(function(b) {
+            return '<option value="' + esc(String(b.batch_id)) + '">' + esc(b.batch_name || '') + '</option>';
+          }).join('');
+        if (v && byBatchList.some(function(b) { return String(b.batch_id) === v; })) el.value = v;
+      }
+
+      document.getElementById('repLoad').addEventListener('click', function() {
+        var sid = document.getElementById('repStudent').value;
+        if (!sid) { alert('Select student.'); return; }
+        var f = document.getElementById('repFrom').value;
+        var t = document.getElementById('repTo').value;
+        var emptySt = document.getElementById('repEmptyState');
+        var repHintEl = document.getElementById('repHint');
+        SchoolAPI.getStudentAttendanceReport(sid, null, { from: f || undefined, to: t || undefined }).then(function(r) {
+          if (!r || !r.ok) {
+            if (repHintEl) {
+              repHintEl.style.display = 'block';
+              repHintEl.textContent = (r && r.error) || 'Failed.';
+            }
+            document.getElementById('repPanel').style.display = 'none';
+            if (emptySt) emptySt.style.display = 'block';
+            return;
+          }
+          lastReport = r;
+          if (repHintEl) repHintEl.style.display = 'none';
+          if (emptySt) emptySt.style.display = 'none';
+          document.getElementById('repPanel').style.display = 'block';
+          document.getElementById('repName').textContent = r.name || sid;
+          document.getElementById('repId').textContent = 'ID: ' + sid;
+          document.getElementById('repTotal').textContent = r.total_records != null ? r.total_records : 0;
+          document.getElementById('repPres').textContent = r.present != null ? r.present : 0;
+          document.getElementById('repAbs').textContent = r.absent != null ? r.absent : 0;
+          document.getElementById('repLate').textContent = r.late != null ? r.late : 0;
+          document.getElementById('repPct').textContent = String(r.attendance_percentage != null ? r.attendance_percentage : 0);
+          var byb = r.by_batch || [];
+          fillRepLogBatchOptions(byb);
+          document.getElementById('repByBatchBody').innerHTML = byb.map(function(b) {
+            return '<tr><td>' + esc(b.batch_name) + '</td><td>' + b.present + '</td><td>' + b.absent + '</td><td>' + b.late + '</td><td>' + b.total + '</td><td>' + b.rate + '%</td><td>' + (b.trend || '') + '</td></tr>';
+          }).join('');
+          renderRepLogs();
+        });
+      });
+
+      function filterRepLogsRaw(logs) {
+        var lb = document.getElementById('repLogBatch').value;
+        var stf = (document.getElementById('repLogStatus') && document.getElementById('repLogStatus').value) || 'all';
+        return (logs || []).filter(function(x) {
+          if (lb && String(x.batch_id) !== lb) return false;
+          if (!stf || stf === 'all') return true;
+          return (x.status || '').toLowerCase() === stf;
+        });
+      }
+
+      function renderRepLogs() {
+        if (!lastReport || !lastReport.logs) return;
+        var lb = document.getElementById('repLogBatch').value;
+        var logs = filterRepLogsRaw(lastReport.logs);
+        document.getElementById('repLogBody').innerHTML = logs.length
+          ? logs.map(function(row) {
+            var st = (row.status || '').toLowerCase();
+            return '<tr><td>' + esc(row.date) + '</td><td>' + esc(row.batch_name) + '</td><td>' + statusEmojiLabel(st) + '</td><td>' + esc(row.remark || '—') + '</td></tr>';
+          }).join('')
+          : '<tr><td colspan="4" class="text-muted">No rows match this filter.</td></tr>';
+        document.getElementById('repOverallTrend').innerHTML = buildOverallTrend(lastReport.logs || [], lb);
+      }
+      document.getElementById('repLogBatch').addEventListener('change', renderRepLogs);
+      document.getElementById('repLogStatus').addEventListener('change', renderRepLogs);
+
+      document.getElementById('repExport').addEventListener('click', function() {
+        if (!lastReport || !lastReport.logs) return;
+        var sid = document.getElementById('repStudent').value;
+        var exportLogs = filterRepLogsRaw(lastReport.logs);
+        var rows = [['date', 'batch', 'status', 'remark']].concat(
+          exportLogs.map(function(x) { return [x.date, x.batch_name, x.status, (x.remark || '').replace(/"/g, '""')]; })
+        );
+        var csv = rows.map(function(l) { return l.map(function(c) { return '"' + String(c).replace(/"/g, '""') + '"'; }).join(','); }).join('\n');
+        var blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+        var a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'attendance_' + sid + '.csv';
+        a.click();
+        URL.revokeObjectURL(a.href);
+      });
+
+      document.getElementById('repExportPdf').addEventListener('click', function() {
+        if (!lastReport) {
+          alert('Load a student report first.');
+          return;
+        }
+        switchView('report');
+        setTimeout(function() {
+          window.print();
+        }, 100);
+      });
+
+      loadBatchesAndStudents().then(function() {
+        try {
+          var tab = new URLSearchParams(window.location.search).get('tab');
+          if (tab === 'detail' || tab === 'report') switchView(tab);
+        } catch (e) {}
+      });
+    })();
+  </script>
+  <script src="../assets/js/dashboard-sidebar.js" defer></script>
+</body>
+</html>

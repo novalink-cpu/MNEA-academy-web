@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="my">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="../assets/js/desktop-layout-viewport.js"></script>
+  <title>Blog Posts | Admin</title>
+  <link rel="stylesheet" href="../assets/css/main.css">
+  <link rel="stylesheet" href="../assets/css/dashboard.css">
+  <style>
+    .modal-overlay { position: fixed; inset: 0; background: rgba(15, 23, 42, .42); z-index: 1300; display: none; align-items: center; justify-content: center; padding: 1rem; }
+    .modal-overlay.show { display: flex; }
+    .modal-card { width: min(760px, 100%); max-height: 92vh; overflow: auto; background: #fff; border-radius: 14px; padding: 1rem; }
+    .modal-head { display: flex; align-items: center; justify-content: space-between; gap: .75rem; margin-bottom: .75rem; }
+    .modal-head h3 { margin: 0; }
+    .modal-close { border: none; background: none; font-size: 1.4rem; cursor: pointer; color: #64748b; }
+    .form-grid { display: grid; gap: .8rem; }
+    .form-group label { display: block; font-weight: 600; margin-bottom: .25rem; }
+    .form-group input, .form-group textarea, .form-group select { width: 100%; padding: .55rem .65rem; border: 1px solid var(--border); border-radius: 8px; box-sizing: border-box; }
+    .form-group textarea { min-height: 110px; resize: vertical; }
+    .grid-two { display: grid; grid-template-columns: 1fr 1fr; gap: .8rem; }
+    @media (max-width: 680px) { .grid-two { grid-template-columns: 1fr; } }
+    .form-actions { display: flex; gap: .6rem; flex-wrap: wrap; margin-top: .35rem; }
+    .btn-primary { background: #16a34a !important; border-color: #16a34a !important; color: #fff !important; }
+    .btn-primary:hover { background: #15803d !important; border-color: #15803d !important; }
+    .chip { display: inline-block; padding: .18rem .58rem; border-radius: 999px; font-size: .78rem; font-weight: 600; }
+    .chip-published { background: #dcfce7; color: #166534; }
+    .chip-draft { background: #fef3c7; color: #92400e; }
+  </style>
+</head>
+<body class="admin-dashboard-glass">
+  <div class="dashboard-wrap glass-dashboard">
+    <aside class="dashboard-sidebar">
+      <a href="../public-page/index.html" class="logo-link"><span class="logo-brand-row"><img src="../photo/logo.png" alt="" class="logo-mark-img" width="72" decoding="async" /><span class="logo-headlines"><span class="logo-title-line">MYANMAR</span><span class="logo-title-line">NEW ERA</span></span></span></a>
+      <nav>
+        <a href="dashboard.html">Dashboard</a>
+        <a href="admissions.html">Admission Management</a>
+        <a href="students.html">Student Management</a>
+        <a href="teachers.html">Teacher Management</a>
+        <a href="academic.html">Academic Management</a>
+        <a href="attendance.html">Attendance Management</a>
+        <a href="exams.html">Exam Management</a>
+        <a href="gpa-transcript.html">GPA & Transcript Management</a>
+        <a href="inquiries.html">Communication <span class="nav-inquiry-badge" id="navInquiryCount"></span></a>
+        <a href="content-management.html">Page Content Management</a>
+        <a href="question-bank.html">Question Bank Management</a>
+        <a href="reports.html">Reports & Analytics</a>
+        <a href="settings.html">Settings & Configuration</a>
+      </nav>
+    </aside>
+    <main class="dashboard-main">
+      <div class="dashboard-header glass-toolbar">
+        <p class="dashboard-toolbar-title" data-lang-en="Blog Posts" data-lang-my="Blog Posts">Blog Posts</p>
+        <div class="auth-info">
+          <a href="content-management.html" class="btn-preview" style="margin-right:0.5rem;">← Page Content Management</a>
+          <div class="notification-wrap">
+            <button type="button" class="btn-notification" id="btnNotification" aria-haspopup="true" aria-expanded="false">
+              &#x1F514; <span id="notificationLabel">Notifications</span> (<span id="notificationCount" class="notification-count-num">0</span>)
+              <span class="notification-badge" id="notificationBadge" style="display:none;">0</span>
+            </button>
+            <div class="notification-dropdown" id="notificationDropdown" role="menu">
+              <h3>Notifications</h3>
+              <ul id="notificationList">
+                <li><a href="inquiries.html">No new notifications</a></li>
+              </ul>
+            </div>
+          </div>
+          <div class="profile-wrap">
+            <button type="button" class="btn-profile" id="btnProfile" aria-haspopup="true" aria-expanded="false">&#x1F464; <span id="profileName">Admin</span> &#x25BC;</button>
+            <div class="profile-dropdown" id="profileDropdown" role="menu">
+              <a href="settings.html">Profile</a>
+              <a href="settings.html#password">Change Password</a>
+              <div class="divider"></div>
+              <button type="button" id="btnAdminToolbarLogout">Logout</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="mgmt-view-card">
+        <h2>Blog Posts</h2>
+        <div class="mgmt-toolbar">
+          <select id="filterCategory">
+            <option value="">All Categories</option>
+            <option value="learning-tips">Learning Tips</option>
+            <option value="study-guides">Study Guides</option>
+            <option value="academy-news">Academy News</option>
+          </select>
+          <input type="text" id="searchPosts" placeholder="Search posts" style="max-width:200px;">
+          <button type="button" class="btn-primary" id="btnSearchPosts">Search</button>
+          <button type="button" class="btn-primary" id="btnAddPost" style="margin-left:auto;">Add Post</button>
+        </div>
+        <div class="table-wrap">
+          <table class="dashboard-table">
+            <thead>
+              <tr>
+                <th>NO.</th>
+                <th>TITLE</th>
+                <th>CATEGORY</th>
+                <th>DATE</th>
+                <th>STATUS</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="blogPostsBody">
+              <tr><td colspan="6" class="text-muted">No blog posts yet. Add posts to display on the blog page.</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="text-muted mt-1">Manage articles for the website blog.</p>
+      </div>
+    </main>
+  </div>
+  <div id="postModal" class="modal-overlay" aria-hidden="true">
+    <div class="modal-card">
+      <div class="modal-head">
+        <h3 id="postModalTitle">Add Blog Post</h3>
+        <button type="button" class="modal-close" id="btnClosePostModal" aria-label="Close">&times;</button>
+      </div>
+      <form id="postForm" class="form-grid">
+        <input type="hidden" id="postId">
+        <div class="form-group">
+          <label for="postTitle">Title</label>
+          <input type="text" id="postTitle" required>
+        </div>
+        <div class="grid-two">
+          <div class="form-group">
+            <label for="postCategory">Category</label>
+            <select id="postCategory" required>
+              <option value="">Select category</option>
+              <option value="learning-tips">Learning Tips</option>
+              <option value="study-guides">Study Guides</option>
+              <option value="academy-news">Academy News</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="postStatus">Status</label>
+            <select id="postStatus" required>
+              <option value="published">Published</option>
+              <option value="draft">Draft</option>
+            </select>
+          </div>
+        </div>
+        <div class="grid-two">
+          <div class="form-group">
+            <label for="postDate">Date</label>
+            <input type="date" id="postDate" required lang="en-GB" placeholder="dd/mm/yyyy">
+          </div>
+          <div class="form-group">
+            <label for="postUrl">Read More URL (optional)</label>
+            <input type="text" id="postUrl" placeholder="e.g. blog-my-post.html">
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="postExcerpt">Excerpt</label>
+          <textarea id="postExcerpt" required></textarea>
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="btn-primary">Save Post</button>
+          <button type="button" class="btn" id="btnResetPost">Reset</button>
+        </div>
+      </form>
+    </div>
+  </div>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+  <script src="../assets/js/firebase-config.js"></script>
+  <script src="../assets/js/auth.js"></script>
+  <script src="../assets/js/school-api.js"></script>
+  <script src="../assets/js/lang-switcher.js"></script>
+  <script src="../assets/js/content-firebase.js"></script>
+  <script src="../assets/js/admin-top-toolbar.js"></script>
+  <script src="../assets/js/content-admin.js"></script>
+  <script>
+    (function() {
+      var u = window.AcademyAuth && AcademyAuth.currentUser();
+      if (!u) { window.location.href = '../public-page/login.html'; return; }
+      AcademyAuth.getUserProfile(u.uid, function(p) { if ((p && p.role) !== 'admin') window.location.href = '../student/dashboard.html'; });
+      if (window.AdminTopToolbar) AdminTopToolbar.init();
+
+      var posts = [];
+
+      function esc(s) {
+        if (s == null || s === undefined) return '';
+        var d = document.createElement('div');
+        d.textContent = s;
+        return d.innerHTML;
+      }
+
+      function fmtDate(raw) {
+        var s = (raw || '').toString().trim();
+        if (!s) return '—';
+        var d = new Date(s);
+        if (isNaN(d.getTime())) return s;
+        return d.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' });
+      }
+
+      function getCategoryLabel(v) {
+        if (v === 'learning-tips') return 'Learning Tips';
+        if (v === 'study-guides') return 'Study Guides';
+        if (v === 'academy-news') return 'Academy News';
+        return v || '—';
+      }
+
+      function isPublished(v) {
+        return (v || '').toString().toLowerCase() === 'published';
+      }
+
+      function openPostModal() {
+        document.getElementById('postModal').classList.add('show');
+        document.getElementById('postModal').setAttribute('aria-hidden', 'false');
+      }
+
+      function closePostModal() {
+        document.getElementById('postModal').classList.remove('show');
+        document.getElementById('postModal').setAttribute('aria-hidden', 'true');
+      }
+
+      function resetPostForm() {
+        document.getElementById('postId').value = '';
+        document.getElementById('postTitle').value = '';
+        document.getElementById('postCategory').value = '';
+        document.getElementById('postStatus').value = 'published';
+        document.getElementById('postDate').value = new Date().toISOString().slice(0, 10);
+        document.getElementById('postUrl').value = '';
+        document.getElementById('postExcerpt').value = '';
+        document.getElementById('postModalTitle').textContent = 'Add Blog Post';
+      }
+
+      function getFilteredPosts() {
+        var category = (document.getElementById('filterCategory').value || '').trim().toLowerCase();
+        var keyword = (document.getElementById('searchPosts').value || '').trim().toLowerCase();
+        return posts.filter(function(post) {
+          var sameCategory = !category || (post.category || '').toLowerCase() === category;
+          var searchable = ((post.title || '') + ' ' + (post.excerpt || '') + ' ' + (post.category || '')).toLowerCase();
+          var sameKeyword = !keyword || searchable.indexOf(keyword) >= 0;
+          return sameCategory && sameKeyword;
+        });
+      }
+
+      function renderPosts() {
+        var body = document.getElementById('blogPostsBody');
+        var filtered = getFilteredPosts();
+        if (!filtered.length) {
+          body.innerHTML = '<tr><td colspan="6" class="text-muted">No blog posts yet. Add posts to display on the blog page.</td></tr>';
+          return;
+        }
+        body.innerHTML = filtered.map(function(post, idx) {
+          var status = isPublished(post.status)
+            ? '<span class="chip chip-published">Published</span>'
+            : '<span class="chip chip-draft">Draft</span>';
+          return '<tr>' +
+            '<td>' + (idx + 1) + '</td>' +
+            '<td><strong>' + esc(post.title || 'Untitled') + '</strong></td>' +
+            '<td>' + esc(getCategoryLabel(post.category)) + '</td>' +
+            '<td>' + esc(fmtDate(post.date)) + '</td>' +
+            '<td>' + status + '</td>' +
+            '<td>' +
+              '<button type="button" class="btn btn-sm btn-secondary btn-edit-post" data-id="' + esc(post.id) + '" aria-label="Edit post">Edit</button> ' +
+              '<button type="button" class="btn btn-sm btn-danger btn-delete-post" data-id="' + esc(post.id) + '" aria-label="Delete post">Delete</button>' +
+            '</td>' +
+          '</tr>';
+        }).join('');
+      }
+
+      function savePosts(nextPosts) {
+        posts = Array.isArray(nextPosts) ? nextPosts.slice() : [];
+        if (window.AcademyContent && AcademyContent.saveBlogPosts) {
+          AcademyContent.saveBlogPosts(posts);
+        }
+        if (window.SchoolAPI && SchoolAPI.saveWebExtra) {
+          return SchoolAPI.saveWebExtra('blog_posts', posts).then(function() {
+            renderPosts();
+          }).catch(function() {
+            renderPosts();
+          });
+        }
+        renderPosts();
+        return Promise.resolve();
+      }
+
+      function loadPosts() {
+        var localPosts = (window.AcademyContent && AcademyContent.loadBlogPosts && AcademyContent.loadBlogPosts()) || [];
+        posts = Array.isArray(localPosts) ? localPosts : [];
+        renderPosts();
+        if (window.SchoolAPI && SchoolAPI.getWebExtra) {
+          SchoolAPI.getWebExtra('blog_posts').then(function(res) {
+            if (res && res.ok && Array.isArray(res.data)) {
+              posts = res.data.slice();
+              if (window.AcademyContent && AcademyContent.saveBlogPosts) AcademyContent.saveBlogPosts(posts);
+              renderPosts();
+            }
+          }).catch(function() {});
+        }
+      }
+
+      document.getElementById('btnAddPost').addEventListener('click', function() {
+        resetPostForm();
+        openPostModal();
+      });
+      document.getElementById('btnClosePostModal').addEventListener('click', closePostModal);
+      document.getElementById('btnResetPost').addEventListener('click', resetPostForm);
+      document.getElementById('postModal').addEventListener('click', function(e) {
+        if (e.target === this) closePostModal();
+      });
+      document.getElementById('btnSearchPosts').addEventListener('click', renderPosts);
+      document.getElementById('filterCategory').addEventListener('change', renderPosts);
+      document.getElementById('searchPosts').addEventListener('input', renderPosts);
+
+      document.getElementById('postForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        var id = (document.getElementById('postId').value || '').trim();
+        var item = {
+          id: id || ('post_' + Date.now()),
+          title: document.getElementById('postTitle').value.trim(),
+          category: document.getElementById('postCategory').value.trim(),
+          status: document.getElementById('postStatus').value.trim(),
+          date: document.getElementById('postDate').value,
+          url: document.getElementById('postUrl').value.trim(),
+          excerpt: document.getElementById('postExcerpt').value.trim(),
+          updated_at: new Date().toISOString()
+        };
+        if (!item.title || !item.category || !item.date || !item.excerpt) return;
+        var next = posts.slice();
+        var idx = next.findIndex(function(p) { return String(p.id) === String(item.id); });
+        if (idx >= 0) next[idx] = item; else next.unshift(item);
+        savePosts(next).then(function() {
+          closePostModal();
+          resetPostForm();
+        });
+      });
+
+      document.getElementById('blogPostsBody').addEventListener('click', function(e) {
+        var editBtn = e.target.closest('.btn-edit-post');
+        var deleteBtn = e.target.closest('.btn-delete-post');
+        if (editBtn) {
+          var id = editBtn.getAttribute('data-id');
+          var post = posts.find(function(p) { return String(p.id) === String(id); });
+          if (!post) return;
+          document.getElementById('postId').value = post.id || '';
+          document.getElementById('postTitle').value = post.title || '';
+          document.getElementById('postCategory').value = post.category || '';
+          document.getElementById('postStatus').value = post.status || 'draft';
+          document.getElementById('postDate').value = post.date || '';
+          document.getElementById('postUrl').value = post.url || '';
+          document.getElementById('postExcerpt').value = post.excerpt || '';
+          document.getElementById('postModalTitle').textContent = 'Edit Blog Post';
+          openPostModal();
+          return;
+        }
+        if (deleteBtn) {
+          var deleteId = deleteBtn.getAttribute('data-id');
+          if (!confirm('Delete this blog post?')) return;
+          var next = posts.filter(function(p) { return String(p.id) !== String(deleteId); });
+          savePosts(next);
+        }
+      });
+
+      resetPostForm();
+      loadPosts();
+    })();
+  </script>
+  <script src="../assets/js/admin-badge.js"></script>
+  <script src="../assets/js/dashboard-sidebar.js" defer></script>
+</body>
+</html>

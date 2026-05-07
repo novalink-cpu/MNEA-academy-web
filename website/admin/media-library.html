@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="my">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="../assets/js/desktop-layout-viewport.js"></script>
+  <title>Media Library | Admin</title>
+  <link rel="stylesheet" href="../assets/css/main.css">
+  <link rel="stylesheet" href="../assets/css/dashboard.css">
+</head>
+<body class="admin-dashboard-glass">
+  <div class="dashboard-wrap glass-dashboard">
+    <aside class="dashboard-sidebar">
+      <a href="../public-page/index.html" class="logo-link"><span class="logo-brand-row"><img src="../photo/logo.png" alt="" class="logo-mark-img" width="72" decoding="async" /><span class="logo-headlines"><span class="logo-title-line">MYANMAR</span><span class="logo-title-line">NEW ERA</span></span></span></a>
+      <nav>
+        <a href="dashboard.html">Dashboard</a>
+        <a href="admissions.html">Admission Management</a>
+        <a href="students.html">Student Management</a>
+        <a href="teachers.html">Teacher Management</a>
+        <a href="academic.html">Academic Management</a>
+        <a href="attendance.html">Attendance Management</a>
+        <a href="exams.html">Exam Management</a>
+        <a href="gpa-transcript.html">GPA & Transcript Management</a>
+        <a href="inquiries.html">Communication <span class="nav-inquiry-badge" id="navInquiryCount"></span></a>
+        <a href="content-management.html" class="active">Page Content Management</a>
+        <a href="question-bank.html">Question Bank Management</a>
+        <a href="reports.html">Reports & Analytics</a>
+        <a href="settings.html">Settings & Configuration</a>
+      </nav>
+    </aside>
+    <main class="dashboard-main">
+      <div class="dashboard-header glass-toolbar">
+        <p class="dashboard-toolbar-title" data-lang-en="Media Library" data-lang-my="Media Library">Media Library</p>
+        <div class="auth-info">
+          <div class="notification-wrap">
+            <button type="button" class="btn-notification" id="btnNotification" aria-haspopup="true" aria-expanded="false">
+              &#x1F514; <span id="notificationLabel">Notifications</span> (<span id="notificationCount" class="notification-count-num">0</span>)
+              <span class="notification-badge" id="notificationBadge" style="display:none;">0</span>
+            </button>
+            <div class="notification-dropdown" id="notificationDropdown" role="menu">
+              <h3>Notifications</h3>
+              <ul id="notificationList">
+                <li><a href="inquiries.html">No new notifications</a></li>
+              </ul>
+            </div>
+          </div>
+          <div class="profile-wrap">
+            <button type="button" class="btn-profile" id="btnProfile" aria-haspopup="true" aria-expanded="false">&#x1F464; <span id="profileName">Admin</span> &#x25BC;</button>
+            <div class="profile-dropdown" id="profileDropdown" role="menu">
+              <a href="settings.html">Profile</a>
+              <a href="settings.html#password">Change Password</a>
+              <div class="divider"></div>
+              <button type="button" id="btnAdminToolbarLogout">Logout</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="mgmt-cards">
+        <a href="admin-content.html" class="mgmt-card">
+          <div class="icon">&#x2699;</div>
+          <h3>Site Content</h3>
+          <p class="mgmt-card-desc">Home, About, Contact, images, Placement Test</p>
+        </a>
+        <a href="admin-content.html?page=news" class="mgmt-card">
+          <div class="icon">&#x1F4DD;</div>
+          <h3>Blog Posts</h3>
+        </a>
+        <a href="blog-categories.html" class="mgmt-card">
+          <div class="icon">&#x1F4CA;</div>
+          <h3>Blog Categories</h3>
+        </a>
+        <a href="media-library.html" class="mgmt-card active">
+          <div class="icon">&#x1F4C1;</div>
+          <h3>Media Library</h3>
+        </a>
+      </div>
+
+      <div class="mgmt-view-card">
+        <h2>Media Library</h2>
+        <div class="mgmt-toolbar">
+          <select id="filterType">
+            <option value="">All Types</option>
+            <option value="image">Images</option>
+            <option value="document">Documents</option>
+          </select>
+          <input type="text" id="searchMedia" placeholder="Search files" style="max-width:200px;">
+          <button type="button" class="btn-primary" id="btnSearchMedia">Search</button>
+          <button type="button" class="btn-primary" id="btnUpload" style="margin-left:auto;">Upload</button>
+        </div>
+        <div class="table-wrap">
+          <table class="dashboard-table">
+            <thead>
+              <tr>
+                <th>NO.</th>
+                <th>FILE NAME</th>
+                <th>TYPE</th>
+                <th>SIZE</th>
+                <th>UPLOADED</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="mediaBody">
+              <tr><td colspan="6" class="text-muted">No media files yet. Upload images and documents for blog and website.</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="text-muted mt-1">Images and files for blog posts and pages.</p>
+      </div>
+    </main>
+  </div>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+  <script src="../assets/js/firebase-config.js"></script>
+  <script src="../assets/js/auth.js"></script>
+  <script src="../assets/js/school-api.js"></script>
+  <script src="../assets/js/lang-switcher.js"></script>
+  <script src="../assets/js/content-firebase.js"></script>
+  <script src="../assets/js/admin-top-toolbar.js"></script>
+  <script>
+    var u = window.AcademyAuth && AcademyAuth.currentUser();
+    if (!u) window.location.href = '../public-page/login.html';
+    else {
+      AcademyAuth.getUserProfile(u.uid, function(p) { if ((p && p.role) !== 'admin') window.location.href = '../student/dashboard.html'; });
+      if (window.AdminTopToolbar) AdminTopToolbar.init();
+    }
+  </script>
+  <script src="../assets/js/admin-badge.js"></script>
+  <script src="../assets/js/dashboard-sidebar.js" defer></script>
+</body>
+</html>

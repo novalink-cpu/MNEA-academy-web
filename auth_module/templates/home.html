@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}Home{% endblock %}
+{% block body %}
+<div class="container">
+  <div class="card">
+    <h1>Signed in</h1>
+    <p>Role: <strong>{{ role }}</strong>, user: <strong>{{ username }}</strong></p>
+    <p class="hint">Wire this page to your school dashboards (admin/teacher/student).</p>
+    <a class="btn btn-ghost" href="{{ url_for('auth.change_password') }}">Change password</a>
+    <a class="btn btn-ghost" href="{{ url_for('auth.logout') }}">Logout</a>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,236 @@
+/* Shared account / settings panels (admin, teacher, student) */
+.settings-intro { font-size: 0.9rem; color: var(--text-muted); margin: 0 0 1rem; line-height: 1.5; }
+.settings-feature-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 0.85rem;
+  margin-bottom: 1rem;
+}
+.settings-feature-cards--admin-wide {
+  grid-template-columns: repeat(auto-fill, minmax(148px, 1fr));
+}
+.settings-feature-card {
+  border-radius: 14px;
+  padding: 1rem 1.1rem;
+  border: 2px solid rgba(255, 255, 255, 0.35);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+  cursor: pointer;
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+  background: linear-gradient(180deg, #f8fafc, #e2e8f0);
+}
+.settings-feature-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+}
+.settings-feature-card.is-active {
+  box-shadow: 0 0 0 3px rgba(30, 58, 95, 0.35), 0 8px 24px rgba(0, 0, 0, 0.08);
+}
+.settings-feature-card h2 {
+  margin: 0 0 0.35rem;
+  font-size: 1rem;
+  font-weight: 800;
+  color: #0f172a;
+}
+.settings-feature-card p {
+  margin: 0;
+  font-size: 0.82rem;
+  color: #475569;
+  line-height: 1.45;
+}
+.settings-feature-card .settings-card-icon {
+  font-size: 1.5rem;
+  line-height: 1;
+  margin-bottom: 0.4rem;
+}
+.settings-pane { display: none; padding: 1.25rem 1.35rem; }
+.settings-pane.is-active { display: block; }
+.settings-pane h2 {
+  margin: 0 0 0.75rem;
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: #0f172a;
+}
+.settings-form-grid {
+  display: grid;
+  gap: 1rem;
+  max-width: 32rem;
+}
+.settings-field label {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #0f172a;
+  margin-bottom: 0.3rem;
+}
+.settings-field input[type="text"],
+.settings-field input[type="password"],
+.settings-field input[type="email"] {
+  width: 100%;
+  max-width: 100%;
+  padding: 0.5rem 0.6rem;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  font-size: 0.9rem;
+  box-sizing: border-box;
+}
+.settings-textarea {
+  width: 100%;
+  max-width: 100%;
+  padding: 0.5rem 0.6rem;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  font-size: 0.9rem;
+  box-sizing: border-box;
+  font-family: inherit;
+  line-height: 1.45;
+  resize: vertical;
+}
+.settings-role-block {
+  margin-top: 1.1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border);
+}
+.settings-role-block:first-of-type {
+  margin-top: 0.65rem;
+  border-top: none;
+  padding-top: 0;
+}
+.settings-role-heading {
+  margin: 0 0 0.5rem;
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: #0f172a;
+}
+.settings-email-status {
+  font-weight: 600;
+  color: #0f172a;
+}
+.settings-perm-scroll {
+  overflow-x: auto;
+  max-width: 100%;
+  margin-top: 0.75rem;
+}
+.settings-perm-table {
+  border-collapse: collapse;
+  width: 100%;
+  min-width: 320px;
+  font-size: 0.84rem;
+}
+.settings-perm-table th,
+.settings-perm-table td {
+  border: 1px solid var(--border);
+  padding: 0.45rem 0.55rem;
+  vertical-align: middle;
+}
+.settings-perm-table th {
+  background: var(--table-header-bg, #efe6db);
+  font-weight: 700;
+  color: var(--table-header-text, #3d2914);
+  text-align: center;
+}
+.settings-perm-table td {
+  text-align: left;
+}
+.settings-perm-cell {
+  text-align: center;
+  width: 5rem;
+}
+.settings-perm-cell input {
+  width: 1.1rem;
+  height: 1.1rem;
+}
+.settings-field input[readonly] {
+  background: #f1f5f9;
+  color: #475569;
+}
+.settings-actions { margin-top: 1rem; display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; }
+.settings-actions .btn {
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  font-size: 0.88rem;
+  cursor: pointer;
+  border: none;
+  font-weight: 600;
+}
+.settings-actions .btn-primary { background: #16a34a; color: #fff; }
+.settings-actions .btn-primary:hover { filter: brightness(1.05); }
+.settings-msg {
+  display: none;
+  margin-top: 0.75rem;
+  padding: 0.55rem 0.75rem;
+  border-radius: 8px;
+  font-size: 0.86rem;
+}
+.settings-msg--ok { background: #ecfdf5; border: 1px solid #bbf7d0; color: #166534; }
+.settings-msg--error { background: #fef2f2; border: 1px solid #fecaca; color: #991b1b; }
+.settings-hint {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin: 0.5rem 0 0;
+  line-height: 1.45;
+}
+.settings-tips {
+  margin: 1rem 0 0;
+  padding-left: 1.15rem;
+  font-size: 0.82rem;
+  color: #475569;
+  line-height: 1.5;
+  max-width: 36rem;
+}
+.settings-tips li { margin-bottom: 0.35rem; }
+.settings-check-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+  max-width: 36rem;
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+.settings-check-row input { width: 1.1rem; height: 1.1rem; margin-top: 0.2rem; flex-shrink: 0; }
+.settings-link-list { margin: 0.75rem 0 0; padding-left: 1.15rem; line-height: 1.55; font-size: 0.9rem; max-width: 38rem; }
+.settings-link-list a { color: #0369a1; }
+
+.settings-gen-section {
+  margin-top: 1.35rem;
+  padding-top: 1.35rem;
+  border-top: 1px solid var(--border);
+}
+.settings-gen-section:first-of-type { margin-top: 0; padding-top: 0; border-top: none; }
+.settings-gen-section h3 {
+  margin: 0 0 0.5rem;
+  font-size: 1rem;
+  font-weight: 800;
+  color: #0f172a;
+}
+.settings-gen-grid { display: grid; gap: 0.85rem; max-width: 42rem; }
+.settings-gen-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.85rem;
+  align-items: center;
+}
+.settings-gen-actions .btn {
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  font-size: 0.86rem;
+  cursor: pointer;
+  border: none;
+  font-weight: 600;
+}
+.settings-gen-actions .btn-primary { background: #16a34a; color: #fff; }
+.settings-gen-actions .btn-secondary { background: #fff; border: 1px solid var(--border); color: #0f172a; }
+.settings-gen-actions .btn-danger { background: #b91c1c; color: #fff; }
+.settings-gen-actions .btn-danger:hover { filter: brightness(1.06); }
+.settings-gen-msg {
+  display: none;
+  margin-top: 0.65rem;
+  padding: 0.5rem 0.65rem;
+  border-radius: 8px;
+  font-size: 0.84rem;
+  max-width: 42rem;
+}
+.settings-gen-msg--ok { background: #ecfdf5; border: 1px solid #bbf7d0; color: #166534; }
+.settings-gen-msg--err { background: #fef2f2; border: 1px solid #fecaca; color: #991b1b; }
+.settings-gen-ul { margin: 0.4rem 0 0; padding-left: 1.15rem; font-size: 0.86rem; color: #475569; line-height: 1.5; max-width: 42rem; }
+.settings-gen-ul li { margin-bottom: 0.3rem; }

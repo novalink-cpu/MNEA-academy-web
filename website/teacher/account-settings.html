@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="my">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="../assets/js/desktop-layout-viewport.js"></script>
+  <title>Teacher profile &amp; settings | Myanmar New Era Academy</title>
+  <link rel="stylesheet" href="../assets/css/main.css">
+  <link rel="stylesheet" href="../assets/css/dashboard.css">
+  <link rel="stylesheet" href="../assets/css/account-settings.css">
+  <link rel="stylesheet" href="../assets/css/teacher-portal.css">
+</head>
+<body class="admin-dashboard-glass" data-account-role="teacher" data-toolbar="teacher" data-notif-admin-base="../admin/">
+  <div class="dashboard-wrap glass-dashboard">
+    <aside class="dashboard-sidebar">
+      <a href="../public-page/index.html" class="logo-link"><span class="logo-brand-row"><img src="../photo/logo.png" alt="" class="logo-mark-img" width="72" decoding="async" /><span class="logo-headlines"><span class="logo-title-line">MYANMAR</span><span class="logo-title-line">NEW ERA</span></span></span></a>
+      <nav>
+        <a href="dashboard.html">Dashboard</a>
+        <a href="students.html">My Students</a>
+        <a href="attendance.html">Take Attendance</a>
+        <a href="attendance-records.html">My Records</a>
+        <a href="marks.html">Marks Entry</a>
+        <a href="materials.html">Lesson Materials</a>
+        <a href="account-settings.html" class="active">Teacher profile</a>
+      </nav>
+    </aside>
+    <main class="dashboard-main">
+      <div class="dashboard-header glass-toolbar">
+        <div>
+          <p class="dashboard-toolbar-title">Teacher profile &amp; account</p>
+          <p class="teacher-toolbar-sub">Myanmar New Era International Education Centre · <span id="teacherToolbarRole">Teacher</span></p>
+        </div>
+        <div class="auth-info">
+          <div class="notification-wrap">
+            <button type="button" class="btn-notification" id="btnNotification" aria-haspopup="true" aria-expanded="false">
+              &#x1F514; <span id="notificationLabel">Notifications</span> (<span id="notificationCount" class="notification-count-num">0</span>)
+              <span class="notification-badge" id="notificationBadge" style="display:none;">0</span>
+            </button>
+            <div class="notification-dropdown" id="notificationDropdown" role="menu">
+              <h3>Notifications</h3>
+              <ul id="notificationList"><li class="notif-empty">…</li></ul>
+            </div>
+          </div>
+          <div class="profile-wrap">
+            <button type="button" class="btn-profile" id="btnProfile" aria-haspopup="true" aria-expanded="false">&#x1F464; <span id="profileName">Teacher</span> &#x25BC;</button>
+            <div class="profile-dropdown" id="profileDropdown" role="menu">
+              <a href="account-settings.html">Profile</a>
+              <a href="account-settings.html#password">Change password</a>
+              <div class="divider"></div>
+              <button type="button" id="btnAdminToolbarLogout">Logout</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <p class="settings-intro">Profile, professional details, password, and notification preferences.</p>
+
+      <div class="settings-feature-cards" aria-label="Account sections">
+        <div class="settings-feature-card is-active" tabindex="0" role="button" data-settings-panel="profile" aria-pressed="true" aria-labelledby="settings-card-profile-title">
+          <div class="settings-card-icon" aria-hidden="true">&#x1F464;</div>
+          <h2 id="settings-card-profile-title">Profile</h2>
+          <p>Personal info &amp; qualifications</p>
+        </div>
+        <div class="settings-feature-card" tabindex="0" role="button" data-settings-panel="password" aria-pressed="false" aria-labelledby="settings-card-pw-title">
+          <div class="settings-card-icon" aria-hidden="true">&#x1F512;</div>
+          <h2 id="settings-card-pw-title">Change password</h2>
+          <p>Server password (API)</p>
+        </div>
+        <div class="settings-feature-card" tabindex="0" role="button" data-settings-panel="notifications" aria-pressed="false" aria-labelledby="settings-card-notif-title">
+          <div class="settings-card-icon" aria-hidden="true">&#x1F514;</div>
+          <h2 id="settings-card-notif-title">Notifications</h2>
+          <p>Sound preferences (this browser)</p>
+        </div>
+      </div>
+
+      <div id="settingsPaneProfile" class="settings-pane is-active card">
+        <h2>Your profile</h2>
+        <p class="settings-hint" style="margin-top:0;">Display name is stored with your Firebase profile. School username comes from your last school login.</p>
+        <div class="settings-form-grid" style="margin-top:1rem;">
+          <div class="settings-field">
+            <label for="settingsDisplayName">Display name</label>
+            <input type="text" id="settingsDisplayName" name="displayName" autocomplete="name" maxlength="120" placeholder="Your name">
+          </div>
+          <div style="grid-column:1/-1;margin-top:0.35rem;">
+            <div class="settings-field">
+              <label for="settingsUsername">Username</label>
+              <input type="text" id="settingsUsername" readonly aria-label="Username">
+            </div>
+            <div class="settings-field">
+              <label for="settingsRole">Role</label>
+              <input type="text" id="settingsRole" readonly aria-label="Role">
+            </div>
+            <div class="settings-field">
+              <label for="settingsUserId">User ID</label>
+              <input type="text" id="settingsUserId" readonly aria-label="User ID">
+            </div>
+            <div class="settings-field">
+              <label for="settingsEmail">Email</label>
+              <input type="text" id="settingsEmail" readonly aria-label="Email" placeholder="Not provided for this account">
+            </div>
+          </div>
+          <div class="settings-actions">
+            <button type="button" class="btn btn-primary" id="settingsSaveDisplayName">Save display name</button>
+          </div>
+          <p id="settingsProfileMsg" class="settings-msg" role="status"></p>
+        </div>
+
+        <div class="settings-gen-section" style="margin-top:1.5rem;">
+          <h3 style="margin:0 0 0.5rem;font-size:1rem;font-weight:800;">Professional profile</h3>
+          <p class="settings-hint" style="margin-top:0;">Stored on the school server (<code>teacher_profiles</code>) keyed by your <strong>username</strong>. Optional profile photo (small image only).</p>
+          <div class="settings-form-grid" style="max-width:36rem;margin-top:0.75rem;">
+            <div class="settings-field">
+              <label for="tpQualifications">Qualifications</label>
+              <textarea id="tpQualifications" class="settings-textarea" rows="3" maxlength="2000" placeholder="Degrees, certificates, TEFL, etc."></textarea>
+            </div>
+            <div class="settings-field">
+              <label for="tpExperience">Work experience</label>
+              <textarea id="tpExperience" class="settings-textarea" rows="3" maxlength="2000" placeholder="Teaching experience, previous schools"></textarea>
+            </div>
+            <div class="settings-field">
+              <label for="tpSubjects">Subject specialization</label>
+              <textarea id="tpSubjects" class="settings-textarea" rows="2" maxlength="1000" placeholder="e.g. English, IELTS, PEIC"></textarea>
+            </div>
+            <div class="settings-field">
+              <label for="tpPhoto">Profile picture (optional, max ~400KB)</label>
+              <input type="file" id="tpPhoto" accept="image/*">
+              <div id="tpPhotoPreview" style="margin-top:0.5rem;max-width:120px;"></div>
+            </div>
+            <div class="settings-actions">
+              <button type="button" class="btn btn-primary" id="tpSaveProfessional">Save professional profile</button>
+            </div>
+            <p id="tpProfMsg" class="settings-msg" role="status"></p>
+          </div>
+        </div>
+      </div>
+
+      <div id="settingsPanePassword" class="settings-pane card">
+        <h2>Change password</h2>
+        <p class="settings-hint" style="margin-top:0;">Requires the school API (e.g. site opened via <code>app.py</code>). Enter your current password, then a new one (at least 6 characters).</p>
+        <div class="settings-form-grid" style="margin-top:1rem;">
+          <div class="settings-field">
+            <label for="settingsCurrentPassword">Current password</label>
+            <input type="password" id="settingsCurrentPassword" name="current_password" autocomplete="current-password">
+          </div>
+          <div class="settings-field">
+            <label for="settingsNewPassword">New password</label>
+            <input type="password" id="settingsNewPassword" name="new_password" autocomplete="new-password" minlength="6">
+          </div>
+          <div class="settings-field">
+            <label for="settingsConfirmPassword">Confirm new password</label>
+            <input type="password" id="settingsConfirmPassword" name="confirm_password" autocomplete="new-password" minlength="6">
+          </div>
+          <div class="settings-actions">
+            <button type="button" class="btn btn-primary" id="settingsPasswordSubmit">Update password</button>
+          </div>
+          <p id="settingsPasswordMsg" class="settings-msg" role="status"></p>
+        </div>
+        <ul class="settings-tips">
+          <li>MySQL school accounts: password is updated with bcrypt on the server.</li>
+          <li>SQLite teacher rows: behaviour depends on how your school stores passwords in <code>users</code> data.</li>
+        </ul>
+      </div>
+
+      <div id="settingsPaneNotifications" class="settings-pane card">
+        <h2>Notification settings</h2>
+        <p class="settings-hint" style="margin-top:0;">Stored in <strong>this browser</strong>. Matches admin notification sound toggle.</p>
+        <div class="settings-check-row" style="margin-top:1rem;">
+          <input type="checkbox" id="settingsNotifSound" checked aria-describedby="settingsNotifSoundHelpT">
+          <div>
+            <label for="settingsNotifSound" style="font-weight:700;margin:0;">Allow notification sounds (when supported)</label>
+            <p id="settingsNotifSoundHelpT" class="settings-hint" style="margin-top:0.35rem;">Uncheck to silence notification beeps on teacher and admin pages.</p>
+          </div>
+        </div>
+        <p id="settingsNotifPrefsMsg" class="settings-msg" role="status"></p>
+      </div>
+    </main>
+  </div>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+  <script src="../assets/js/firebase-config.js"></script>
+  <script src="../assets/js/auth.js"></script>
+  <script src="../assets/js/school-api.js"></script>
+  <script src="../assets/js/content-firebase.js"></script>
+  <script src="../assets/js/admin-top-toolbar.js"></script>
+  <script src="../assets/js/teacher-profile-store.js"></script>
+  <script>
+    (function () {
+      var user = window.AcademyAuth && AcademyAuth.currentUser();
+      if (!user) {
+        window.location.href = '../public-page/login.html?redirect=teacher/account-settings.html';
+        return;
+      }
+      AcademyAuth.getUserProfile(user.uid, function (profile) {
+        var role = (profile && profile.role) || 'student';
+        if (role !== 'teacher' && role !== 'admin') {
+          window.location.href = '../student/dashboard.html';
+          return;
+        }
+        var name = (profile && profile.displayName) || user.email || 'Teacher';
+        var pn = document.getElementById('profileName');
+        if (pn) pn.textContent = name;
+      });
+      if (window.AdminTopToolbar) AdminTopToolbar.init();
+    })();
+  </script>
+  <script src="../assets/js/account-settings.js"></script>
+  <script>
+    (function () {
+      var tpPhotoData = '';
+
+      function showProfMsg(text, ok) {
+        var el = document.getElementById('tpProfMsg');
+        if (!el) return;
+        el.textContent = text || '';
+        el.className = 'settings-msg' + (text ? (ok ? ' settings-msg--ok' : ' settings-msg--error') : '');
+        el.style.display = text ? 'block' : 'none';
+      }
+
+      function loadProfessional() {
+        var unEl = document.getElementById('settingsUsername');
+        var u = unEl ? String(unEl.value || '').trim() : '';
+        if (!u || !window.TeacherProfileStore) return;
+        TeacherProfileStore.load(u, function (row) {
+          var q = document.getElementById('tpQualifications');
+          var e = document.getElementById('tpExperience');
+          var s = document.getElementById('tpSubjects');
+          if (q) q.value = (row && row.qualifications) || '';
+          if (e) e.value = (row && row.experience) || '';
+          if (s) s.value = (row && row.subjects) || '';
+          tpPhotoData = (row && row.photo_data_url) || '';
+          var prev = document.getElementById('tpPhotoPreview');
+          if (prev) {
+            prev.innerHTML = tpPhotoData
+              ? '<img src="' + tpPhotoData.replace(/"/g, '') + '" alt="" style="max-width:120px;border-radius:8px;border:1px solid var(--border);">'
+              : '';
+          }
+        });
+      }
+
+      var tpPhoto = document.getElementById('tpPhoto');
+      if (tpPhoto) {
+        tpPhoto.addEventListener('change', function () {
+          var f = this.files && this.files[0];
+          if (!f) return;
+          if (f.size > 420000) {
+            showProfMsg('Image too large; use a smaller file.', false);
+            return;
+          }
+          var fr = new FileReader();
+          fr.onload = function () {
+            tpPhotoData = typeof fr.result === 'string' ? fr.result : '';
+            var prev = document.getElementById('tpPhotoPreview');
+            if (prev)
+              prev.innerHTML =
+                '<img src="' + tpPhotoData.replace(/"/g, '') + '" alt="" style="max-width:120px;border-radius:8px;border:1px solid var(--border);">';
+          };
+          fr.readAsDataURL(f);
+        });
+      }
+
+      var tpSave = document.getElementById('tpSaveProfessional');
+      if (tpSave) {
+        tpSave.addEventListener('click', function () {
+          var unEl = document.getElementById('settingsUsername');
+          var u = unEl ? String(unEl.value || '').trim() : '';
+          if (!u) {
+            showProfMsg('Username not loaded — wait a moment and try again.', false);
+            return;
+          }
+          showProfMsg('Saving…', true);
+          TeacherProfileStore.save(
+            u,
+            {
+              qualifications: String(document.getElementById('tpQualifications').value || '').trim(),
+              experience: String(document.getElementById('tpExperience').value || '').trim(),
+              subjects: String(document.getElementById('tpSubjects').value || '').trim(),
+              photo_data_url: tpPhotoData || ''
+            },
+            function (ok) {
+              showProfMsg(ok ? 'Professional profile saved.' : 'Save failed (is the API running?).', ok);
+            }
+          );
+        });
+      }
+
+      var _tpTries = 0;
+      function tryLoad() {
+        var unEl = document.getElementById('settingsUsername');
+        if (unEl && String(unEl.value || '').trim()) {
+          loadProfessional();
+          return;
+        }
+        if (_tpTries++ < 15) setTimeout(tryLoad, 400);
+      }
+      setTimeout(tryLoad, 500);
+    })();
+  </script>
+  <script src="../assets/js/dashboard-sidebar.js" defer></script>
+</body>
+</html>

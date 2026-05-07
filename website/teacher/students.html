@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="my">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="../assets/js/desktop-layout-viewport.js"></script>
+  <title>My Students | Teacher | Myanmar New Era Academy</title>
+  <link rel="stylesheet" href="../assets/css/main.css">
+  <link rel="stylesheet" href="../assets/css/dashboard.css">
+  <link rel="stylesheet" href="../assets/css/teacher-portal.css">
+  <style>
+    .batch-block { margin-bottom: 1.5rem; border: 1px solid var(--border); border-radius: 12px; overflow: hidden; background: var(--surface); box-shadow: 0 2px 8px rgba(15,23,42,0.04); }
+    .batch-block h2 { margin: 0; padding: 0.75rem 1rem; font-size: 1rem; background: linear-gradient(135deg, rgba(14, 165, 233, 0.12), rgba(99, 102, 241, 0.08)); border-bottom: 1px solid var(--border); }
+    .batch-block .batch-block-h { display: flex; align-items: center; gap: 0.35rem; }
+    .stu-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+    .stu-table th, .stu-table td { padding: 0.55rem 0.75rem; border-bottom: 1px solid var(--border); }
+    .stu-table thead th { text-align: center; }
+    .stu-table td { text-align: left; }
+    .stu-table th { background: var(--table-header-bg); color: var(--table-header-text); font-weight: 700; }
+    .stu-table tbody tr:hover { background: rgba(14, 165, 233, 0.06); }
+    .trend-cell { font-size: 1.1rem; letter-spacing: 0.06em; white-space: nowrap; }
+    .stu-summary { margin-top: 1rem; padding: 0.85rem 1rem; background: var(--surface-hover); border-radius: 10px; border: 1px solid var(--border); font-weight: 600; font-size: 0.92rem; }
+    .stu-hidden { display: none !important; }
+  </style>
+</head>
+<body class="admin-dashboard-glass" data-toolbar="teacher" data-notif-admin-base="../admin/">
+  <div class="dashboard-wrap glass-dashboard">
+    <aside class="dashboard-sidebar">
+      <a href="../public-page/index.html" class="logo-link"><span class="logo-brand-row"><img src="../photo/logo.png" alt="" class="logo-mark-img" width="72" decoding="async" /><span class="logo-headlines"><span class="logo-title-line">MYANMAR</span><span class="logo-title-line">NEW ERA</span></span></span></a>
+      <nav>
+        <a href="dashboard.html">Dashboard</a>
+        <a href="students.html" class="active">My Students</a>
+        <a href="attendance.html">Take Attendance</a>
+        <a href="attendance-records.html">My Records</a>
+        <a href="marks.html">Marks Entry</a>
+        <a href="materials.html">Lesson Materials</a>
+        <a href="account-settings.html">Teacher profile</a>
+      </nav>
+    </aside>
+    <main class="dashboard-main">
+      <div class="dashboard-header glass-toolbar">
+        <div>
+          <p class="dashboard-toolbar-title">My Students</p>
+          <p class="teacher-toolbar-sub">Myanmar New Era International Education Centre · <span id="teacherToolbarRole">Teacher</span></p>
+        </div>
+        <div class="auth-info">
+          <div class="notification-wrap">
+            <button type="button" class="btn-notification" id="btnNotification" aria-haspopup="true" aria-expanded="false">
+              &#x1F514; <span id="notificationLabel">Notifications</span> (<span id="notificationCount" class="notification-count-num">0</span>)
+              <span class="notification-badge" id="notificationBadge" style="display:none;">0</span>
+            </button>
+            <div class="notification-dropdown" id="notificationDropdown" role="menu">
+              <h3>Notifications</h3>
+              <ul id="notificationList"><li class="notif-empty">…</li></ul>
+            </div>
+          </div>
+          <div class="profile-wrap">
+            <button type="button" class="btn-profile" id="btnProfile" aria-haspopup="true" aria-expanded="false">&#x1F464; <span id="profileName">Teacher</span> &#x25BC;</button>
+            <div class="profile-dropdown" id="profileDropdown" role="menu">
+              <a href="account-settings.html">Profile</a>
+              <a href="account-settings.html#password">Change password</a>
+              <div class="divider"></div>
+              <button type="button" id="btnAdminToolbarLogout">Logout</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card mb-2">
+        <p class="text-muted" id="tsHint" style="margin-bottom:0.75rem;line-height:1.55;font-size:0.88rem;">Use the same <strong>school username</strong> as on the Dashboard (batch teacher login).</p>
+        <div class="teacher-export-bar no-print" style="margin-bottom:1rem;">
+          <label for="stuBatchFilter" style="font-weight:600;font-size:0.85rem;">Filter by batch</label>
+          <select id="stuBatchFilter" style="padding:0.45rem 0.65rem;border-radius:8px;border:1px solid var(--border);min-width:14rem;">
+            <option value="">All batches</option>
+          </select>
+          <button type="button" class="btn-export" id="btnExportCsv">Export Excel (CSV)</button>
+          <button type="button" class="btn-export" id="btnExportPdf">Print / Save PDF</button>
+        </div>
+        <div id="batchSections"></div>
+        <div id="printArea">
+          <p class="text-muted" id="emptyHint" style="display:none;margin-top:0.75rem;">No students found for your batches.</p>
+          <div class="stu-summary" id="pageSummary" style="display:none;"></div>
+        </div>
+      </div>
+    </main>
+  </div>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+  <script src="../assets/js/firebase-config.js"></script>
+  <script src="../assets/js/auth.js"></script>
+  <script src="../assets/js/school-api.js"></script>
+  <script src="../assets/js/content-firebase.js"></script>
+  <script src="../assets/js/admin-top-toolbar.js"></script>
+  <script src="../assets/js/teacher-school.js"></script>
+  <script src="../assets/js/teacher-exports.js"></script>
+  <script src="../assets/js/lang-switcher.js"></script>
+  <script>
+    (function() {
+      var user = window.AcademyAuth && AcademyAuth.currentUser();
+      if (!user) { window.location.href = '../public-page/login.html?redirect=teacher/students.html'; return; }
+      AcademyAuth.getUserProfile(user.uid, function(profile) {
+        var role = (profile && profile.role) || 'student';
+        if (role !== 'teacher' && role !== 'admin') {
+          window.location.href = '../student/dashboard.html';
+          return;
+        }
+      });
+      if (window.AdminTopToolbar) AdminTopToolbar.init();
+
+      var batchFilter = document.getElementById('stuBatchFilter');
+
+      function esc(s) {
+        if (s == null) return '';
+        return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+      }
+
+      function statusEmoji(st) {
+        var m = { present: 'P', absent: 'A', late: 'L' };
+        return m[(st || '').toLowerCase()] || '-';
+      }
+
+      function trendStr(arr) {
+        if (!arr || !arr.length) return '—';
+        return arr.map(statusEmoji).join(' ');
+      }
+
+      function fillBatchFilter(batches) {
+        if (!batchFilter) return;
+        var cur = batchFilter.value;
+        batchFilter.innerHTML = '<option value="">All batches</option>' +
+          (batches || []).map(function(b) {
+            var t = (b.batch_title || b.batch_name || '').trim();
+            return t ? '<option value="' + esc(t) + '">' + esc(t) + '</option>' : '';
+          }).join('');
+        if (cur && Array.prototype.some.call(batchFilter.options, function(o) { return o.value === cur; })) batchFilter.value = cur;
+      }
+
+      function applyBatchFilter() {
+        var v = batchFilter ? batchFilter.value : '';
+        document.querySelectorAll('#batchSections .batch-block').forEach(function(sec) {
+          var title = (sec.getAttribute('data-batch-title') || '').trim();
+          if (!v || title === v) sec.classList.remove('stu-hidden');
+          else sec.classList.add('stu-hidden');
+        });
+      }
+
+      function buildCsvFromDom() {
+        var lines = [['Batch', 'No', 'Student Name', 'Student ID', 'Attendance %', 'Last 3 days']];
+        document.querySelectorAll('#batchSections .batch-block:not(.stu-hidden)').forEach(function(sec) {
+          var batchName = (sec.getAttribute('data-batch-title') || '').trim();
+          sec.querySelectorAll('tbody tr').forEach(function(tr) {
+            var cells = tr.querySelectorAll('td');
+            if (cells.length < 5) return;
+            lines.push([
+              batchName,
+              (cells[0].innerText || '').trim(),
+              (cells[1].innerText || '').trim(),
+              (cells[2].innerText || '').trim(),
+              (cells[3].innerText || '').trim(),
+              (cells[4].innerText || '').replace(/\s+/g, ' ').trim()
+            ]);
+          });
+        });
+        return lines.map(function(row) {
+          return row.map(function(c) {
+            var s = String(c == null ? '' : c);
+            if (/[",\n\r]/.test(s)) return '"' + s.replace(/"/g, '""') + '"';
+            return s;
+          }).join(',');
+        }).join('\r\n');
+      }
+
+      function render() {
+        var wrap = document.getElementById('batchSections');
+        var emptyEl = document.getElementById('emptyHint');
+        var hintEl = document.getElementById('tsHint');
+        var sumEl = document.getElementById('pageSummary');
+        if (!window.TeacherSchool || !window.SchoolAPI || !SchoolAPI.getTeacherStudentsAttendanceSummary) {
+          wrap.innerHTML = '';
+          emptyEl.style.display = 'block';
+          sumEl.style.display = 'none';
+          return;
+        }
+        var u = TeacherSchool.getUsername();
+        if (!u) {
+          hintEl.innerHTML = 'Set your <strong>school username</strong> on <a href="dashboard.html">Dashboard</a> first.';
+          wrap.innerHTML = '';
+          emptyEl.style.display = 'block';
+          sumEl.style.display = 'none';
+          fillBatchFilter([]);
+          return;
+        }
+        hintEl.innerHTML = 'Username: <strong>' + esc(u) + '</strong>';
+        SchoolAPI.getTeacherStudentsAttendanceSummary(u).then(function(res) {
+          if (!res || !res.ok) {
+            wrap.innerHTML = '<p class="text-muted">' + esc((res && res.error) || 'Load failed.') + '</p>';
+            emptyEl.style.display = 'none';
+            sumEl.style.display = 'none';
+            fillBatchFilter([]);
+            return;
+          }
+          fillBatchFilter(res.batches || []);
+          var batches = res.batches || [];
+          var any = batches.some(function(b) { return (b.students || []).length; });
+          emptyEl.style.display = any ? 'none' : 'block';
+          if (!batches.length) {
+            wrap.innerHTML = '';
+            sumEl.style.display = 'none';
+            return;
+          }
+          wrap.innerHTML = batches.map(function(b) {
+            var studs = b.students || [];
+            if (!studs.length) return '';
+            var rows = studs.map(function(s, i) {
+              var rate = s.attendance_rate != null ? String(s.attendance_rate) + '%' : '—';
+              return '<tr><td>' + (i + 1) + '</td><td>' + esc(s.name) + '</td><td>' + esc(s.student_id) + '</td><td>' + rate + '</td><td>' + trendStr(s.last_3_statuses) + '</td></tr>';
+            }).join('');
+            return '<section class="batch-block" data-batch-title="' + esc(b.batch_title || b.batch_name || '') + '"><h2><span class="batch-block-h" aria-hidden="true">&#x1F4DA;</span> ' + esc(b.batch_title || b.batch_name) + '</h2>' +
+              '<div class="table-wrap"><table class="stu-table"><thead><tr><th>#</th><th>Student Name</th><th>Student ID</th><th>Attendance Rate</th><th>Last 3 Days</th></tr></thead><tbody>' +
+              rows + '</tbody></table></div></section>';
+          }).join('');
+          var ts = res.total_students != null ? res.total_students : 0;
+          var avg = res.average_attendance != null ? res.average_attendance + '%' : '—';
+          sumEl.textContent = 'Total students: ' + ts + ' · Average attendance: ' + avg;
+          sumEl.style.display = ts ? 'block' : 'none';
+          applyBatchFilter();
+        });
+      }
+
+      if (batchFilter) batchFilter.addEventListener('change', applyBatchFilter);
+      document.getElementById('btnExportCsv').addEventListener('click', function() {
+        var csv = buildCsvFromDom();
+        if (!csv || csv.indexOf('\n') < 0) {
+          alert('No rows to export.');
+          return;
+        }
+        if (window.TeacherExport) TeacherExport.downloadCsv('my_students.csv', csv);
+      });
+      document.getElementById('btnExportPdf').addEventListener('click', function() {
+        if (window.TeacherExport) TeacherExport.printElement(document.getElementById('printArea'));
+        else window.print();
+      });
+
+      render();
+    })();
+  </script>
+  <script src="../assets/js/dashboard-sidebar.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="my">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="../assets/js/desktop-layout-viewport.js"></script>
+  <title>Lesson Materials | Teacher | Myanmar New Era Academy</title>
+  <link rel="stylesheet" href="../assets/css/main.css">
+  <link rel="stylesheet" href="../assets/css/dashboard.css">
+  <link rel="stylesheet" href="../assets/css/teacher-portal.css">
+  <style>
+    .mat-list { list-style: none; padding: 0; margin: 0; }
+    .mat-list li {
+      border: 1px solid var(--border); border-radius: 12px; padding: 1rem 1.15rem; margin-bottom: 0.75rem;
+      background: rgba(255,255,255,0.55); display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: flex-start; justify-content: space-between;
+    }
+    .mat-list h4 { margin: 0 0 0.35rem; font-size: 1rem; }
+    .mat-meta { font-size: 0.82rem; color: var(--text-muted); }
+    .mat-actions { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+    .mat-actions button { padding: 0.35rem 0.65rem; border-radius: 8px; border: 1px solid var(--border); background: #fff; cursor: pointer; font-size: 0.82rem; font-weight: 600; }
+    .mat-form-grid { display: grid; gap: 0.85rem; max-width: 36rem; }
+  </style>
+</head>
+<body class="admin-dashboard-glass" data-toolbar="teacher" data-notif-admin-base="../admin/">
+  <div class="dashboard-wrap glass-dashboard">
+    <aside class="dashboard-sidebar">
+      <a href="../public-page/index.html" class="logo-link"><span class="logo-brand-row"><img src="../photo/logo.png" alt="" class="logo-mark-img" width="72" decoding="async" /><span class="logo-headlines"><span class="logo-title-line">MYANMAR</span><span class="logo-title-line">NEW ERA</span></span></span></a>
+      <nav>
+        <a href="dashboard.html">Dashboard</a>
+        <a href="students.html">My Students</a>
+        <a href="attendance.html">Take Attendance</a>
+        <a href="attendance-records.html">My Records</a>
+        <a href="marks.html">Marks Entry</a>
+        <a href="materials.html" class="active">Lesson Materials</a>
+        <a href="account-settings.html">Teacher profile</a>
+      </nav>
+    </aside>
+    <main class="dashboard-main">
+      <div class="dashboard-header glass-toolbar">
+        <div>
+          <p class="dashboard-toolbar-title">Lesson Materials</p>
+          <p class="teacher-toolbar-sub">Share files &amp; links with your batches · <span id="teacherToolbarRole">Teacher</span></p>
+        </div>
+        <div class="auth-info">
+          <div class="notification-wrap">
+            <button type="button" class="btn-notification" id="btnNotification" aria-haspopup="true" aria-expanded="false">
+              &#x1F514; <span id="notificationLabel">Notifications</span> (<span id="notificationCount" class="notification-count-num">0</span>)
+              <span class="notification-badge" id="notificationBadge" style="display:none;">0</span>
+            </button>
+            <div class="notification-dropdown" id="notificationDropdown" role="menu">
+              <h3>Notifications</h3>
+              <ul id="notificationList"><li class="notif-empty">…</li></ul>
+            </div>
+          </div>
+          <div class="profile-wrap">
+            <button type="button" class="btn-profile" id="btnProfile" aria-haspopup="true" aria-expanded="false">&#x1F464; <span id="profileName">Teacher</span> &#x25BC;</button>
+            <div class="profile-dropdown" id="profileDropdown" role="menu">
+              <a href="account-settings.html">Profile</a>
+              <a href="account-settings.html#password">Change password</a>
+              <div class="divider"></div>
+              <button type="button" id="btnAdminToolbarLogout">Logout</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <p class="text-muted" id="matTeacherCtx" style="font-size:0.88rem;margin-bottom:1rem;line-height:1.5;"></p>
+
+      <div class="card mb-2">
+        <h2 style="margin:0 0 0.75rem;font-size:1rem;font-weight:800;">Add material</h2>
+        <p class="text-muted" style="font-size:0.85rem;margin-bottom:1rem;">Use a public URL (Drive, YouTube, school host) or attach a small file (under ~800KB for demo storage). Students see materials when you share the link in class or via your LMS.</p>
+        <div class="mat-form-grid">
+          <div class="settings-field">
+            <label for="matTitle">Title</label>
+            <input type="text" id="matTitle" maxlength="200" placeholder="e.g. Unit 3 worksheet">
+          </div>
+          <div class="settings-field">
+            <label for="matKind">Type</label>
+            <select id="matKind">
+              <option value="pdf">PDF</option>
+              <option value="video">Video</option>
+              <option value="image">Image</option>
+              <option value="link">Web link</option>
+            </select>
+          </div>
+          <div class="settings-field">
+            <label for="matUrl">URL (optional if file below)</label>
+            <input type="url" id="matUrl" placeholder="https://…">
+          </div>
+          <div class="settings-field">
+            <label for="matFile">Small file (optional)</label>
+            <input type="file" id="matFile" accept=".pdf,.png,.jpg,.jpeg,.webp,video/*">
+          </div>
+          <div class="settings-field">
+            <label for="matBatches">Visible for batches (comma-separated names, or leave empty for “all mine”)</label>
+            <input type="text" id="matBatches" placeholder="Batch A, IELTS Morning">
+          </div>
+          <div>
+            <button type="button" class="btn-primary" id="matSave" style="padding:0.55rem 1.2rem;border-radius:8px;border:none;cursor:pointer;font-weight:700;">Add to list</button>
+            <span id="matSaveMsg" class="text-muted" style="margin-left:0.75rem;font-size:0.86rem;"></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card mb-2">
+        <h2 style="margin:0 0 0.75rem;font-size:1rem;font-weight:800;">Your materials</h2>
+        <ul class="mat-list" id="matList"><li class="text-muted">Loading…</li></ul>
+      </div>
+    </main>
+  </div>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+  <script src="../assets/js/firebase-config.js"></script>
+  <script src="../assets/js/auth.js"></script>
+  <script src="../assets/js/school-api.js"></script>
+  <script src="../assets/js/content-firebase.js"></script>
+  <script src="../assets/js/admin-top-toolbar.js"></script>
+  <script src="../assets/js/teacher-school.js"></script>
+  <script src="../assets/js/lang-switcher.js"></script>
+  <script>
+    (function() {
+      var user = window.AcademyAuth && AcademyAuth.currentUser();
+      if (!user) { window.location.href = '../public-page/login.html?redirect=teacher/materials.html'; return; }
+      AcademyAuth.getUserProfile(user.uid, function(profile) {
+        var role = (profile && profile.role) || 'student';
+        if (role !== 'teacher' && role !== 'admin') {
+          window.location.href = '../student/dashboard.html';
+          return;
+        }
+        var name = (profile && profile.displayName) || user.email || 'Teacher';
+        var el = document.getElementById('profileName');
+        if (el) el.textContent = name;
+      });
+      if (window.AdminTopToolbar) AdminTopToolbar.init();
+
+      var MAX_B64 = 900000;
+
+      function uid() {
+        return 'm' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+      }
+
+      function teacherU() {
+        return window.TeacherSchool ? TeacherSchool.getUsername() : '';
+      }
+
+      function ctxLine() {
+        var el = document.getElementById('matTeacherCtx');
+        var u = teacherU();
+        if (!el) return;
+        if (!u) {
+          el.innerHTML = '<strong>School username</strong> is not set. Open <a href="dashboard.html">Dashboard</a> and save your batch login username first.';
+          return;
+        }
+        TeacherSchool.loadBatches().then(function(r) {
+          var bs = r && r.ok && r.batches ? r.batches : [];
+          var names = bs.map(function(b) { return b.name || b.id; }).join(', ');
+          el.textContent = 'School login: ' + u + (names ? ' · Your batches: ' + names : '');
+        });
+      }
+
+      function loadList(cb) {
+        if (!window.SchoolAPI || !SchoolAPI.getWebExtra) {
+          if (cb) cb([]);
+          return;
+        }
+        SchoolAPI.getWebExtra('teacher_materials').then(function(r) {
+          var data = (r && r.ok && r.data) || [];
+          if (!Array.isArray(data)) data = [];
+          if (cb) cb(data);
+        });
+      }
+
+      function saveList(arr, cb) {
+        SchoolAPI.saveWebExtra('teacher_materials', arr).then(function(r) {
+          if (cb) cb(r && r.ok);
+        });
+      }
+
+      function escHtml(s) {
+        if (s == null) return '';
+        return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;');
+      }
+
+      function renderList(data) {
+        var ul = document.getElementById('matList');
+        var u = teacherU();
+        var mine = data.filter(function(x) {
+          return !u || !x.teacher_username || x.teacher_username === u;
+        });
+        ul.innerHTML = '';
+        if (!mine.length) {
+          ul.innerHTML = '<li class="text-muted">No materials yet. Add one above.</li>';
+          return;
+        }
+        mine.forEach(function(item) {
+          var href = item.url || item.file_data_url || '';
+          var dl = item.downloads != null ? item.downloads : 0;
+          var li = document.createElement('li');
+          li.innerHTML =
+            '<div><h4>' + escHtml(item.title || 'Untitled') + '</h4>' +
+            '<div class="mat-meta">' + escHtml(item.kind || 'file') + ' · ' + escHtml(item.batches_note || 'All batches') + ' · Downloads recorded: ' + dl + '</div></div>' +
+            '<div class="mat-actions"></div>';
+          var actions = li.querySelector('.mat-actions');
+          if (href) {
+            var o = document.createElement('button');
+            o.type = 'button';
+            o.textContent = 'Open';
+            o.addEventListener('click', function() { window.open(href, '_blank', 'noopener'); });
+            actions.appendChild(o);
+            var c = document.createElement('button');
+            c.type = 'button';
+            c.textContent = 'Copy link';
+            c.addEventListener('click', function() {
+              if (navigator.clipboard) navigator.clipboard.writeText(href);
+              else prompt('Copy:', href);
+            });
+            actions.appendChild(c);
+          }
+          var inc = document.createElement('button');
+          inc.type = 'button';
+          inc.textContent = '+1 download';
+          inc.addEventListener('click', function() {
+            var id = item.id;
+            loadList(function(all) {
+              all.forEach(function(x) {
+                if (x.id === id) x.downloads = (x.downloads || 0) + 1;
+              });
+              saveList(all, function() { loadList(renderList); });
+            });
+          });
+          actions.appendChild(inc);
+          var del = document.createElement('button');
+          del.type = 'button';
+          del.textContent = 'Delete';
+          del.style.color = '#b91c1c';
+          del.addEventListener('click', function() {
+            if (!confirm('Delete this material?')) return;
+            loadList(function(all) {
+              saveList(all.filter(function(x) { return x.id !== item.id; }), function() { loadList(renderList); });
+            });
+          });
+          actions.appendChild(del);
+          ul.appendChild(li);
+        });
+      }
+
+      document.getElementById('matSave').addEventListener('click', function() {
+        var msg = document.getElementById('matSaveMsg');
+        msg.textContent = '';
+        var title = (document.getElementById('matTitle').value || '').trim();
+        if (!title) {
+          msg.textContent = 'Title required.';
+          return;
+        }
+        var kind = document.getElementById('matKind').value;
+        var url = (document.getElementById('matUrl').value || '').trim();
+        var batchesNote = (document.getElementById('matBatches').value || '').trim();
+        var fileInp = document.getElementById('matFile');
+        var file = fileInp && fileInp.files && fileInp.files[0];
+
+        function pushRow(fileDataUrl) {
+          if (!url && !fileDataUrl) {
+            msg.textContent = 'Provide a URL or a file.';
+            return;
+          }
+          loadList(function(data) {
+            data.unshift({
+              id: uid(),
+              title: title,
+              kind: kind,
+              url: url || '',
+              file_data_url: fileDataUrl || '',
+              batches_note: batchesNote || 'All my batches',
+              downloads: 0,
+              created_at: new Date().toISOString(),
+              teacher_username: teacherU()
+            });
+            saveList(data, function(ok) {
+              msg.textContent = ok ? 'Saved.' : 'Save failed.';
+              if (ok) {
+                document.getElementById('matTitle').value = '';
+                document.getElementById('matUrl').value = '';
+                if (fileInp) fileInp.value = '';
+                loadList(renderList);
+              }
+            });
+          });
+        }
+
+        if (file) {
+          if (file.size > MAX_B64) {
+            msg.textContent = 'File too large for demo storage; use a URL instead.';
+            return;
+          }
+          var fr = new FileReader();
+          fr.onload = function() {
+            var s = fr.result;
+            if (typeof s === 'string' && s.length > MAX_B64) {
+              msg.textContent = 'Encoded file too large; use a URL.';
+              return;
+            }
+            pushRow(typeof s === 'string' ? s : '');
+          };
+          fr.readAsDataURL(file);
+        } else {
+          pushRow('');
+        }
+      });
+
+      ctxLine();
+      loadList(renderList);
+    })();
+  </script>
+  <script src="../assets/js/dashboard-sidebar.js" defer></script>
+</body>
+</html>

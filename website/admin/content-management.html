@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="my">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="../assets/js/desktop-layout-viewport.js"></script>
+  <title>Page Content Management | Admin</title>
+  <link rel="stylesheet" href="../assets/css/main.css">
+  <link rel="stylesheet" href="../assets/css/dashboard.css">
+  <style>
+    .mgmt-cards {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+    @media (max-width: 980px) {
+      .mgmt-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+    @media (max-width: 620px) {
+      .mgmt-cards { grid-template-columns: 1fr; }
+    }
+
+    .cm-inline-shell { display: none; margin-top: 0.9rem; }
+    .cm-inline-shell.show { display: block; }
+    .cm-inline-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.6rem;
+      flex-wrap: wrap;
+      margin-bottom: 0.75rem;
+    }
+    .cm-inline-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+    .cm-inline-btn {
+      border: 1px solid var(--border);
+      background: #fff;
+      color: var(--text);
+      border-radius: 8px;
+      padding: 0.45rem 0.75rem;
+      font-size: 0.86rem;
+      cursor: pointer;
+      text-decoration: none;
+    }
+    .cm-inline-btn:hover { background: var(--surface-hover); }
+    .cm-inline-frame {
+      width: 100%;
+      min-height: 980px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: #fff;
+    }
+    @media (max-width: 900px) {
+      .cm-inline-frame { min-height: 760px; }
+    }
+  </style>
+</head>
+<body class="admin-dashboard-glass">
+  <div class="dashboard-wrap glass-dashboard">
+    <aside class="dashboard-sidebar">
+      <a href="../public-page/index.html" class="logo-link"><span class="logo-brand-row"><img src="../photo/logo.png" alt="" class="logo-mark-img" width="72" decoding="async" /><span class="logo-headlines"><span class="logo-title-line">MYANMAR</span><span class="logo-title-line">NEW ERA</span></span></span></a>
+      <nav>
+        <a href="dashboard.html">Dashboard</a>
+        <a href="admissions.html">Admission Management</a>
+        <a href="students.html">Student Management</a>
+        <a href="teachers.html">Teacher Management</a>
+        <a href="academic.html">Academic Management</a>
+        <a href="attendance.html">Attendance Management</a>
+        <a href="exams.html">Exam Management</a>
+        <a href="gpa-transcript.html">GPA & Transcript Management</a>
+        <a href="inquiries.html">Communication <span class="nav-inquiry-badge" id="navInquiryCount"></span></a>
+        <a href="content-management.html" class="active">Page Content Management</a>
+        <a href="question-bank.html">Question Bank Management</a>
+        <a href="reports.html">Reports & Analytics</a>
+        <a href="settings.html">Settings & Configuration</a>
+      </nav>
+    </aside>
+    <main class="dashboard-main">
+      <div class="dashboard-header glass-toolbar">
+        <p class="dashboard-toolbar-title" data-lang-en="Page Content Management" data-lang-my="Page Content Management">Page Content Management</p>
+        <div class="auth-info">
+          <div class="notification-wrap">
+            <button type="button" class="btn-notification" id="btnNotification" aria-haspopup="true" aria-expanded="false">
+              &#x1F514; <span id="notificationLabel">Notifications</span> (<span id="notificationCount" class="notification-count-num">0</span>)
+              <span class="notification-badge" id="notificationBadge" style="display:none;">0</span>
+            </button>
+            <div class="notification-dropdown" id="notificationDropdown" role="menu">
+              <h3>Notifications</h3>
+              <ul id="notificationList">
+                <li><a href="inquiries.html">No new notifications</a></li>
+              </ul>
+            </div>
+          </div>
+          <div class="profile-wrap">
+            <button type="button" class="btn-profile" id="btnProfile" aria-haspopup="true" aria-expanded="false">&#x1F464; <span id="profileName">Admin</span> &#x25BC;</button>
+            <div class="profile-dropdown" id="profileDropdown" role="menu">
+              <a href="settings.html">Profile</a>
+              <a href="settings.html#password">Change Password</a>
+              <div class="divider"></div>
+              <button type="button" id="btnAdminToolbarLogout">Logout</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <p class="text-muted" style="margin-bottom:0.35rem;">  </p>
+      <p class="text-muted" style="margin-bottom:1rem; font-size:0.9rem;">    editor  <strong>Course</strong>  website  <code>courses.html</code> (Our Courses   features )  <code>admin-content.html</code>  Course tab  </p>
+      <div class="mgmt-cards">
+        <a href="admin-content.html?page=home" class="mgmt-card">
+          <div class="icon">&#x1F3E0;</div>
+          <h3>Home Page</h3>
+        </a>
+        <a href="admin-content.html?page=about" class="mgmt-card">
+          <div class="icon">&#x1F393;</div>
+          <h3>About Us</h3>
+        </a>
+        <a href="admin-content.html?page=course" class="mgmt-card">
+          <div class="icon">&#x1F4DA;</div>
+          <h3>Programs</h3>
+        </a>
+        <a href="admin-content.html?page=placement" class="mgmt-card">
+          <div class="icon">&#x270F;</div>
+          <h3>Placement Test</h3>
+        </a>
+        <a href="admin-content.html?page=news" class="mgmt-card">
+          <div class="icon">&#x1F4DD;</div>
+          <h3>Resources</h3>
+        </a>
+        <a href="admin-content.html?page=contact" class="mgmt-card">
+          <div class="icon">&#x1F4DE;</div>
+          <h3>Contact</h3>
+        </a>
+        <a href="website-settings.html" class="mgmt-card">
+          <div class="icon">&#x2699;</div>
+          <h3>Website Settings</h3>
+        </a>
+      </div>
+
+      <div id="contentInlineShell" class="card cm-inline-shell">
+        <div class="cm-inline-toolbar">
+          <strong id="contentInlineTitle">Content Editor</strong>
+          <div class="cm-inline-actions">
+            <a id="contentInlineOpenNew" class="cm-inline-btn" href="#" target="_blank" rel="noopener">Open Full Page ↗</a>
+            <button type="button" id="contentInlineClose" class="cm-inline-btn">Close</button>
+          </div>
+        </div>
+        <iframe id="contentInlineFrame" class="cm-inline-frame" title="Page Content Editor"></iframe>
+      </div>
+    </main>
+  </div>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+  <script src="../assets/js/firebase-config.js"></script>
+  <script src="../assets/js/auth.js"></script>
+  <script src="../assets/js/school-api.js"></script>
+  <script src="../assets/js/lang-switcher.js"></script>
+  <script src="../assets/js/content-firebase.js"></script>
+  <script src="../assets/js/admin-top-toolbar.js"></script>
+  <script>
+    var u = window.AcademyAuth && AcademyAuth.currentUser();
+    if (!u) window.location.href = '../public-page/login.html';
+    else {
+      AcademyAuth.getUserProfile(u.uid, function(p) { if ((p && p.role) !== 'admin') window.location.href = '../student/dashboard.html'; });
+      if (window.AdminTopToolbar) AdminTopToolbar.init();
+    }
+
+    (function() {
+      var USE_INLINE_EDITOR = false;
+      var cards = Array.prototype.slice.call(document.querySelectorAll('.mgmt-card'));
+      var shell = document.getElementById('contentInlineShell');
+      var frame = document.getElementById('contentInlineFrame');
+      var titleEl = document.getElementById('contentInlineTitle');
+      var openNewEl = document.getElementById('contentInlineOpenNew');
+      var closeBtn = document.getElementById('contentInlineClose');
+
+      function clearActive() {
+        cards.forEach(function(card) { card.classList.remove('active'); });
+      }
+
+      function closeInline() {
+        if (shell) shell.classList.remove('show');
+        clearActive();
+      }
+
+      function openInline(card) {
+        if (!card || !frame || !shell) return;
+        var targetUrl = card.getAttribute('href');
+        if (!targetUrl) return;
+        if (!USE_INLINE_EDITOR) {
+          window.location.href = targetUrl;
+          return;
+        }
+        clearActive();
+        card.classList.add('active');
+        frame.src = targetUrl;
+        if (titleEl) {
+          var h3 = card.querySelector('h3');
+          titleEl.textContent = h3 ? (h3.textContent + ' Editor') : 'Content Editor';
+        }
+        if (openNewEl) openNewEl.href = targetUrl;
+        shell.classList.add('show');
+        setTimeout(function() {
+          try { shell.scrollIntoView({ behavior: 'smooth', block: 'start' }); } catch (e) {}
+        }, 20);
+      }
+
+      cards.forEach(function(card) {
+        card.addEventListener('click', function(e) {
+          e.preventDefault();
+          openInline(card);
+        });
+      });
+
+      if (closeBtn) closeBtn.addEventListener('click', closeInline);
+
+      try {
+        var sp = new URLSearchParams(window.location.search || '');
+        var page = (sp.get('page') || '').toLowerCase();
+        if (page && USE_INLINE_EDITOR) {
+          var matched = cards.find(function(card) {
+            var href = String(card.getAttribute('href') || '').toLowerCase();
+            return href.indexOf('page=' + page) >= 0;
+          });
+          if (matched) openInline(matched);
+        }
+      } catch (e) {}
+    })();
+  </script>
+  <script src="../assets/js/admin-badge.js"></script>
+  <script src="../assets/js/dashboard-sidebar.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,26 @@
+{
+  "name": "Myanmar New Era International Education Centre",
+  "short_name": "myanmarnewera",
+  "description": "Myanmar New Era — English and international programmes in Nay Pyi Taw.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#9e1818",
+  "lang": "my",
+  "dir": "ltr",
+  "icons": [
+    {
+      "src": "logo.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}

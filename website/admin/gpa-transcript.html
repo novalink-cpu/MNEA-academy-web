@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="my">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="../assets/js/desktop-layout-viewport.js"></script>
+  <title>GPA & Transcript | Admin</title>
+  <link rel="stylesheet" href="../assets/css/main.css">
+  <link rel="stylesheet" href="../assets/css/dashboard.css">
+  <style>
+    .gpa-page { display: flex; flex-direction: column; gap: 1rem; margin-top: 0.35rem; padding-inline: 0.35rem; box-sizing: border-box; }
+    .gpa-stat-cards {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 1rem;
+      width: 100%;
+      box-sizing: border-box;
+      position: relative;
+      z-index: 2;
+      margin-bottom: 0.25rem;
+    }
+    @media (max-width: 1200px) { .gpa-stat-cards { grid-template-columns: repeat(3, 1fr); } }
+    @media (max-width: 720px) { .gpa-stat-cards { grid-template-columns: 1fr; } }
+    .gpa-jump-target { scroll-margin-top: 5.5rem; }
+    .gpa-stat-card {
+      border-radius: 16px;
+      padding: 1rem 1rem 0.9rem;
+      box-shadow: 0 4px 18px rgba(0, 0, 0, 0.07);
+      border: 2px solid rgba(255, 255, 255, 0.45);
+      min-height: 9rem;
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+      overflow: hidden;
+    }
+    .gpa-stat-card:nth-child(1) { background: linear-gradient(180deg, #dbeafe 0%, #bfdbfe 100%); }
+    .gpa-stat-card:nth-child(2) { background: linear-gradient(180deg, #d1fae5 0%, #a7f3d0 100%); }
+    .gpa-stat-card:nth-child(3) { background: linear-gradient(180deg, #ede9fe 0%, #ddd6fe 100%); }
+    .gpa-stat-card:nth-child(4) { background: linear-gradient(180deg, #fce7f3 0%, #fbcfe8 100%); }
+    .gpa-stat-card:nth-child(5) { background: linear-gradient(180deg, #ccfbf1 0%, #99f6e4 100%); }
+    .gpa-stat-card .gpa-stat-icon { font-size: 1.6rem; line-height: 1; margin-bottom: 0.35rem; }
+    .gpa-stat-card h3 { margin: 0 0 0.3rem; font-size: 0.92rem; font-weight: 800; color: #0f172a; line-height: 1.25; overflow-wrap: anywhere; }
+    .gpa-stat-card p { margin: 0 0 auto; font-size: 0.76rem; color: #1e293b; line-height: 1.45; flex: 1; opacity: 0.95; overflow-wrap: anywhere; }
+    .gpa-stat-cta {
+      margin-top: 0.65rem;
+      align-self: center;
+      border: none;
+      border-radius: 999px;
+      padding: 0.38rem 0.85rem;
+      font-size: 0.72rem;
+      font-weight: 800;
+      letter-spacing: 0.04em;
+      cursor: pointer;
+      color: #fff;
+    }
+    .gpa-stat-cta--blue { background: #2563eb; }
+    .gpa-stat-cta--green { background: #16a34a; }
+    .gpa-stat-cta--purple { background: #7c3aed; }
+    .gpa-stat-cta--pink { background: #db2777; }
+    .gpa-stat-cta--teal { background: #0d9488; }
+    .gpa-info-banner {
+      background: #eff6ff;
+      border: 1px solid #93c5fd;
+      border-radius: 12px;
+      padding: 0.85rem 1.1rem;
+      margin-bottom: 0.8rem;
+      font-size: 0.88rem;
+      line-height: 1.55;
+      color: #1e3a5f;
+    }
+    #gpaPanelAuto .gpa-info-banner { margin-top: -0.25rem; }
+    .gpa-info-banner strong { color: #0f172a; }
+    .gpa-ref-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.15rem; }
+    .gpa-ref-card { background: #f8fafc; border: 1px solid var(--border); border-radius: 12px; padding: 0.85rem 1rem; font-size: 0.82rem; }
+    .gpa-ref-grid .gpa-ref-card:nth-child(1) {
+      background: linear-gradient(180deg, #dbeafe 0%, #bfdbfe 100%);
+      border-color: rgba(59, 130, 246, 0.35);
+    }
+    .gpa-ref-grid .gpa-ref-card:nth-child(2) {
+      background: linear-gradient(180deg, #fce7f3 0%, #fbcfe8 100%);
+      border-color: rgba(236, 72, 153, 0.3);
+    }
+    .gpa-ref-card h4 { margin: 0 0 0.45rem; font-size: 0.88rem; color: #0f172a; }
+    .gpa-ref-card table { width: 100%; border-collapse: collapse; font-size: 0.78rem; }
+    .gpa-ref-card th, .gpa-ref-card td { border: 1px solid var(--border); padding: 0.28rem 0.4rem; text-align: left; }
+    .gpa-ref-card thead th { text-align: center; }
+    .gpa-ref-card th { background: #e0f2fe; color: #0c4a6e; font-weight: 700; }
+    .gpa-ref-card details > summary {
+      list-style: none;
+      cursor: pointer;
+      font-weight: 800;
+      font-size: 0.88rem;
+      color: #0f172a;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      user-select: none;
+    }
+    .gpa-ref-card details > summary::-webkit-details-marker { display: none; }
+    .gpa-ref-card details > summary::before {
+      content: '+';
+      width: 1.15rem;
+      height: 1.15rem;
+      border-radius: 999px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: #dbeafe;
+      color: #1d4ed8;
+      font-weight: 900;
+      line-height: 1;
+      flex: 0 0 auto;
+    }
+    .gpa-ref-card details[open] > summary::before { content: '−'; }
+    .gpa-ref-card details > div { margin-top: 0.55rem; }
+    .gpa-ref-note { margin: 0.5rem 0 0; font-size: 0.76rem; color: var(--text-muted); }
+    .gpa-toolbar {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+      gap: 0.75rem;
+      align-items: end;
+      margin-top: 0.25rem;
+      width: 100%;
+    }
+    .gpa-toolbar .form-group { margin: 0; min-width: 0; }
+    .gpa-toolbar label { display: block; font-size: 0.78rem; font-weight: 600; margin-bottom: 0.25rem; color: #0f172a; }
+    .gpa-toolbar select { width: 100%; max-width: 100%; padding: 0.45rem 0.55rem; border-radius: 8px; border: 1px solid var(--border); box-sizing: border-box; }
+    .gpa-program-duration {
+      margin-top: 0.6rem;
+      background: #f8fafc;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      padding: 0.45rem 0.65rem;
+      font-size: 0.8rem;
+      color: #334155;
+    }
+    .gpa-program-duration strong { color: #0f172a; }
+    .gpa-actions-top { display: flex; flex-wrap: wrap; gap: 0.55rem; margin-top: 0.85rem; align-items: center; }
+    .gpa-btn-red { background: #ef4444; color: #fff; border: none; padding: 0.5rem 1rem; border-radius: 8px; font-weight: 700; font-size: 0.86rem; cursor: pointer; }
+    .gpa-btn-red:hover { background: #dc2626; }
+    .gpa-btn-muted { background: #f1f5f9; color: #334155; border: 1px solid #cbd5e1; padding: 0.5rem 0.95rem; border-radius: 8px; font-size: 0.86rem; cursor: pointer; }
+    .gpa-btn-muted:hover { background: #e2e8f0; }
+    #gpaImportExamBtn {
+      background: linear-gradient(180deg, #e2e8f0, #cbd5e1);
+      color: #0f172a;
+      border-color: #94a3b8;
+      font-weight: 700;
+    }
+    #gpaSaveBtn {
+      background: linear-gradient(180deg, #3b82f6, #2563eb);
+      color: #fff;
+      border-color: #1d4ed8;
+      font-weight: 700;
+    }
+    #gpaPrintSummaryBottom {
+      background: linear-gradient(180deg, #22c55e, #16a34a);
+      color: #fff;
+      border-color: #15803d;
+      font-weight: 700;
+    }
+    .gpa-section-title { font-size: 1.05rem; font-weight: 800; color: #0f172a; margin: 1rem 0 0.5rem; }
+    .gpa-table-wrap { overflow: auto; margin-top: 0.35rem; border: 1px solid var(--border); border-radius: 10px; }
+    .gpa-table { width: 100%; border-collapse: collapse; font-size: 0.86rem; }
+    .gpa-table th, .gpa-table td { padding: 0.5rem 0.55rem; border-bottom: 1px solid var(--border); vertical-align: middle; }
+    .gpa-table thead th { text-align: center; background: #e0f2fe; color: #0c4a6e; font-weight: 700; }
+    .gpa-table td { text-align: left; }
+    .gpa-inp { width: 100%; max-width: 100%; padding: 0.4rem 0.45rem; border: 1px solid var(--border); border-radius: 6px; box-sizing: border-box; }
+    .gpa-inp--num { max-width: 5rem; }
+    .gpa-cell-muted { color: var(--text-muted); font-weight: 600; }
+    .gpa-cell-gp { font-weight: 700; color: #0f172a; }
+    /* Exam result table: keep Program column left; center other input/data columns */
+    #gpaCourseBody td { text-align: center; }
+    #gpaCourseBody td:nth-child(2) { text-align: left; }
+    #gpaCourseBody td .gpa-inp { text-align: center; }
+    #gpaCourseBody td:nth-child(2) .gpa-inp { text-align: left; }
+    .gpa-table-foot {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      padding: 0.75rem 1rem;
+      background: linear-gradient(135deg, #ecfdf5, #d1fae5);
+      border: 1px solid #bbf7d0;
+      border-top: none;
+      border-radius: 0 0 10px 10px;
+    }
+    .gpa-table-foot .gpa-btn-green-outline {
+      background: #ef4444;
+      color: #fff;
+      border: none;
+      padding: 0.45rem 0.9rem;
+      border-radius: 8px;
+      font-weight: 700;
+      cursor: pointer;
+      font-size: 0.86rem;
+    }
+    .gpa-table-foot .gpa-btn-green-outline:hover { background: #dc2626; }
+    .gpa-term-gpa-block { text-align: right; }
+    .gpa-term-gpa-block .lbl { display: block; font-size: 0.82rem; font-weight: 600; color: #14532d; }
+    .gpa-term-gpa-block .val { font-size: 1.55rem; font-weight: 800; color: #166534; }
+    .gpa-cum-hint {
+      margin-top: 0.65rem;
+      padding: 0.55rem 1rem;
+      background: #ecfdf5;
+      border: 1px solid #bbf7d0;
+      border-radius: 10px;
+      font-size: 0.86rem;
+      color: #166534;
+    }
+    .gpa-bottom-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-top: 0.75rem;
+      justify-content: flex-end;
+    }
+    .gpa-bottom-bar .btn-p { padding: 0.5rem 0.95rem; border-radius: 8px; border: none; font-size: 0.86rem; font-weight: 600; cursor: pointer; color: #fff; }
+    .gpa-bb-blue { background: #2563eb; }
+    .gpa-bb-green { background: #16a34a; }
+    .gpa-bb-purple { background: #9333ea; }
+    .gpa-bb-indigo { background: #4f46e5; }
+    .gpa-status { margin-top: 0.5rem; padding: 0.55rem 0.75rem; border-radius: 8px; font-size: 0.86rem; display: none; }
+    .gpa-status--ok { background: #ecfdf5; border: 1px solid #bbf7d0; color: #166534; display: block; }
+    .gpa-status--error { background: #fef2f2; border: 1px solid #fecaca; color: #991b1b; display: block; }
+    .btn-icon-del { background: #fee2e2; color: #991b1b; border: none; width: 2rem; height: 2rem; border-radius: 8px; cursor: pointer; font-size: 1.1rem; line-height: 1; }
+    .btn-icon-del:hover { background: #fecaca; }
+    .gpa-official-head { text-align: center; font-size: 1.15rem; font-weight: 800; letter-spacing: 0.06em; margin: 1.25rem 0 0.75rem; color: #0f172a; }
+    .gpa-student-card {
+      background: #f1f5f9;
+      border-radius: 12px;
+      padding: 1rem 1.25rem;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.5rem 1.5rem;
+      font-size: 0.88rem;
+    }
+    @media (max-width: 600px) { .gpa-student-card { grid-template-columns: 1fr; } }
+    .gpa-student-card dt { font-weight: 600; color: #64748b; margin: 0; font-size: 0.76rem; }
+    .gpa-student-card dd { margin: 0.15rem 0 0; font-weight: 700; color: #0f172a; }
+    .gpa-transcript-table thead th { background: #bae6fd; }
+    .gpa-transcript-table .gpa-term-row td { background: #e0f2fe; font-weight: 700; }
+    .gpa-transcript-table .gpa-term-row td { text-align: center !important; }
+    /* Official transcript table: keep Program Name left, center others */
+    #gpaOfficialBody td { text-align: center; }
+    #gpaOfficialBody td:nth-child(2) { text-align: left; }
+    .gpa-print-tr { margin-top: 0.75rem; text-align: right; }
+    .gpa-print-tr .btn {
+      background: #16a34a !important;
+      color: #fff !important;
+      border: none;
+      padding: 0.55rem 1.25rem;
+      border-radius: 10px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .gpa-print-tr .btn:hover { filter: brightness(1.04); }
+    .gpa-pdf-box {
+      background: #f5f3ff;
+      border: 1px solid #c4b5fd;
+      border-radius: 12px;
+      padding: 1rem 1.15rem;
+      margin-top: 0.65rem;
+    }
+    .gpa-pdf-box h4 { margin: 0 0 0.65rem; color: #6d28d9; font-size: 0.95rem; }
+    .gpa-pdf-box label { display: flex; align-items: center; gap: 0.5rem; margin: 0.4rem 0; font-size: 0.86rem; cursor: pointer; }
+    .gpa-download-pdf-btn {
+      display: block;
+      margin: 1rem auto 0;
+      background: #7c3aed;
+      color: #fff;
+      border: none;
+      padding: 0.65rem 1.5rem;
+      border-radius: 10px;
+      font-weight: 700;
+      font-size: 0.92rem;
+      cursor: pointer;
+    }
+    .gpa-download-pdf-btn:hover { background: #6d28d9; }
+    .gpa-sem-card {
+      border-radius: 14px;
+      padding: 1rem 1.15rem;
+      margin-bottom: 0.65rem;
+      border: 1px solid #fbcfe8;
+      background: linear-gradient(135deg, #fdf2f8, #fce7f3);
+    }
+    .gpa-sem-card--idle {
+      background: #f8fafc;
+      border-color: #e2e8f0;
+    }
+    .gpa-sem-card-head { display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 0.5rem; }
+    .gpa-sem-card-head h4 { margin: 0; font-size: 0.95rem; color: #831843; }
+    .gpa-sem-card--idle .gpa-sem-card-head h4 { color: #475569; }
+    .gpa-sem-meta { display: flex; gap: 1.5rem; flex-wrap: wrap; margin-top: 0.65rem; font-size: 0.82rem; }
+    .gpa-sem-meta span { color: #64748b; }
+    .gpa-sem-meta strong { color: #0f172a; }
+    .gpa-cum-hero {
+      text-align: center;
+      background: linear-gradient(180deg, #ccfbf1, #99f6e4);
+      border-radius: 16px;
+      padding: 1.25rem 1rem 1.1rem;
+      border: 1px solid #5eead4;
+      margin-top: 0.65rem;
+    }
+    .gpa-cum-hero h4 { margin: 0; font-size: 0.95rem; color: #0f766e; font-weight: 700; }
+    .gpa-cum-hero .big { font-size: 2.35rem; font-weight: 800; color: #115e59; margin: 0.35rem 0 0.75rem; }
+    .gpa-cum-stats { display: flex; justify-content: center; gap: 2rem; flex-wrap: wrap; font-size: 0.84rem; color: #134e4a; }
+    .gpa-cum-stats strong { display: block; font-size: 1.05rem; color: #0f766e; }
+    .gpa-cum-table-wrap { margin-top: 1rem; border: 1px solid var(--border); border-radius: 10px; overflow: auto; }
+    .gpa-cum-table { width: 100%; border-collapse: collapse; font-size: 0.86rem; }
+    .gpa-cum-table th, .gpa-cum-table td { padding: 0.5rem 0.65rem; border-bottom: 1px solid var(--border); }
+    .gpa-cum-table th { background: #f8fafc; text-align: left; font-weight: 700; }
+    .gpa-cum-table tbody td { text-align: center; }
+    .gpa-export-row { margin-top: 0.85rem; text-align: right; }
+    .gpa-export-row button { background: #0d9488; color: #fff; border: none; padding: 0.55rem 1.1rem; border-radius: 10px; font-weight: 700; cursor: pointer; }
+    .gpa-panel { display: none; position: relative; z-index: 1; margin-top: 0.35rem; }
+    .gpa-panel.is-active { display: block; }
+    .gpa-stat-card { cursor: pointer; outline: none; }
+    .gpa-stat-card:focus-visible { box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.45); }
+    .gpa-stat-card.is-active-card {
+      box-shadow: 0 0 0 3px rgba(15, 23, 42, 0.28), 0 10px 28px rgba(0, 0, 0, 0.1);
+      transform: translateY(-2px);
+    }
+    .gpa-stat-card .gpa-stat-cta { cursor: pointer; pointer-events: none; }
+  </style>
+</head>
+<body class="admin-dashboard-glass">
+  <div class="dashboard-wrap glass-dashboard">
+    <aside class="dashboard-sidebar">
+      <a href="../public-page/index.html" class="logo-link"><span class="logo-brand-row"><img src="../photo/logo.png" alt="" class="logo-mark-img" width="72" decoding="async" /><span class="logo-headlines"><span class="logo-title-line">MYANMAR</span><span class="logo-title-line">NEW ERA</span></span></span></a>
+      <nav>
+        <a href="dashboard.html">Dashboard</a>
+        <a href="admissions.html">Admission Management</a>
+        <a href="students.html">Student Management</a>
+        <a href="teachers.html">Teacher Management</a>
+        <a href="academic.html">Academic Management</a>
+        <a href="attendance.html">Attendance Management</a>
+        <a href="exams.html">Exam Management</a>
+        <a href="gpa-transcript.html" class="active">GPA & Transcript Management</a>
+        <a href="inquiries.html">Communication <span class="nav-inquiry-badge" id="navInquiryCount"></span></a>
+        <a href="content-management.html">Page Content Management</a>
+        <a href="question-bank.html">Question Bank Management</a>
+        <a href="reports.html">Reports & Analytics</a>
+        <a href="settings.html">Settings & Configuration</a>
+      </nav>
+    </aside>
+    <main class="dashboard-main">
+      <div class="dashboard-header glass-toolbar">
+        <p class="dashboard-toolbar-title" data-lang-en="GPA & Transcript Management" data-lang-my="GPA နှင့် မှတ်တမ်းစီမံခန့်ခွဲမှု">GPA & Transcript Management</p>
+        <div class="auth-info">
+          <div class="notification-wrap">
+            <button type="button" class="btn-notification" id="btnNotification" aria-haspopup="true" aria-expanded="false">
+              &#x1F514; <span id="notificationLabel">Notifications</span> (<span id="notificationCount" class="notification-count-num">0</span>)
+              <span class="notification-badge" id="notificationBadge" style="display:none;">0</span>
+            </button>
+            <div class="notification-dropdown" id="notificationDropdown" role="menu">
+              <h3>Notifications</h3>
+              <ul id="notificationList">
+                <li><a href="inquiries.html">No new notifications</a></li>
+              </ul>
+            </div>
+          </div>
+          <div class="profile-wrap">
+            <button type="button" class="btn-profile" id="btnProfile" aria-haspopup="true" aria-expanded="false">&#x1F464; <span id="profileName">Admin</span> &#x25BC;</button>
+            <div class="profile-dropdown" id="profileDropdown" role="menu">
+              <a href="settings.html">Profile</a>
+              <a href="settings.html#password">Change Password</a>
+              <div class="divider"></div>
+              <button type="button" id="btnAdminToolbarLogout">Logout</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="gpa-page">
+        <div class="gpa-stat-cards" aria-label="GPA and transcript features">
+          <div class="gpa-stat-card is-active-card" id="gpaCardAuto" tabindex="0" role="button" data-gpa-panel="auto" aria-pressed="true" aria-label="Automatic GPA calculation">
+            <div class="gpa-stat-icon" aria-hidden="true">&#x1F4CA;</div>
+            <h3>Automatic GPA Calculation</h3>
+            <p>Calculate term GPA automatically from program credits and scores</p>
+            <span class="gpa-stat-cta gpa-stat-cta--blue">CALCULATE</span>
+          </div>
+          <div class="gpa-stat-card" id="gpaCardTranscript" tabindex="0" role="button" data-gpa-panel="transcript" aria-pressed="false" aria-label="Transcript generation">
+            <div class="gpa-stat-icon" aria-hidden="true">&#x1F4C4;</div>
+            <h3>Transcript Generation</h3>
+            <p>Generate official student transcript</p>
+            <span class="gpa-stat-cta gpa-stat-cta--green">PRINT</span>
+          </div>
+          <div class="gpa-stat-card" id="gpaCardPdf" tabindex="0" role="button" data-gpa-panel="pdf" aria-pressed="false" aria-label="Transcript PDF download">
+            <div class="gpa-stat-icon" aria-hidden="true">&#x1F4E5;</div>
+            <h3>Transcript PDF Download</h3>
+            <p>Get PDF summary (transcript template based)</p>
+            <span class="gpa-stat-cta gpa-stat-cta--purple">DOWNLOAD PDF</span>
+          </div>
+          <div class="gpa-stat-card" id="gpaCardSemester" tabindex="0" role="button" data-gpa-panel="semester" aria-pressed="false" aria-label="Semester wise results">
+            <div class="gpa-stat-icon" aria-hidden="true">&#x1F4CA;</div>
+            <h3>Semester wise Results</h3>
+            <p>Separate records for academic years and terms</p>
+            <span class="gpa-stat-cta gpa-stat-cta--pink">VIEW TERMS</span>
+          </div>
+          <div class="gpa-stat-card" id="gpaCardCumulative" tabindex="0" role="button" data-gpa-panel="cumulative" aria-pressed="false" aria-label="Cumulative GPA">
+            <div class="gpa-stat-icon" aria-hidden="true">&#x1F4C8;</div>
+            <h3>Cumulative GPA</h3>
+            <p>View overall GPA across all terms (use data above)</p>
+            <span class="gpa-stat-cta gpa-stat-cta--teal">VIEW GPA</span>
+          </div>
+        </div>
+
+        <div id="gpaPanelAuto" class="gpa-panel is-active">
+        <div class="gpa-info-banner" id="gpa-section-banner">
+          <strong>Automatic GPA</strong> uses score-weighted grade points. Enter each program’s <strong>credits</strong> (integers) and <strong>scores</strong> as a percentage (e.g. <code>88</code> or <code>88%</code>) or a letter grade (<code>A</code>, <code>B+</code>, <code>A*</code>). The tool supports <strong>4.0+</strong>, <strong>5.0</strong>, <strong>6.0</strong>, <strong>10.0</strong> style scales via the grading scale menu; reference tables below match the active mapping for US 4.0+ and BCSE letters.
+        </div>
+
+        <div class="card" id="gpa-workspace">
+          <div class="gpa-toolbar gpa-jump-target" id="gpa-section-exam" aria-label="Filters">
+            <div class="form-group">
+              <label for="gpaProgramSelect">Program</label>
+              <select id="gpaProgramSelect">
+                <option value="__all__">All programs</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="gpaStudentSelect">Student</label>
+              <select id="gpaStudentSelect"></select>
+            </div>
+            <div class="form-group">
+              <label for="gpaAcademicYearSelect">Academic year</label>
+              <select id="gpaAcademicYearSelect"></select>
+            </div>
+            <div class="form-group">
+              <label for="gpaTermSelect">Term</label>
+              <select id="gpaTermSelect"></select>
+            </div>
+            <div class="form-group">
+              <label for="gpaScale">Grading scale</label>
+              <select id="gpaScale"></select>
+            </div>
+          </div>
+          <div class="gpa-program-duration" id="gpaProgramDurationHint">
+            Selected program duration: <strong id="gpaProgramDurationValue">All programs (mixed durations)</strong>
+          </div>
+
+          <div class="gpa-actions-top">
+            <button type="button" class="gpa-btn-muted" id="gpaImportExamBtn">Import from exam results</button>
+            <button type="button" class="gpa-btn-muted" id="gpaSaveBtn">&#x1F4BE; Save Record</button>
+            <button type="button" class="gpa-btn-muted" id="gpaPrintSummaryBottom">&#x1F5A8; Print Summary</button>
+          </div>
+
+          <div id="gpaStatus" class="gpa-status" role="status"></div>
+
+          <div class="gpa-ref-grid" style="margin-top:1rem;">
+            <div class="gpa-ref-card">
+              <details>
+                <summary>US 4.0 Letter (0–100%)</summary>
+                <div>
+                  <table>
+                    <thead><tr><th>% range</th><th>Letter</th><th>GP</th></tr></thead>
+                    <tbody>
+                      <tr><td>93–100</td><td>A</td><td>4.0</td></tr>
+                      <tr><td>90–92</td><td>A-</td><td>3.8</td></tr>
+                      <tr><td>87–89</td><td>B+</td><td>3.5</td></tr>
+                      <tr><td>83–86</td><td>B</td><td>3.0</td></tr>
+                      <tr><td>80–82</td><td>B-</td><td>2.8</td></tr>
+                      <tr><td>77–79</td><td>C+</td><td>2.5</td></tr>
+                      <tr><td>73–76</td><td>C</td><td>2.0</td></tr>
+                      <tr><td>70–72</td><td>C-</td><td>1.8</td></tr>
+                      <tr><td>60–69</td><td>D</td><td>1.0</td></tr>
+                      <tr><td>0–59</td><td>F</td><td>0.0</td></tr>
+                    </tbody>
+                  </table>
+                  <p class="gpa-ref-note">If your max GPA is 5.0, set A = 5 in policy; BCSE direct letters use the table on the right.</p>
+                </div>
+              </details>
+            </div>
+            <div class="gpa-ref-card">
+              <details>
+                <summary>BCSE letters (directly)</summary>
+                <div>
+                  <table>
+                    <thead><tr><th>Grade</th><th>GP</th></tr></thead>
+                    <tbody>
+                      <tr><td>A</td><td>4.0</td></tr>
+                      <tr><td>B</td><td>3.5</td></tr>
+                      <tr><td>C</td><td>3.0</td></tr>
+                      <tr><td>D</td><td>2.5</td></tr>
+                      <tr><td>E</td><td>2.0</td></tr>
+                      <tr><td>F</td><td>0.0</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+              </details>
+            </div>
+          </div>
+
+          <h2 class="gpa-section-title">Exam result table</h2>
+          <div class="gpa-table-wrap">
+            <table class="gpa-table">
+              <thead>
+                <tr>
+                  <th>Code</th>
+                  <th>Program</th>
+                  <th>Credits</th>
+                  <th>Score (% or letter)</th>
+                  <th>Letter</th>
+                  <th>GP</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="gpaCourseBody"></tbody>
+            </table>
+            <div class="gpa-table-foot">
+              <div>
+                <button type="button" class="gpa-btn-green-outline" id="gpaAddRowFooter">+ Add program row</button>
+                <span style="margin-left:0.75rem;font-size:0.86rem;color:#14532d;">Add credits and scores to compute GPA</span>
+              </div>
+              <div class="gpa-term-gpa-block">
+                <span class="lbl">Term GPA</span>
+                <span class="val" id="gpaResultValue">0.00</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="gpa-cum-hint" id="gpaCumulativeHint">
+            From cumulative GPA: <strong id="gpaCumulativeHintVal">—</strong> — Add credits and scores above, then <strong>Save record</strong> to include terms in the roll-up.
+          </div>
+
+        </div>
+        </div>
+
+        <div id="gpaPanelTranscript" class="gpa-panel">
+        <h2 class="gpa-official-head" id="gpa-section-official">OFFICIAL TRANSCRIPT</h2>
+        <div class="card">
+          <div class="gpa-toolbar">
+            <div class="form-group">
+              <label for="gpaOfficialProgram">Program</label>
+              <select id="gpaOfficialProgram">
+                <option value="__all__">All programs</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="gpaOfficialStudent">Select Student</label>
+              <select id="gpaOfficialStudent"></select>
+            </div>
+            <div class="form-group">
+              <label for="gpaOfficialYear">Academic Year</label>
+              <select id="gpaOfficialYear"></select>
+            </div>
+          </div>
+          <dl class="gpa-student-card" id="gpaOfficialStudentCard">
+            <div><dt>Student Name</dt><dd id="gpaOffName">—</dd></div>
+            <div><dt>Student ID</dt><dd id="gpaOffId">—</dd></div>
+            <div><dt>Batch</dt><dd id="gpaOffBatch">—</dd></div>
+            <div><dt>Academic Year</dt><dd id="gpaOffYear">—</dd></div>
+          </dl>
+          <div class="gpa-table-wrap">
+            <table class="gpa-table gpa-transcript-table">
+              <thead>
+                <tr>
+                  <th>Program Code</th>
+                  <th>Program Name</th>
+                  <th>Credits</th>
+                  <th>Grade</th>
+                  <th>GP</th>
+                </tr>
+              </thead>
+              <tbody id="gpaOfficialBody"></tbody>
+            </table>
+          </div>
+          <div class="gpa-print-tr">
+            <button type="button" class="btn" id="gpaPrintTranscriptBtn">&#x1F5B8; Print Transcript</button>
+          </div>
+        </div>
+        </div>
+
+        <div id="gpaPanelPdf" class="gpa-panel">
+        <h2 class="gpa-section-title" id="gpa-section-download" style="margin-top:0;">Download Transcript PDF</h2>
+        <div class="card">
+          <div class="gpa-toolbar">
+            <div class="form-group">
+              <label for="gpaPdfProgram">Program</label>
+              <select id="gpaPdfProgram">
+                <option value="__all__">All programs</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="gpaPdfStudent">Select Student</label>
+              <select id="gpaPdfStudent"></select>
+            </div>
+            <div class="form-group">
+              <label for="gpaPdfYear">Academic Year</label>
+              <select id="gpaPdfYear"></select>
+            </div>
+          </div>
+          <div class="gpa-pdf-box">
+            <h4>PDF Options</h4>
+            <label><input type="checkbox" id="gpaPdfOptInfo" checked> Include student information</label>
+            <label><input type="checkbox" id="gpaPdfOptTerms" checked> Include all terms</label>
+            <label><input type="checkbox" id="gpaPdfOptCum" checked> Include cumulative GPA</label>
+            <label><input type="checkbox" id="gpaPdfOptLetterhead"> Include school letterhead</label>
+          </div>
+          <button type="button" class="gpa-download-pdf-btn" id="gpaDownloadPdfBtn">&#x2B07; Download PDF Transcript</button>
+        </div>
+        </div>
+
+        <div id="gpaPanelSemester" class="gpa-panel">
+        <h2 class="gpa-section-title" id="gpa-section-semester" style="margin-top:0;">Semester-wise Results</h2>
+        <div class="card">
+          <div class="gpa-toolbar">
+            <div class="form-group">
+              <label for="gpaSemProgram">Program</label>
+              <select id="gpaSemProgram">
+                <option value="__all__">All programs</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="gpaSemStudent">Select Student</label>
+              <select id="gpaSemStudent"></select>
+            </div>
+            <div class="form-group">
+              <label for="gpaSemYear">Academic Year</label>
+              <select id="gpaSemYear"></select>
+            </div>
+            <div class="form-group">
+              <label for="gpaSemTermFilter">Term</label>
+              <select id="gpaSemTermFilter">
+                <option value="__all__">All Terms</option>
+              </select>
+            </div>
+          </div>
+          <div id="gpaSemesterCards"></div>
+        </div>
+        </div>
+
+        <div id="gpaPanelCumulative" class="gpa-panel">
+        <h2 class="gpa-section-title" id="gpa-section-cumulative" style="margin-top:0;">Cumulative GPA</h2>
+        <div class="card">
+          <div class="gpa-toolbar">
+            <div class="form-group">
+              <label for="gpaCumProgram">Program</label>
+              <select id="gpaCumProgram">
+                <option value="__all__">All programs</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="gpaCumStudent">Select Student</label>
+              <select id="gpaCumStudent"></select>
+            </div>
+            <div class="form-group">
+              <label for="gpaCumYearRange">Academic Year Range</label>
+              <select id="gpaCumYearRange">
+                <option value="__all__">All Years</option>
+              </select>
+            </div>
+          </div>
+          <div class="gpa-cum-hero">
+            <h4>Overall Cumulative GPA</h4>
+            <div class="big" id="gpaCumHeroVal">—</div>
+            <div class="gpa-cum-stats">
+              <div><span>Total Credits</span><strong id="gpaCumTotCred">—</strong></div>
+              <div><span>Terms Completed</span><strong id="gpaCumTermsDone">—</strong></div>
+              <div><span>Total Programs</span><strong id="gpaCumCourses">—</strong></div>
+            </div>
+          </div>
+          <h3 class="gpa-section-title" style="font-size:0.95rem;">Term-by-Term Breakdown</h3>
+          <div class="gpa-cum-table-wrap">
+            <table class="gpa-cum-table">
+              <thead>
+                <tr><th>Term</th><th>Credits</th><th>Term GPA</th><th>Cumulative GPA</th></tr>
+              </thead>
+              <tbody id="gpaCumTableBody"></tbody>
+            </table>
+          </div>
+          <div class="gpa-export-row">
+            <button type="button" id="gpaExportReportBtn">&#x2B07; Export Report</button>
+          </div>
+        </div>
+        </div>
+      </div>
+    </main>
+  </div>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+  <script src="../assets/js/firebase-config.js"></script>
+  <script src="../assets/js/auth.js"></script>
+  <script src="../assets/js/school-api.js"></script>
+  <script src="../assets/js/lang-switcher.js"></script>
+  <script src="../assets/js/content-firebase.js"></script>
+  <script src="../assets/js/admin-top-toolbar.js"></script>
+  <script>
+    var u = window.AcademyAuth && AcademyAuth.currentUser();
+    if (!u) window.location.href = '../public-page/login.html';
+    else {
+      AcademyAuth.getUserProfile(u.uid, function(p) { if ((p && p.role) !== 'admin') window.location.href = '../student/dashboard.html'; });
+      if (window.AdminTopToolbar) AdminTopToolbar.init();
+    }
+  </script>
+  <script src="../assets/js/admin-badge.js"></script>
+  <script src="../assets/js/gpa-engine.js"></script>
+  <script src="../assets/js/gpa-transcript-admin.js"></script>
+  <script src="../assets/js/dashboard-sidebar.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,264 @@
+/* Teacher portal — glass UI aligned with admin; load after dashboard.css */
+.teacher-toolbar-sub {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  margin: 0.15rem 0 0;
+  font-weight: 500;
+}
+.teacher-context-card {
+  margin-bottom: 1rem;
+  padding: 0.85rem 1.1rem;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  background: rgba(255, 255, 255, 0.45);
+}
+.teacher-context-card .row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  align-items: center;
+}
+.teacher-context-card label {
+  font-weight: 600;
+  font-size: 0.82rem;
+}
+.teacher-context-card input[type='text'] {
+  padding: 0.45rem 0.65rem;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  min-width: 12rem;
+}
+.teacher-analytics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+.teacher-analytics-card h3 {
+  margin: 0 0 0.75rem;
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: var(--primary);
+}
+.t-bar-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.45rem;
+  font-size: 0.82rem;
+}
+.t-bar-row span:first-child {
+  width: 5.5rem;
+  flex-shrink: 0;
+  color: var(--text-muted);
+}
+.t-bar-track {
+  flex: 1;
+  height: 0.55rem;
+  background: rgba(15, 23, 42, 0.08);
+  border-radius: 6px;
+  overflow: hidden;
+}
+.t-bar-fill {
+  height: 100%;
+  border-radius: 6px;
+  background: linear-gradient(90deg, #2563eb, #7c3aed);
+  transition: width 0.35s ease;
+}
+.t-bar-val {
+  width: 2.5rem;
+  text-align: right;
+  font-weight: 700;
+  color: #0f172a;
+}
+.teacher-action-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 0.85rem;
+  margin-bottom: 1rem;
+}
+.teacher-action-tile {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+  padding: 1.1rem 1rem;
+  border-radius: 14px;
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  background: rgba(255, 255, 255, 0.5);
+  text-align: center;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.teacher-action-tile:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 28px rgba(15, 23, 42, 0.12);
+}
+.teacher-action-tile .tile-ico {
+  font-size: 1.75rem;
+  line-height: 1;
+  margin-bottom: 0.35rem;
+}
+.teacher-action-tile .tile-label {
+  font-weight: 700;
+  font-size: 0.88rem;
+}
+.teacher-action-tile .tile-val {
+  font-size: 1.65rem;
+  font-weight: 800;
+  color: #1e3a5f;
+  margin-top: 0.35rem;
+}
+.teacher-action-tile .tile-hint {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin-top: 0.35rem;
+}
+.teacher-export-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  align-items: center;
+}
+.teacher-export-bar .btn-export {
+  padding: 0.45rem 0.85rem;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: #fff;
+  font-size: 0.84rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.teacher-export-bar .btn-export:hover {
+  background: var(--surface-hover);
+}
+@media print {
+  .no-print,
+  .dashboard-sidebar,
+  .dashboard-sidebar-toggle,
+  .dashboard-sidebar-backdrop,
+  .glass-toolbar .auth-info,
+  .teacher-export-bar {
+    display: none !important;
+  }
+  .dashboard-main {
+    margin: 0 !important;
+  }
+}
+
+/* —— Student portal (shared glass layout) —— */
+.stu-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-bottom: 1rem;
+}
+.stu-tabs button {
+  padding: 0.4rem 0.85rem;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.55);
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.stu-tabs button.is-active {
+  background: linear-gradient(135deg, #2563eb, #7c3aed);
+  color: #fff;
+  border-color: transparent;
+}
+.stu-cal-wrap {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 0.25rem;
+  font-size: 0.75rem;
+  margin-top: 0.5rem;
+}
+.stu-cal-h {
+  text-align: center;
+  font-weight: 700;
+  color: var(--text-muted);
+  padding: 0.25rem;
+}
+.stu-cal-cell {
+  min-height: 2rem;
+  border-radius: 8px;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  background: rgba(255, 255, 255, 0.4);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 0.2rem;
+}
+.stu-cal-cell--muted {
+  opacity: 0.35;
+}
+.stu-cal-cell--present {
+  border-color: #166534;
+  background: rgba(22, 101, 52, 0.12);
+}
+.stu-cal-cell--absent {
+  border-color: #991b1b;
+  background: rgba(153, 27, 27, 0.1);
+}
+.stu-cal-cell--late {
+  border-color: #a16207;
+  background: rgba(161, 98, 7, 0.12);
+}
+.stu-notice-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  align-items: flex-end;
+  margin-bottom: 1rem;
+}
+.stu-notice-filters input[type='search'],
+.stu-notice-filters select {
+  padding: 0.45rem 0.65rem;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  font-size: 0.88rem;
+}
+.stu-notice-item {
+  padding: 1rem 0;
+  border-bottom: 1px solid var(--border);
+}
+.stu-notice-item:last-child {
+  border-bottom: none;
+}
+.stu-notice-cat {
+  display: inline-block;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 0.15rem 0.5rem;
+  border-radius: 6px;
+  background: rgba(37, 99, 235, 0.12);
+  color: #1d4ed8;
+  margin-bottom: 0.35rem;
+}
+.stu-chart-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+.stu-mini-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  background: rgba(15, 23, 42, 0.06);
+}
+.status-present {
+  color: #166534;
+  font-weight: 600;
+}
+.status-absent {
+  color: #991b1b;
+  font-weight: 600;
+}

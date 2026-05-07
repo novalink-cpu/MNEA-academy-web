@@ -1,0 +1,2900 @@
+<!DOCTYPE html>
+<html lang="my">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="../assets/js/desktop-layout-viewport.js"></script>
+  <title>Admin Panel | Myanmar New Era Academy</title>
+  <link rel="stylesheet" href="../assets/css/main.css">
+  <link rel="stylesheet" href="../assets/css/dashboard.css">
+  <style>
+    .admin-wrap { max-width: 780px; margin: 0 auto; padding: 1.5rem 1.25rem 3rem; }
+    .admin-header { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1.25rem; }
+    .admin-header h1 { color: #16a34a; font-size: 1.35rem; margin: 0; }
+    /*   */
+    h2, h3, .content-card-live, .section-fixed-title { color: #16a34a; }
+    /* Placement Test tab   –  bg +  */
+    #tab-placement h3 {
+      background: #22c55e;
+      color: #000;
+      padding: 0.5rem 1rem;
+      border-radius: 6px;
+      margin: 1.25rem 0 0.5rem 0;
+    }
+    #tab-placement h3:first-of-type { margin-top: 0; }
+    /* Placement Test –    label/  */
+    #tab-placement .pt-block label { color: #2563eb; font-weight: 600; }
+    #tab-placement .pt-block input,
+    #tab-placement .pt-block select,
+    #tab-placement .pt-block textarea { color: #1e40af; border-color: #93c5fd; }
+    /* A B C   –     */
+    #tab-placement .pt-options-row {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      margin-bottom: 0.7rem;
+    }
+    #tab-placement .pt-options-row .form-group {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 0;
+    }
+    #tab-placement .pt-options-row .form-group label { flex: 0 0 1.5em; margin-bottom: 0; }
+    #tab-placement .pt-options-row .form-group input { flex: 1; min-width: 0; }
+    /* Submission mark modal overlay */
+    #submissionMarkModal.modal-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,.4);
+      display: flex; align-items: center; justify-content: center; z-index: 9999;
+      padding: 1rem;
+    }
+    #submissionMarkModal .modal-box { background: #fff; border-radius: 12px; padding: 1.25rem; max-height: 90vh; overflow-y: auto; box-shadow: 0 8px 32px rgba(0,0,0,.2); }
+    .admin-note { background: #fef3c7; border: 1px solid #f59e0b; border-radius: 8px; padding: 0.65rem 0.85rem; margin-bottom: 1.25rem; font-size: 0.87rem; line-height: 1.5; }
+    /* ── Tabs ── */
+    .tabs { display: flex; flex-wrap: wrap; gap: 0.25rem; margin-bottom: 1.25rem; border-bottom: 2px solid var(--border, #e0e0e0); padding-bottom: 0; }
+    .tab-btn { padding: 0.5rem 0.85rem; font-size: 0.88rem; font-weight: 600; background: none; border: none; border-radius: 6px 6px 0 0; cursor: pointer; color: var(--text-muted, #666); border: 1px solid transparent; border-bottom: none; position: relative; bottom: -2px; transition: all .15s; }
+    .tab-btn:hover { color: var(--primary); background: #f0f4ff; }
+    .tab-btn.active { color: var(--primary); background: #fff; border-color: var(--border, #e0e0e0); border-bottom-color: #fff; }
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+    /* ── Form helpers ── */
+    .card { background: #fff; border: 1px solid var(--border, #e0e0e0); border-radius: 10px; padding: 1.25rem 1.25rem; margin-bottom: 1.25rem; box-shadow: 0 1px 4px rgba(0,0,0,.04); }
+    .form-group { margin-bottom: 0.7rem; }
+    label { display: block; margin-bottom: 0.22rem; font-weight: 500; font-size: 0.88rem; color: #333; }
+    input[type="text"], input[type="url"], input[type="number"], input[type="email"], textarea, select {
+      width: 100%; padding: 0.46rem 0.6rem; border: 1px solid var(--border, #ddd); border-radius: 6px; font-size: 0.92rem; background: #fff; box-sizing: border-box;
+    }
+    textarea { min-height: 60px; resize: vertical; }
+    input[type="file"] { font-size: 0.87rem; }
+    /* ── Section dividers (  bg —   ) ── */
+    .section-divider { display: flex; align-items: center; gap: 0.5rem; margin: 1.35rem 0 0.85rem; flex-wrap: wrap; }
+    .section-divider.section-toggle {
+      cursor: pointer;
+      user-select: none;
+      border: 1px solid #dbe6ef;
+      border-radius: 16px;
+      padding: 0.8rem 1rem;
+      min-height: 72px;
+      box-shadow: 0 6px 16px rgba(15, 23, 42, 0.08);
+      transition: transform .12s ease, box-shadow .16s ease, filter .16s ease;
+      background: linear-gradient(180deg, #f8fbff 0%, #eef6ff 100%);
+      position: relative;
+      margin-bottom: 0.9rem;
+    }
+    .section-divider.section-toggle:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 10px 20px rgba(15, 23, 42, 0.12);
+      filter: saturate(1.03);
+    }
+    .section-divider.section-toggle .sd-icon { font-size: 1.3rem; }
+    .section-divider.section-toggle .sd-title {
+      border-radius: 999px;
+      padding: 0.34rem 0.72rem;
+      font-size: 0.95rem;
+      font-weight: 700;
+    }
+    .section-divider.section-toggle .sd-sub {
+      width: 100%;
+      margin-top: 0.2rem;
+      margin-left: 2rem;
+      font-size: 0.8rem;
+    }
+    .section-divider.section-toggle.sec-theme-0 { background: linear-gradient(180deg, #ffe9b3 0%, #ffd680 100%); }
+    .section-divider.section-toggle.sec-theme-1 { background: linear-gradient(180deg, #c8f3e4 0%, #95e6cc 100%); }
+    .section-divider.section-toggle.sec-theme-2 { background: linear-gradient(180deg, #d7dcff 0%, #b7c2ff 100%); }
+    .section-divider.section-toggle.sec-theme-3 { background: linear-gradient(180deg, #ffd8e2 0%, #ffb6c8 100%); }
+    .section-divider.section-toggle.sec-theme-4 { background: linear-gradient(180deg, #d9e7f8 0%, #bdd3ef 100%); }
+    .section-divider.section-toggle.sec-theme-5 { background: linear-gradient(180deg, #ecebd7 0%, #dfdebf 100%); }
+    .section-divider .sd-chevron {
+      margin-left: auto;
+      color: #64748b;
+      font-weight: 700;
+      font-size: 0.9rem;
+      line-height: 1;
+    }
+    .section-divider.section-open .sd-chevron { transform: rotate(90deg); }
+    .section-divider .sd-icon { font-size: 1.05rem; }
+    .section-divider .sd-icon--img { font-size: 0; line-height: 0; display: inline-flex; align-items: center; }
+    .section-divider .sd-pin-icon { width: 18px; height: 18px; object-fit: contain; display: block; }
+    .label-with-pin { display: inline-flex; align-items: center; gap: 0.35rem; }
+    .form-pin-icon { flex-shrink: 0; object-fit: contain; }
+    .section-divider .sd-title {
+      font-size: 0.97rem; font-weight: 700; color: #fff;
+      background: #16a34a; padding: 0.35rem 0.65rem; border-radius: 6px;
+      border: 1px solid #15803d;
+    }
+    .section-divider .sd-sub { font-size: 0.8rem; color: var(--text-muted, #888); }
+    /* ── Content cards ── */
+    .content-card { border: 1.5px solid var(--border, #e0e0e0); border-radius: 8px; padding: 0.8rem 0.95rem 0.5rem; margin-bottom: 0.7rem; background: #fafbff; }
+    .content-card-header { display: flex; align-items: center; gap: 0.45rem; margin-bottom: 0.55rem; padding-bottom: 0.4rem; border-bottom: 1px solid var(--border, #e0e0e0); }
+    .content-card-icon { font-size: 1.1rem; }
+    .content-card-live { font-size: 0.88rem; font-weight: 600; color: #1e3a5f; }
+    /* ── Upload / image ── */
+    .upload-preview { display: inline-block; margin-top: 0.3rem; }
+    .upload-preview img { max-width: 110px; max-height: 70px; border-radius: 5px; border: 1px solid var(--border); vertical-align: middle; }
+    .upload-row { display: flex; align-items: flex-start; gap: 0.65rem; flex-wrap: wrap; }
+    .btn-remove-img { margin-top: 0.3rem; padding: 0.3rem 0.55rem; font-size: 0.82rem; background: #dc2626; color: #fff; border: none; border-radius: 6px; cursor: pointer; white-space: nowrap; }
+    .btn-remove-img:hover { background: #b91c1c; }
+    /* ── Blog post list ── */
+    .post-item { border: 1px solid var(--border, #ddd); border-radius: 8px; padding: 0.75rem 0.9rem; margin-bottom: 0.6rem; background: #fff; position: relative; }
+    .post-item-title { font-weight: 600; font-size: 0.93rem; margin-bottom: 0.2rem; }
+    .post-item-meta { font-size: 0.8rem; color: var(--text-muted, #888); }
+    .post-item-actions { display: flex; gap: 0.4rem; margin-top: 0.45rem; flex-wrap: wrap; }
+    .btn-post-edit { padding: 0.28rem 0.55rem; font-size: 0.82rem; background: #2563eb; color: #fff; border: none; border-radius: 5px; cursor: pointer; }
+    .btn-post-edit:hover { background: #1d4ed8; }
+    .btn-post-del  { padding: 0.28rem 0.55rem; font-size: 0.82rem; background: #dc2626; color: #fff; border: none; border-radius: 5px; cursor: pointer; }
+    .btn-post-del:hover  { background: #b91c1c; }
+    .post-edit-form { background: #f0f6ff; border: 1px solid #c7d9f7; border-radius: 7px; padding: 0.75rem 0.9rem; margin-top: 0.5rem; display: none; }
+    .post-edit-form.open { display: block; }
+    /* ── Save bar ── */
+    .save-bar { position: sticky; bottom: 0; background: #fff; border-top: 1px solid var(--border, #ddd); padding: 0.85rem 0; margin-top: 1.5rem; display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center; justify-content: center; z-index: 10; }
+    .btn-save-all { padding: 0.6rem 1.5rem; font-size: 1rem; font-weight: 700; background: #16a34a; color: #fff; border: none; border-radius: 8px; cursor: pointer; }
+    .btn-save-all:hover { opacity: 0.9; }
+    .post-edit-save { background: #16a34a !important; color: #fff !important; }
+    .admin-wrap .btn-preview {
+      padding: 0.6rem 1rem; font-size: 0.9rem; font-weight: 600;
+      background: var(--primary, #1e3a5f); color: #fff !important;
+      border: none; border-radius: 8px; cursor: pointer; text-decoration: none;
+      display: inline-flex; align-items: center; gap: 0.35rem;
+      line-height: 1.2; white-space: nowrap;
+    }
+    .admin-wrap .btn-preview:visited,
+    .admin-wrap .btn-preview:active,
+    .admin-wrap .btn-preview:hover,
+    .admin-wrap .btn-preview:focus {
+      color: #fff !important;
+      text-decoration: none;
+      opacity: 0.9;
+    }
+    .save-status { font-size: 0.88rem; color: #16a34a; font-weight: 600; display: none; }
+    /* ── PT blocks ( — ) ── */
+    .pt-block { border: 1px solid #f59e0b; border-left: 4px solid #f59e0b; border-radius: 0 7px 7px 0; padding: 0.7rem 0.85rem; margin-bottom: 0.6rem; background: #fffbeb; position: relative; }
+    .pt-block-del { position: absolute; top: 0.5rem; right: 0.6rem; padding: 0.18rem 0.5rem; font-size: 0.78rem; background: #dc2626; color: #fff; border: none; border-radius: 4px; cursor: pointer; }
+    .btn-add { padding: 0.42rem 0.9rem; font-size: 0.87rem; background: var(--primary, #1e3a5f); color: #fff; border: none; border-radius: 6px; cursor: pointer; margin-top: 0.4rem; }
+    .btn-add:hover { opacity: 0.85; }
+    .hr { border: none; border-top: 1px solid var(--border, #e0e0e0); margin: 1rem 0; }
+    /* ──  +   ── */
+    .edit-hint {
+      background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px; padding: 0.6rem 0.85rem; margin-bottom: 1rem;
+      font-size: 0.88rem; color: #1e40af; line-height: 1.45;
+    }
+    .current-preview { font-size: 0.82rem; color: var(--text-muted, #666); margin-bottom: 0.35rem; }
+    .current-preview strong { color: #333; }
+    .image-edit-block {
+      border: 1px solid var(--border, #e5e7eb); border-radius: 8px; padding: 0.85rem; margin-bottom: 0.6rem; background: #fafbfc;
+    }
+    .image-edit-block .current-img-wrap { margin-bottom: 0.6rem; }
+    .image-edit-block .current-img-wrap.current-img-wrap-photo { min-height: 100px; display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+    .image-edit-block .current-img-wrap img { max-width: 140px; max-height: 90px; border-radius: 6px; border: 1px solid var(--border); }
+    .image-edit-block .current-img-wrap .no-img { font-size: 0.85rem; color: #9ca3af; font-style: italic; }
+    .btn-import-image {
+      display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.5rem 1rem; font-size: 0.9rem; font-weight: 600;
+      background: var(--primary, #1e3a5f); color: #fff; border: none; border-radius: 8px; cursor: pointer;
+    }
+    .btn-import-image:hover { opacity: 0.9; }
+    .input-file-hidden { position: absolute; width: 0.1px; height: 0.1px; opacity: 0; overflow: hidden; z-index: -1; }
+    /*  —    */
+    .edit-zone {
+      background: #fffbeb;
+      border-left: 4px solid #f59e0b;
+      padding: 0.6rem 0.75rem;
+      margin-bottom: 0.6rem;
+      border-radius: 0 8px 8px 0;
+    }
+    .edit-zone label { color: #b45309; font-weight: 600; }
+    .edit-zone input, .edit-zone textarea { background: #fff; border-color: #fcd34d; color: blue; }
+    .edit-zone input::placeholder, .edit-zone textarea::placeholder { color: rgba(0, 0, 255, 0.6); }
+    .title-green-badge {
+      display: inline-block;
+      color: #fff !important;
+      background: #16a34a;
+      border: 1px solid #15803d;
+      border-radius: 6px;
+      padding: 0.28rem 0.6rem;
+      line-height: 1.2;
+    }
+    .edit-zone-hint {
+      background: #fef3c7;
+      border: 1px solid #f59e0b;
+      border-radius: 8px;
+      padding: 0.5rem 0.85rem;
+      margin-bottom: 1rem;
+      font-size: 0.9rem;
+      color: #92400e;
+      font-weight: 600;
+    }
+    /*   —   */
+    .section-fixed-title {
+      font-size: 1rem;
+      font-weight: 700;
+      color: #16a34a;
+      margin: 0 0 0.5rem 0;
+      padding: 0;
+    }
+  </style>
+</head>
+<body class="admin-dashboard-glass">
+  <div class="admin-wrap">
+    <!-- TAB NAVIGATION (hidden when ?page= single-page mode) -->
+    <div class="tabs" id="tabsWrap">
+      <button class="tab-btn active" data-tab="home">🏠 Home</button>
+      <button class="tab-btn" data-tab="about">👥 About Us</button>
+      <button class="tab-btn" data-tab="course">📚 Course</button>
+      <button class="tab-btn" data-tab="news">📰 News</button>
+      <button class="tab-btn" data-tab="admissions">💳 Admissions</button>
+      <button class="tab-btn" data-tab="contact">📞 Contact</button>
+      <button class="tab-btn" data-tab="placement">📝 Placement Test</button>
+      <button class="tab-btn" data-tab="submissions">📥 Submissions</button>
+    </div>
+
+    <form id="adminForm">
+
+      <!-- ══════════════════════════════════════════════════════
+           TAB 1 : HOME
+      ══════════════════════════════════════════════════════ -->
+      <div class="tab-panel active" id="tab-home">
+
+        <!-- Hero Banner (Logo  Website Settings  ) -->
+        <div class="section-divider"><span class="sd-icon">🏠</span><span class="sd-title">Hero Banner</span><span class="sd-sub">—  </span></div>
+        <div class="card">
+          <div class="form-group edit-zone"><label> (Heading)</label><input type="text" id="hero_title" placeholder="Improve Your English Skills with Myanmar New Era"></div>
+          <div class="form-group edit-zone"><label> /  (Subheading)</label><textarea id="hero_subtitle" rows="2" placeholder="Learn Listening, Speaking..."></textarea></div>
+          <div class="form-group edit-zone"><label> </label><input type="text" id="hero_check1" placeholder="International Curriculum"></div>
+          <div class="form-group edit-zone"><label> </label><input type="text" id="hero_check2" placeholder="Small Class Size"></div>
+          <div class="form-group edit-zone"><label> </label><input type="text" id="hero_check3" placeholder="Flexible Schedule"></div>
+        </div>
+
+        <div class="section-divider"><span class="sd-icon">🖼</span><span class="sd-title">Home — Activities carousel ( + )</span><span class="sd-sub">—  + </span></div>
+        <p style="font-size:0.88rem;color:var(--text-muted);margin:0 0 0.75rem;line-height:1.45;">  carousel —    caption  /    <strong> </strong> (photo/activity1.jpg)    <strong>➕ Carousel  </strong>  </p>
+        <div class="card" style="margin-bottom:1rem;">
+          <div class="form-group edit-zone" style="margin-bottom:0;">
+            <label style="font-weight:700;">⏱ Auto-slide —    ()</label>
+            <input type="number" id="home_activities_carousel_interval_sec" min="2" max="120" step="0.5" placeholder="5" style="max-width:8rem;">
+            <p style="font-size:0.82rem;color:var(--text-muted);margin:0.45rem 0 0;line-height:1.4;"> <strong></strong>   <strong></strong>     <strong> </strong>   Save All  website refresh </p>
+          </div>
+        </div>
+        <div id="homeActivitiesSlidesList"></div>
+        <button type="button" class="btn-add" id="btnAddHomeActivitySlide">➕ Carousel  </button>
+
+        <div class="section-divider"><span class="sd-icon">🎬</span><span class="sd-title">Home — Activities carousel  </span><span class="sd-sub">YouTube  </span></div>
+        <div class="card">
+          <p style="font-size:0.88rem;color:var(--text-muted);margin:0 0 1rem;line-height:1.45;"> Activities carousel <strong></strong>  YouTube  (Watch / Share)  .mp4   direct link       </p>
+          <div class="form-group edit-zone"><label>  — URL</label><input type="text" id="home_activity_video_1" placeholder="https://www.youtube.com/watch?v=..."></div>
+          <div class="upload-row">
+            <input type="file" id="upload_home_activity_video_1_upload" accept="video/*" class="input-file-hidden">
+            <button type="button" class="btn-import-image" id="btn_import_home_activity_video_1_upload">🎬   </button>
+            <button type="button" class="btn-remove-img" id="remove_home_activity_video_1_upload">🗑 </button>
+            <span class="upload-preview" id="preview_home_activity_video_1_upload"></span>
+          </div>
+          <div class="form-group edit-zone" style="margin-top:1rem;"><label>  — URL</label><input type="text" id="home_activity_video_2" placeholder="https://youtu.be/..."></div>
+          <div class="upload-row">
+            <input type="file" id="upload_home_activity_video_2_upload" accept="video/*" class="input-file-hidden">
+            <button type="button" class="btn-import-image" id="btn_import_home_activity_video_2_upload">🎬   </button>
+            <button type="button" class="btn-remove-img" id="remove_home_activity_video_2_upload">🗑 </button>
+            <span class="upload-preview" id="preview_home_activity_video_2_upload"></span>
+          </div>
+        </div>
+
+        <!-- Why Choose Us ( ) —  +  -->
+        <div class="section-divider"><span class="sd-icon">✅</span><span class="sd-title">Why Choose Us</span><span class="sd-sub">—  </span></div>
+        <div class="form-group edit-zone"><label></label><input type="text" id="why_title" placeholder="Why Choose Us"></div>
+        <div class="form-group edit-zone"><label>  </label><textarea id="why_lead" rows="2" placeholder="Hero    "></textarea></div>
+        <div class="content-card">
+          <div class="content-card-header"><span class="content-card-icon">👩‍🏫</span><span class="content-card-live" id="lbl_about1">Expert Teachers</span></div>
+          <div class="form-group edit-zone"><label> ()</label><input type="text" id="about1_title"></div>
+          <div class="form-group edit-zone"><label></label><textarea id="about1_text" rows="2"></textarea></div>
+        </div>
+        <div class="content-card">
+          <div class="content-card-header"><span class="content-card-icon">📚</span><span class="content-card-live" id="lbl_about2">4 Skills Focus</span></div>
+          <div class="form-group edit-zone"><label> ()</label><input type="text" id="about2_title"></div>
+          <div class="form-group edit-zone"><label></label><textarea id="about2_text" rows="2"></textarea></div>
+        </div>
+        <div class="content-card">
+          <div class="content-card-header"><span class="content-card-icon">🕐</span><span class="content-card-live" id="lbl_about3">Flexible Schedule</span></div>
+          <div class="form-group edit-zone"><label> ()</label><input type="text" id="about3_title"></div>
+          <div class="form-group edit-zone"><label></label><textarea id="about3_text" rows="2"></textarea></div>
+        </div>
+        <div class="content-card">
+          <div class="content-card-header"><span class="content-card-icon">👥</span><span class="content-card-live" id="lbl_about4">Small Class Size</span></div>
+          <div class="form-group edit-zone"><label> ()</label><input type="text" id="about4_title"></div>
+          <div class="form-group edit-zone"><label></label><textarea id="about4_text" rows="2"></textarea></div>
+        </div>
+
+        <!-- Course  Content Management  Course  -->
+        <!-- Find Your English Level (Placement CTA) —  Popular Courses  -->
+        <div class="section-divider"><span class="sd-icon">📋</span><span class="sd-title">Find Your English Level (Placement CTA)</span></div>
+        <div class="card">
+          <div class="form-group edit-zone"><label></label><input type="text" id="pt_cta_title" placeholder="Find Your English Level"></div>
+          <div class="form-group edit-zone"><label></label><input type="text" id="pt_cta_subtitle" placeholder="Take our FREE placement test and discover the perfect program for you."></div>
+          <div class="form-group edit-zone"><label> </label><input type="text" id="pt_cta_check1" placeholder="60-minute test"></div>
+          <div class="form-group edit-zone"><label> </label><input type="text" id="pt_cta_check2" placeholder="Instant results"></div>
+          <div class="form-group edit-zone"><label></label><input type="text" id="pt_cta_btn" placeholder="Take Free Placement Test"></div>
+        </div>
+
+        <!-- Our Learning Method -->
+        <div class="section-divider"><span class="sd-icon">📐</span><span class="sd-title">Our Learning Method</span><span class="sd-sub">—  +  /</span></div>
+        <div class="card">
+          <div class="form-group edit-zone"><label></label><input type="text" id="learning_method_section_title" placeholder="Our Learning Method"></div>
+          <div class="form-group edit-zone"><label> ()</label><textarea id="learning_method_section_lead" rows="2" placeholder="Section "></textarea></div>
+        </div>
+        <div id="homeLearningMethodList"></div>
+        <button type="button" class="btn-add" id="btnAddHomeLearning">➕ Learning item </button>
+
+        <!-- Meet Our Teachers () -->
+        <div class="section-divider"><span class="sd-icon">👩‍🏫</span><span class="sd-title">Meet Our Teachers</span><span class="sd-sub">—  + /  </span></div>
+        <div class="card">
+          <div class="form-group edit-zone"><label></label><input type="text" id="teachers_section_title" placeholder="Meet Our Teachers"></div>
+          <div class="form-group edit-zone"><label></label><input type="text" id="teachers_section_subtitle" placeholder="Learn from qualified and experienced instructors."></div>
+        </div>
+        <div id="homeTeachersList"></div>
+        <button type="button" class="btn-add" id="btnAddHomeTeacher">➕ / </button>
+
+        <!-- Our Facilities -->
+        <div class="section-divider"><span class="sd-icon">🏫</span><span class="sd-title">Our Facilities</span><span class="sd-sub">—  +  /</span></div>
+        <div class="card">
+          <div class="form-group edit-zone"><label></label><input type="text" id="facilities_section_title" placeholder="Our Facilities"></div>
+          <div class="form-group edit-zone"><label> ()</label><textarea id="facilities_section_lead" rows="2" placeholder="Section "></textarea></div>
+        </div>
+        <div id="homeFacilitiesList"></div>
+        <button type="button" class="btn-add" id="btnAddHomeFacility">➕ Facility </button>
+
+        <!-- Student Testimonials () -->
+        <div class="section-divider"><span class="sd-icon">💬</span><span class="sd-title">Student Testimonials</span><span class="sd-sub">—  +  +   </span></div>
+        <div class="form-group edit-zone"><label> (Section title)</label><input type="text" id="testimonials_title" placeholder="Student Testimonials"></div>
+        <div class="form-group edit-zone"><label> (Subtitle)</label><input type="text" id="testimonials_subtitle" placeholder="What our students say about learning at Myanmar New Era"></div>
+        <div id="homeTestimonialsList"></div>
+        <button type="button" class="btn-add" id="btnAddHomeTestimonial">➕ Testimonial </button>
+
+        <div class="section-divider"><span class="sd-icon">❓</span><span class="sd-title">Frequently Asked Questions</span><span class="sd-sub">—  +   </span></div>
+        <div class="form-group edit-zone"><label>FAQ </label><input type="text" id="faq_section_title" placeholder="Frequently Asked Questions"></div>
+        <div id="faqList"></div>
+        <button type="button" class="btn-add" id="btnAddFaq">➕ FAQ </button>
+      </div>
+
+      <!-- ══════════════════════════════════════════════════════
+           TAB 2 : ABOUT US
+      ══════════════════════════════════════════════════════ -->
+      <div class="tab-panel" id="tab-about">
+        <div class="section-divider"><span class="sd-icon">📄</span><span class="sd-title">About  </span><span class="sd-sub">— about.html page head</span></div>
+        <div class="card">
+          <div class="form-group edit-zone"><label>  (H1)</label><input type="text" id="about_page_title" placeholder="About Us"></div>
+        </div>
+
+        <div class="section-divider"><span class="sd-icon"></span><span class="sd-title">Mission &amp; Vision</span></div>
+        <div class="card">
+          <div class="form-group edit-zone"><label> (H2)</label><input type="text" id="about_mv_section_title" placeholder="Mission & Vision"></div>
+          <div class="form-group edit-zone"><label>Mission  ()</label><input type="text" id="about_mission_label" placeholder="Mission"></div>
+          <div class="form-group edit-zone"><label>Mission </label><textarea id="about_mission_text" rows="3" placeholder="To provide high-quality..."></textarea></div>
+          <div class="form-group edit-zone"><label>Vision  ()</label><input type="text" id="about_vision_label" placeholder="Vision"></div>
+          <div class="form-group edit-zone"><label>Vision </label><textarea id="about_vision_text" rows="3" placeholder="To become a leading..."></textarea></div>
+          <div class="form-group edit-zone"><label>Core Values </label><input type="text" id="about_core_values_label" placeholder="Core Values"></div>
+          <div class="form-group edit-zone"><label>Core Values  ( )</label><textarea id="about_core_values_text" rows="5" placeholder=" Enter "></textarea></div>
+        </div>
+
+        <div class="section-divider"><span class="sd-icon">👩‍🏫</span><span class="sd-title">Our Instructors</span><span class="sd-sub">—   + </span></div>
+        <div class="card">
+          <div class="form-group edit-zone"><label> (H2)</label><input type="text" id="about_instructors_section_title" placeholder="Our Instructors"></div>
+        </div>
+        <div id="aboutInstructorsList"></div>
+        <button type="button" class="btn-add" id="btnAddAboutInstructor">➕ / </button>
+
+        <div class="section-divider"><span class="sd-icon">🏛️</span><span class="sd-title">Facilities (About page)</span><span class="sd-sub">—  /</span></div>
+        <div class="card">
+          <div class="form-group edit-zone"><label> (H2)</label><input type="text" id="about_facilities_section_title" placeholder="Facilities"></div>
+        </div>
+        <div id="aboutFacilitiesList"></div>
+        <button type="button" class="btn-add" id="btnAddAboutFacility">➕ Facility </button>
+
+        <div class="section-divider"><span class="sd-icon">🖼️</span><span class="sd-title">Photo Gallery</span><span class="sd-sub">— Resources → Gallery  (sidebar + )</span></div>
+        <p class="form-hint" style="margin:0 0 0.75rem; font-size:0.9rem; color:var(--text-muted,#666);">Album       slot    ➕ Add photo slot   ( ) About Facilities  </p>
+        <div id="galleryAlbumsAdmin"></div>
+
+        <div class="section-divider"><span class="sd-icon">✨</span><span class="sd-title">Join Myanmar New Era (CTA)</span><span class="sd-sub">— </span></div>
+        <div class="card">
+          <div class="form-group edit-zone"><label></label><input type="text" id="about_join_title" placeholder="Join Myanmar New Era"></div>
+          <div class="form-group edit-zone"><label> ()</label><input type="text" id="about_join_lead" placeholder="Create your new future with English."></div>
+          <div class="form-group edit-zone"><label></label><textarea id="about_join_text" rows="3" placeholder="At Myanmar New Era..."></textarea></div>
+        </div>
+      </div>
+
+      <!-- ══════════════════════════════════════════════════════
+           TAB : COURSE ( Popular Courses )
+      ══════════════════════════════════════════════════════ -->
+      <div class="tab-panel" id="tab-course">
+        <div class="section-divider"><span class="sd-icon">📚</span><span class="sd-title">Courses Page Header</span><span class="sd-sub">—  </span></div>
+        <div class="card">
+          <div class="form-group edit-zone"><label> — Popular Courses </label><input type="text" id="courses_title" placeholder="Popular Courses"></div>
+          <div class="form-group edit-zone"><label>Page </label><input type="text" id="course_page_title" placeholder="Programs"></div>
+          <div class="form-group edit-zone"><label>Page </label><textarea id="course_page_subtitle" rows="2" placeholder=""></textarea></div>
+          <div class="form-group edit-zone"><label>Our Courses </label><input type="text" id="course_our_title" placeholder="Our Programs"></div>
+        </div>
+
+        <div class="section-divider"><span class="sd-icon">📖</span><span class="sd-title">Our Courses (Courses Page)</span><span class="sd-sub">—  //</span></div>
+        <div id="ourCoursesList"></div>
+        <button type="button" class="btn-add" id="btnAddOurCourse">➕ Our Course </button>
+
+        <div class="section-divider"><span class="sd-icon"></span><span class="sd-title">Program Features to CTA</span><span class="sd-sub">— website page </span></div>
+        <div class="card">
+          <div class="form-group edit-zone"><label>Program Features </label><input type="text" id="course_features_title" placeholder="Program Features"></div>
+          <p class="form-hint" style="margin:0 0 0.75rem; font-size:0.9rem; color:var(--text-muted, #666);">Feature   logo  ( ) </p>
+          <div class="content-card">
+            <div class="content-card-header">Feature 1</div>
+            <div class="form-group edit-zone"><label>Title</label><input type="text" id="course_feature1_title" placeholder="Small Class Size"></div>
+            <div class="form-group edit-zone"><label>Description</label><textarea id="course_feature1_text" rows="2"></textarea></div>
+          </div>
+          <div class="content-card">
+            <div class="content-card-header">Feature 2</div>
+            <div class="form-group edit-zone"><label>Title</label><input type="text" id="course_feature2_title" placeholder="Interactive Learning"></div>
+            <div class="form-group edit-zone"><label>Description</label><textarea id="course_feature2_text" rows="2"></textarea></div>
+          </div>
+          <div class="content-card">
+            <div class="content-card-header">Feature 3</div>
+            <div class="form-group edit-zone"><label>Title</label><input type="text" id="course_feature3_title" placeholder="Experienced Teachers"></div>
+            <div class="form-group edit-zone"><label>Description</label><textarea id="course_feature3_text" rows="2"></textarea></div>
+          </div>
+          <div class="content-card">
+            <div class="content-card-header">Feature 4</div>
+            <div class="form-group edit-zone"><label>Title</label><input type="text" id="course_feature4_title" placeholder="International Curriculum"></div>
+            <div class="form-group edit-zone"><label>Description</label><textarea id="course_feature4_text" rows="2"></textarea></div>
+          </div>
+          <div class="content-card">
+            <div class="content-card-header">Feature 5</div>
+            <div class="form-group edit-zone"><label>Title</label><input type="text" id="course_feature5_title" placeholder="Certificate After Completion"></div>
+            <div class="form-group edit-zone"><label>Description</label><textarea id="course_feature5_text" rows="2"></textarea></div>
+          </div>
+          <div class="hr"></div>
+          <div class="form-group edit-zone"><label class="title-green-badge">Who Should Join </label><input type="text" id="course_join_title" placeholder="Who Should Join This Program"></div>
+          <div class="form-group edit-zone"><label>Join Item 1</label><input type="text" id="course_join1" placeholder="Students who want to improve English skills"></div>
+          <div class="form-group edit-zone"><label>Join Item 2</label><input type="text" id="course_join2" placeholder="People preparing for international exams"></div>
+          <div class="form-group edit-zone"><label>Join Item 3</label><input type="text" id="course_join3" placeholder="Professionals who want better communication skills"></div>
+          <div class="form-group edit-zone"><label>Join Item 4</label><input type="text" id="course_join4" placeholder="Anyone who wants to study English systematically"></div>
+          <div class="hr"></div>
+          <div class="form-group edit-zone"><label class="title-green-badge">Learning Outcomes </label><input type="text" id="course_outcomes_title" placeholder="Learning Outcomes"></div>
+          <div class="form-group edit-zone"><label>Learning Outcomes Intro</label><input type="text" id="course_outcomes_intro" placeholder="After completing the course, students will be able to:"></div>
+          <div class="form-group edit-zone"><label>Outcome 1</label><input type="text" id="course_outcome1" placeholder="Speak English with more confidence"></div>
+          <div class="form-group edit-zone"><label>Outcome 2</label><input type="text" id="course_outcome2" placeholder="Improve listening and comprehension"></div>
+          <div class="form-group edit-zone"><label>Outcome 3</label><input type="text" id="course_outcome3" placeholder="Read and understand English texts better"></div>
+          <div class="form-group edit-zone"><label>Outcome 4</label><input type="text" id="course_outcome4" placeholder="Write clearly and effectively"></div>
+          <div class="hr"></div>
+          <div class="form-group edit-zone"><label class="title-green-badge">CTA </label><input type="text" id="course_cta_title" placeholder="Not Sure About Your English Level?"></div>
+          <div class="form-group edit-zone"><label>CTA </label><textarea id="course_cta_subtitle" rows="2" placeholder="Take our FREE Placement Test..."></textarea></div>
+          <div class="form-group edit-zone"><label>CTA Checklist 1</label><input type="text" id="course_cta_check1" placeholder="60-minute test"></div>
+          <div class="form-group edit-zone"><label>CTA Checklist 2</label><input type="text" id="course_cta_check2" placeholder="Instant result"></div>
+          <div class="form-group edit-zone"><label>CTA Button Text</label><input type="text" id="course_cta_btn" placeholder="Take Free Placement Test"></div>
+        </div>
+
+      </div>
+
+      <!-- ══════════════════════════════════════════════════════
+           TAB 3 : NEWS AND KNOWLEDGE
+      ══════════════════════════════════════════════════════ -->
+      <div class="tab-panel" id="tab-news">
+
+        <div class="section-divider"><span class="sd-icon">💡</span><span class="sd-title">English Learning Tips</span><span class="sd-sub">—  </span></div>
+        <div class="content-card">
+          <div class="content-card-header"><span class="content-card-icon">📖</span><span class="content-card-live" id="lbl_tip1"> </span></div>
+          <div class="form-group"><label></label><input type="text" id="blog_tip1_title"></div>
+          <div class="form-group"><label></label><textarea id="blog_tip1_text" rows="2"></textarea></div>
+        </div>
+        <div class="content-card">
+          <div class="content-card-header"><span class="content-card-icon">🎧</span><span class="content-card-live" id="lbl_tip2">Listening </span></div>
+          <div class="form-group"><label></label><input type="text" id="blog_tip2_title"></div>
+          <div class="form-group"><label></label><textarea id="blog_tip2_text" rows="2"></textarea></div>
+        </div>
+        <div class="content-card">
+          <div class="content-card-header"><span class="content-card-icon">✍️</span><span class="content-card-live" id="lbl_tip3">Writing </span></div>
+          <div class="form-group"><label></label><input type="text" id="blog_tip3_title"></div>
+          <div class="form-group"><label></label><textarea id="blog_tip3_text" rows="2"></textarea></div>
+        </div>
+
+        <div class="section-divider"><span class="sd-icon">📣</span><span class="sd-title">Academy Announcements</span><span class="sd-sub">— add / edit / delete posts</span></div>
+        <div id="blogPostsList"></div>
+        <div class="card" style="margin-top:0.5rem;">
+          <h3 style="margin-bottom:0.75rem; color:var(--primary);">➕ Add New Post</h3>
+          <div class="form-group"><label>Title (English)</label><input type="text" id="newPost_title_en" placeholder="e.g. New IELTS Batch Open"></div>
+          <div class="form-group"><label>Title (Myanmar)</label><input type="text" id="newPost_title_my" placeholder="ဥပမာ - IELTS အတန်းသစ် ဖွင့်လှစ်ခြင်း"></div>
+          <div class="form-group"><label>Excerpt (English)</label><textarea id="newPost_text_en" rows="3" placeholder="Write short summary..."></textarea></div>
+          <div class="form-group"><label>Excerpt (Myanmar)</label><textarea id="newPost_text_my" rows="3" placeholder="မြန်မာလို အကျဉ်းချုပ်ရေးပါ..."></textarea></div>
+          <div class="form-group"><label>Date</label><input type="date" id="newPost_date" lang="en-GB" placeholder="dd/mm/yyyy"></div>
+          <div class="form-group"><label>Category</label>
+            <select id="newPost_category">
+              <option value="academy-news">Academy News</option>
+              <option value="learning-tips">Learning Tips</option>
+              <option value="study-guides">Study Guides</option>
+            </select>
+          </div>
+          <div class="form-group"><label>Status</label>
+            <select id="newPost_status">
+              <option value="published">Published</option>
+              <option value="draft">Draft</option>
+            </select>
+          </div>
+          <div class="form-group"><label>Read More URL (optional)</label><input type="text" id="newPost_url" placeholder="e.g. blog-ielts-class.html"></div>
+          <div class="form-group"><label>Image</label><input type="file" id="newPost_image" accept="image/*"></div>
+          <div class="upload-preview" id="newPost_image_preview"></div>
+          <button type="button" class="btn-add post-edit-save" id="btnAddPost">➕ Add Post</button>
+        </div>
+      </div>
+
+      <!-- ══════════════════════════════════════════════════════
+           TAB 4 : ADMISSIONS
+      ══════════════════════════════════════════════════════ -->
+      <div class="tab-panel" id="tab-admissions">
+        <div class="section-divider"><span class="sd-icon">💳</span><span class="sd-title">Payment Guide</span><span class="sd-sub">— </span></div>
+        <div class="content-card">
+          <div class="content-card-header"><span class="content-card-icon">📱</span><span class="content-card-live">KPay</span></div>
+          <div class="form-group"><label>KPay  ( Account)</label><textarea id="pay_kpay" rows="2" placeholder=": 09 xxx&#10;Account: Myanmar New Era Academy"></textarea></div>
+        </div>
+        <div class="content-card">
+          <div class="content-card-header"><span class="content-card-icon">🌊</span><span class="content-card-live">Wave Pay</span></div>
+          <div class="form-group"><label>Wave Pay </label><textarea id="pay_wave" rows="2" placeholder=": 09 xxx&#10;Account: Myanmar New Era Academy"></textarea></div>
+        </div>
+        <div class="content-card">
+          <div class="content-card-header"><span class="content-card-icon">🏦</span><span class="content-card-live">Bank Transfer</span></div>
+          <div class="form-group"><label>Bank Transfer </label><textarea id="pay_bank" rows="3" placeholder="KBZ / CB / AYA Bank&#10;Account Name: ...&#10;Account No: xxxx xxxx xxxx"></textarea></div>
+        </div>
+      </div>
+
+      <!-- ══════════════════════════════════════════════════════
+           TAB 5 : CONTACT US
+      ══════════════════════════════════════════════════════ -->
+      <div class="tab-panel" id="tab-contact">
+        <p class="edit-hint">      </p>
+        <div class="section-divider"><span class="sd-icon sd-icon--img"><img src="../assets/images/icon-location-pin.png" alt="" class="sd-pin-icon" width="18" height="18"></span><span class="sd-title">Location &amp; Contact Info</span><span class="sd-sub">—  </span></div>
+        <div class="card">
+          <div class="form-group"><label class="label-with-pin" for="contact_address"><img src="../assets/images/icon-location-pin.png" alt="" class="form-pin-icon" width="16" height="16">  (Address)</label><input type="text" id="contact_address" placeholder="No.5311, Myat Lay Street, Ottarathiri 15015, Naypyitaw"></div>
+          <div class="form-group"><label>📞 </label><input type="text" id="contact_phone" placeholder="+95 9 885 511664, +95 9 885 511665"></div>
+          <div class="form-group"><label>✉️ Email (primary)</label><input type="email" id="contact_email" placeholder="office@mmnea.com"></div>
+          <div class="form-group"><label>✉️ Email (secondary)</label><input type="email" id="contact_email_2" placeholder="myanmarneweraacademy@gmail.com"></div>
+          <div class="form-group"><label>👍 Facebook Page Name</label><input type="text" id="contact_facebook" placeholder="Myanmar New Era Academy"></div>
+          <div class="form-group"><label>🔗 Facebook URL</label><input type="url" id="contact_fb_url" placeholder="https://facebook.com/..."></div>
+        </div>
+        <div class="section-divider"><span class="sd-icon">🗺️</span><span class="sd-title">Google Map</span><span class="sd-sub">— Google Maps  Embed Code </span></div>
+        <div class="card">
+          <div class="form-group">
+            <label>Google Maps Embed Code (iframe)   URL</label>
+            <textarea id="contact_map" rows="4" placeholder='&lt;iframe src="https://maps.google.com/..." width="100%" height="280" ...&gt;&lt;/iframe&gt;&#10; link URL '></textarea>
+            <small style="color:#888; font-size:0.8rem;">Google Maps → Share → Embed a map → HTML </small>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══════════════════════════════════════════════════════
+           TAB 6 : PLACEMENT TEST
+      ══════════════════════════════════════════════════════ -->
+      <div class="tab-panel" id="tab-placement">
+        <div class="card">
+          <p class="edit-zone-hint" style="margin-bottom: 1rem;">🟠  Placement Test /setting   <strong>Question Bank Management</strong>  </p>
+          <div class="form-group edit-zone"><label> </label><input type="text" id="pt_pageTitle" placeholder="4-Skill Placement Test"></div>
+          <div class="form-group edit-zone"><label> / </label><textarea id="pt_pageSubtitle" rows="2"></textarea></div>
+          <div class="form-group edit-zone"><label>Stepper Label</label><input type="text" id="pt_stepperLabel"></div>
+          <div class="hr"></div>
+          <h3 style="margin-bottom:0.5rem;">Step 1 – </h3>
+          <div class="form-group edit-zone"><label></label><input type="text" id="pt_step1_title"></div>
+          <div class="form-group edit-zone"><label> / </label><input type="text" id="pt_step1_subtitle"></div>
+          <div class="hr"></div>
+          <h3 style="margin-bottom:0.5rem;">Step 2 – Listening</h3>
+          <p class="text-muted" style="font-size:.85rem; margin-bottom:0.5rem;">Listening     — <strong>Question Bank Management</strong>     </p>
+          <div class="hr"></div>
+          <h3 style="margin-bottom:0.5rem;">Step 3 – Reading</h3>
+          <p class="text-muted" style="font-size:.85rem;">Reading questions  <strong>Question Bank Management</strong>  </p>
+          <div class="hr"></div>
+          <h3 style="margin-bottom:0.5rem;">Step 4 – Writing</h3>
+          <div class="form-group edit-zone"><label> / </label><input type="text" id="pt_step4_instruction"></div>
+          <p class="text-muted" style="font-size:.85rem;">Writing prompts  <strong>Question Bank Management</strong>  </p>
+          <div class="hr"></div>
+          <h3 style="margin-bottom:0.5rem;">Step 5 – Speaking</h3>
+          <div class="form-group edit-zone"><label> / </label><input type="text" id="pt_step5_instruction"></div>
+          <div class="hr"></div>
+          <h3 style="margin-bottom:0.5rem;">Step 6 – </h3>
+          <div class="form-group edit-zone"><label></label><input type="text" id="pt_step6_title"></div>
+          <div class="form-group edit-zone"><label> / </label><textarea id="pt_step6_message" rows="2"></textarea></div>
+          <div class="form-group edit-zone"><label></label><input type="text" id="pt_step6_thankYou"></div>
+        </div>
+      </div>
+
+      <!-- ══════════════════════════════════════════════════════
+           TAB 7 : SUBMISSIONS
+      ══════════════════════════════════════════════════════ -->
+      <div class="tab-panel" id="tab-submissions">
+        <div class="card">
+          <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:.5rem; margin-bottom:1rem;">
+            <h2 style="margin:0; color:var(--primary);">📥 Placement Test Submissions</h2>
+            <button type="button" class="btn-add" id="btnLoadSubmissions">🔄  (Refresh)</button>
+          </div>
+          <p class="text-muted" style="font-size:.87rem; margin-bottom:.75rem;">Firebase       Telegram notification    message </p>
+          <div id="submissionsContainer">
+            <p class="text-muted" style="font-size:.87rem;"> — "🔄 " </p>
+          </div>
+          <p class="text-muted" style="font-size:.82rem; margin-top:.5rem;">Listening / Reading     Writing  Speaking  /Admin   ""  </p>
+        </div>
+      </div>
+
+      <!-- Modal: Submission detail + Writing/Speaking  -->
+      <div id="submissionMarkModal" class="modal-overlay" style="display:none;" aria-hidden="true">
+        <div class="modal-box" style="max-width:560px;">
+          <div class="modal-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:.75rem;">
+            <h3 style="margin:0;">  (Writing &amp; Speaking)</h3>
+            <button type="button" class="pt-modal-close" id="submissionMarkModalClose" aria-label="Close">&times;</button>
+          </div>
+          <div class="modal-body" id="submissionMarkModalBody">
+            <p><strong>Student:</strong> <span id="smName">—</span></p>
+            <p><strong>Parent / guardian:</strong> <span id="smParentName">—</span></p>
+            <p><strong>Listening:</strong> <span id="smListening">—</span> / 25 &nbsp; <strong>Reading:</strong> <span id="smReading">—</span> / 25</p>
+            <div class="form-group" style="margin-top:.75rem;">
+              <label>✍️ Writing ()</label>
+              <textarea id="smWritingText" rows="4" readonly style="background:#f8fafc; font-size:.9rem;"></textarea>
+            </div>
+            <p style="font-size:.85rem;"><strong>🎤 Speaking:</strong> <span id="smSpeakingStatus">—</span></p>
+            <div class="form-group">
+              <label>Writing  (–)</label>
+              <input type="number" id="smWritingScore" min="0" max="20" value="0" style="width:80px;">
+            </div>
+            <div class="form-group">
+              <label>Speaking  (–)</label>
+              <input type="number" id="smSpeakingScore" min="0" max="20" value="0" style="width:80px;">
+            </div>
+            <p style="font-size:.85rem; color:#555;"> ""   Suggested Level   </p>
+            <button type="button" class="btn-save-all" id="submissionMarkSave"></button>
+          </div>
+        </div>
+      </div>
+
+      <!-- SAVE BAR -->
+      <div class="save-bar">
+        <button type="submit" class="btn-save-all">💾 Save All</button>
+        <span class="save-status" id="saveStatus">Changes saved successfully</span>
+      </div>
+    </form>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+  <script src="../assets/js/firebase-config.js"></script>
+  <script src="../assets/js/content-firebase.js"></script>
+  <script src="../assets/js/lang-switcher.js"></script>
+  <script src="../assets/js/content-admin.js?v=20260404-scroll-reload"></script>
+  <script>
+  (function() {
+    function applyEnglishUiText(root) {
+      var scope = root || document.body;
+      if (!scope) return;
+      var replacements = [
+        ['Website ', 'View Website'],
+        [' ', 'No posts yet.'],
+        ['', 'Title'],
+        ['', 'Date'],
+        ['', 'Total'],
+        ['Submission ', 'No submissions yet.'],
+        ['', 'Mark Score'],
+        ['', 'Delete'],
+        ['', 'Edit'],
+        ['', 'Upload Image'],
+        ['', 'Remove Image'],
+        ['', 'Not recorded'],
+        ['', 'Recorded']
+      ];
+      var walker = document.createTreeWalker(scope, NodeFilter.SHOW_TEXT, null);
+      var node;
+      while ((node = walker.nextNode())) {
+        var t = node.nodeValue;
+        if (!t || !t.trim()) continue;
+        var next = t;
+        for (var i = 0; i < replacements.length; i++) {
+          var from = replacements[i][0];
+          var to = replacements[i][1];
+          /* Guard against corrupted replacement keys (empty/whitespace)
+             which can explode text size and crash Chromium tabs. */
+          if (!from || !String(from).trim() || String(from).length < 2) continue;
+          if (next.indexOf(from) >= 0) next = next.split(from).join(to);
+        }
+        if (next !== t) node.nodeValue = next;
+      }
+    }
+
+    /* ── Tab switching ── */
+    function initSectionAccordions(panel) {
+      if (!panel || panel.__sectionInitDone) return;
+      var children = Array.prototype.slice.call(panel.children || []);
+      var groups = [];
+      var current = null;
+      children.forEach(function(node) {
+        if (!node || !node.classList) return;
+        if (node.classList.contains('section-divider')) {
+          current = { divider: node, body: [] };
+          groups.push(current);
+          return;
+        }
+        if (current) current.body.push(node);
+      });
+      if (!groups.length) return;
+      panel.__sectionGroups = groups;
+      panel.__openSectionIndex = 0;
+      groups.forEach(function(g, idx) {
+        g.divider.classList.add('section-toggle');
+        g.divider.classList.add('sec-theme-' + (idx % 6));
+        if (!g.divider.querySelector('.sd-chevron')) {
+          var chev = document.createElement('span');
+          chev.className = 'sd-chevron';
+          chev.setAttribute('aria-hidden', 'true');
+          chev.textContent = '▶';
+          g.divider.appendChild(chev);
+        }
+        g.divider.addEventListener('click', function() {
+          setSectionOpen(panel, idx, panel.__openSectionIndex !== idx);
+        });
+      });
+      panel.__sectionInitDone = true;
+      setSectionOpen(panel, -1, false);
+    }
+
+    function setSectionOpen(panel, idx, open) {
+      if (!panel || !panel.__sectionGroups || !panel.__sectionGroups.length) return;
+      panel.__sectionGroups.forEach(function(g, i) {
+        var isOpen = open && i === idx;
+        g.divider.classList.toggle('section-open', isOpen);
+        g.body.forEach(function(node) {
+          node.style.display = isOpen ? '' : 'none';
+        });
+      });
+      panel.__openSectionIndex = open ? idx : -1;
+    }
+
+    function switchToTab(tabName) {
+      var btn = document.querySelector('.tab-btn[data-tab="' + tabName + '"]');
+      if (!btn) return;
+      document.querySelectorAll('.tab-btn').forEach(function(b) { b.classList.remove('active'); });
+      document.querySelectorAll('.tab-panel').forEach(function(p) { p.classList.remove('active'); });
+      btn.classList.add('active');
+      var panel = document.getElementById('tab-' + tabName);
+      if (panel) {
+        panel.classList.add('active');
+        initSectionAccordions(panel);
+      }
+    }
+    document.querySelectorAll('.tab-btn').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        switchToTab(btn.getAttribute('data-tab'));
+      });
+    });
+    var singlePage = (function() {
+      var m = location.search.match(/[?&]page=([a-z]+)/);
+      return m ? m[1] : null;
+    })();
+    if (singlePage) {
+      var tabsWrap = document.getElementById('tabsWrap');
+      var backLink = document.getElementById('backToContentMgmt');
+      if (tabsWrap) tabsWrap.style.display = 'none';
+      if (backLink) backLink.style.display = 'inline-flex';
+      switchToTab(singlePage);
+    } else if (location.hash && location.hash.indexOf('tab-') === 0) {
+      var tabName = location.hash.slice(1).replace('tab-', '');
+      switchToTab(tabName);
+    }
+
+    /* ── Import image  file input  ── */
+    [['course1_image','upload_course1_image','btn_import_course1_image'],
+     ['course2_image','upload_course2_image','btn_import_course2_image'], ['course3_image','upload_course3_image','btn_import_course3_image']].forEach(function(arr) {
+      var fileId = arr[1], btnId = arr[2];
+      var btn = document.getElementById(btnId);
+      var fileInput = document.getElementById(fileId);
+      if (btn && fileInput) btn.addEventListener('click', function() { fileInput.click(); });
+    });
+
+    /* ── Upload / remove images ── */
+    var UPLOAD_IDS = ['course1_image', 'course2_image', 'course3_image'];
+    var IMAGE_WARN_BYTES = 500 * 1024;   /* warn if original file > 0.5MB */
+    var IMAGE_TARGET_BYTES = 260 * 1024; /* compressed upload target */
+    function fmtSize(bytes) {
+      var n = Number(bytes || 0);
+      if (n >= 1024 * 1024) return (n / (1024 * 1024)).toFixed(2) + ' MB';
+      return Math.max(0.1, n / 1024).toFixed(1) + ' KB';
+    }
+    function estimateDataUrlBytes(dataUrl) {
+      var s = String(dataUrl || '');
+      var i = s.indexOf(',');
+      var b64 = i >= 0 ? s.slice(i + 1) : s;
+      return Math.floor((b64.length * 3) / 4);
+    }
+    function saveImageUploadWithUi(file, uploadKey, uiHintEl, done) {
+      if (!file || !file.type || !file.type.match(/^image\//)) { if (done) done(false); return; }
+      if (file.size > IMAGE_WARN_BYTES) {
+        alert(' ' + fmtSize(file.size) + '  ' +
+          'Save    ');
+      }
+      compressImageForUpload(file, function(dataUrl) {
+        if (!dataUrl) { if (done) done(false); return; }
+        var outBytes = estimateDataUrlBytes(dataUrl);
+        var ok = AcademyContent.saveUpload(uploadKey, dataUrl);
+        if (!ok) {
+          alert('Storage     ');
+          if (done) done(false);
+          return;
+        }
+        if (uiHintEl) {
+          uiHintEl.textContent = '✓ ' + file.name + '  (' + fmtSize(file.size) + ' → ' + fmtSize(outBytes) + ')';
+        }
+        if (done) done(true, dataUrl, outBytes);
+      });
+    }
+    function updateCurrentImage(id, dataUrl) {
+      var base = (id && id.replace) ? id.replace(/_image$/, '') : id;
+      var wrap = document.getElementById('current_' + base + '_wrap');
+      var placeholder = document.getElementById('current_' + base + '_placeholder');
+      var img = document.getElementById('current_' + base + '_img') || (wrap ? wrap.querySelector('img') : null);
+      var label = document.getElementById('current_' + base + '_label');
+      if (img) {
+        img.style.display = dataUrl ? 'inline-block' : 'none';
+        img.src = dataUrl || '';
+        img.removeAttribute('hidden');
+        if (!dataUrl) img.setAttribute('hidden', '');
+      }
+      if (placeholder) placeholder.style.display = dataUrl ? 'none' : 'inline';
+      if (label) label.textContent = dataUrl ? '' : '()';
+      var preview = document.getElementById('preview_' + id);
+      if (preview) {
+        if (img) preview.innerHTML = '';
+        else preview.innerHTML = dataUrl ? '<img src="' + dataUrl + '" alt="Preview" style="max-width:120px;max-height:80px;border-radius:6px;"> ()' : '';
+      }
+    }
+    UPLOAD_IDS.forEach(function(id) {
+      var input   = document.getElementById('upload_' + id);
+      var preview = document.getElementById('preview_' + id);
+      if (!input) return;
+      input.addEventListener('change', function() {
+        var file = this.files && this.files[0];
+        if (!file || !file.type.match(/^image\//)) { if (preview) preview.innerHTML = ''; return; }
+        saveImageUploadWithUi(file, id, null, function(ok, savedDataUrl) {
+          if (!ok) return;
+          if (preview && !document.getElementById('current_' + (id.replace(/_image$/, '')) + '_img')) {
+            preview.innerHTML = '<img src="' + savedDataUrl + '" alt="Preview"> ';
+          }
+          updateCurrentImage(id, savedDataUrl);
+        });
+      });
+      var btn = document.getElementById('remove_' + id);
+      if (btn) btn.addEventListener('click', function() {
+        AcademyContent.removeUpload(id);
+        if (preview) preview.innerHTML = '';
+        if (input) input.value = '';
+        updateCurrentImage(id, null);
+        alert('Image removed. Click "Save All" to apply.');
+      });
+    });
+
+    ['home_activity_video_1_upload', 'home_activity_video_2_upload'].forEach(function(id) {
+      var input = document.getElementById('upload_' + id);
+      var preview = document.getElementById('preview_' + id);
+      var btnImport = document.getElementById('btn_import_' + id);
+      if (btnImport && input) btnImport.addEventListener('click', function() { input.click(); });
+      if (!input) return;
+      input.addEventListener('change', function() {
+        var file = this.files && this.files[0];
+        if (!file || !file.type.match(/^video\//)) {
+          if (preview) preview.textContent = '';
+          alert(' ');
+          return;
+        }
+        var reader = new FileReader();
+        reader.onload = function() {
+          AcademyContent.saveUpload(id, reader.result);
+          if (preview) preview.textContent = '✓ ' + file.name + ' — Save All ';
+        };
+        reader.readAsDataURL(file);
+      });
+      var btnRm = document.getElementById('remove_' + id);
+      if (btnRm) btnRm.addEventListener('click', function() {
+        AcademyContent.removeUpload(id);
+        if (preview) preview.textContent = '';
+        if (input) input.value = '';
+        alert('  Save All ');
+      });
+    });
+
+    /* ── Defaults ( ) ── */
+    var HOME_DEFAULTS = {
+      hero_title: 'Improve Your English Skills\nwith Myanmar New Era',
+      hero_subtitle: 'Learn Listening, Speaking, Reading and Writing with experienced teachers.',
+      hero_check1: 'International Curriculum',
+      hero_check2: 'Small Class Size',
+      hero_check3: 'Flexible Schedule',
+      hero_btn1: 'Free Placement Test',
+      hero_btn2: 'View Programs',
+      home_activity_video_1: '',
+      home_activity_video_2: '',
+      home_activities_carousel_interval_sec: '5',
+      why_title: 'Why Choose Us',
+      why_lead: 'Learn Listening, Speaking, Reading and Writing with experienced teachers.',
+      about1_title: 'Expert Teachers',
+      about1_text: 'Learn from experienced and qualified English instructors.',
+      about2_title: '4 Skills Focus',
+      about2_text: 'Focus on Listening, Speaking, Reading and Writing.',
+      about3_title: 'Flexible Schedule',
+      about3_text: 'Morning, evening and weekend classes available.',
+      about4_title: 'Small Class Size',
+      about4_text: 'Small classes for better attention and interaction.',
+      courses_title: 'Popular Courses',
+      course1_title: 'General English',
+      course1_text: 'Improve your everyday English from Beginner to Advanced level.',
+      course2_title: 'Exam Preparation',
+      course2_text: 'Prepare for IELTS, TOEFL, Duolingo and other English exams.',
+      course3_title: 'Pearson English International Certificate (PEIC)',
+      course3_text: 'Programmes are available for children (Young Learners), teenagers, and adults (Adult Learners). They are ideal if you want to build all four English skills from the ground up. Take a placement test first, then join the level that fits you. You can sit the exam here in Nay Pyi Taw and receive an internationally recognised certificate.',
+      course1_duration: '3 months', course1_schedule: 'Mon Wed Fri', course1_level: 'Beginner to Advanced',
+      course1_overview: 'Systematic four-skill English from beginner to advanced.',
+      course1_who_join: 'Anyone who wants to improve listening, speaking, reading and writing.',
+      course1_focus: 'Listening\nSpeaking\nReading\nWriting',
+      course1_fee: 'From 150,000 MMK per month', course1_schedule_options: 'Mon–Fri or Sat–Sun, morning/afternoon options.',
+      course2_ribbon_main: 'IGCSE',
+      course2_ribbon_sub: 'Batch 3',
+      course2_duration: '8–12 weeks', course2_schedule: 'As per batch', course2_level: 'Intermediate+',
+      course2_overview: 'IELTS, TOEFL, Duolingo preparation.',
+      course2_who_join: 'Students planning to take IELTS, TOEFL or Duolingo.',
+      course2_focus: 'Listening\nSpeaking\nReading\nWriting',
+      course2_fee: '200,000 – 350,000 MMK per course', course2_schedule_options: '8-week or 12-week courses. Schedule options available.',
+      course3_duration: 'By level (placement test)', course3_schedule: 'Morning / afternoon / evening options', course3_level: 'Pre-A1 to C2 (Young Learners & Adult)',
+      course3_overview: 'Pearson English International Certificate (PEIC) aligns with CEFR levels and offers a clear pathway from foundation to proficiency for learners aged 8+ (Young Learners) and 14+ (Adults).',
+      course3_who_join: 'Learners who want a structured, internationally recognised English qualification with valid-for-life certification, Ofqual-regulated standards, and acceptance by schools, universities, and government bodies worldwide.',
+      course3_focus: 'Listening\nSpeaking\nReading\nWriting',
+      course3_fee: 'Contact us for current fees and exam dates.', course3_schedule_options: 'Class schedules vary by level. Ask at the centre or via our contact form.',
+      course_page_title: 'Programs',
+      course_page_subtitle: '',
+      course_our_title: 'Our Programs',
+      course_features_title: 'Program Features',
+      course_feature1_title: 'Small Class Size', course_feature1_text: 'Small classes allow teachers to give more attention to every student.',
+      course_feature2_title: 'Interactive Learning', course_feature2_text: 'Students actively participate in speaking and discussion activities.',
+      course_feature3_title: 'Experienced Teachers', course_feature3_text: 'Learn from qualified and experienced English instructors.',
+      course_feature4_title: 'International Curriculum', course_feature4_text: 'Use globally recognized learning materials.',
+      course_feature5_title: 'Certificate After Completion', course_feature5_text: 'Students receive a certificate after successfully completing the course.',
+      course_join_title: 'Who Should Join This Program',
+      course_join1: 'Students who want to improve English skills',
+      course_join2: 'People preparing for international exams',
+      course_join3: 'Professionals who want better communication skills',
+      course_join4: 'Anyone who wants to study English systematically',
+      course_outcomes_title: 'Learning Outcomes',
+      course_outcomes_intro: 'After completing the course, students will be able to:',
+      course_outcome1: 'Speak English with more confidence',
+      course_outcome2: 'Improve listening and comprehension',
+      course_outcome3: 'Read and understand English texts better',
+      course_outcome4: 'Write clearly and effectively',
+      course_cta_title: 'Not Sure About Your English Level?',
+      course_cta_subtitle: 'Take our FREE Placement Test to discover the best course for your level.',
+      course_cta_check1: '60-minute test',
+      course_cta_check2: 'Instant result',
+      course_cta_btn: 'Take Free Placement Test',
+      testimonials_title: 'Student Testimonials', testimonials_subtitle: 'What our students say about learning at Myanmar New Era',
+      pt_cta_title: 'Find Your English Level', pt_cta_subtitle: 'Take our FREE placement test and discover the perfect program for you.',
+      pt_cta_check1: '60-minute test', pt_cta_check2: 'Instant results', pt_cta_btn: 'Take Free Placement Test',
+      teachers_section_title: 'Meet Our Teachers', teachers_section_subtitle: 'Learn from qualified and experienced instructors.',
+      learning_method_section_title: 'Our Learning Method',
+      learning_method_section_lead: 'Structured lessons, real communication practice, and materials that support every learner.',
+      facilities_section_title: 'Our Facilities',
+      facilities_section_lead: 'Modern classrooms, listening labs, and welcoming spaces designed for focused English learning.'
+    };
+    var ABOUT_DEFAULTS = {
+      about_page_title: 'About Us',
+      about_mv_section_title: 'Mission, Vision & Core Values',
+      about_mission_label: 'Mission',
+      about_mission_text: 'To deliver high-quality English programmes that strengthen communication, academic skills, and confidence for study and work.',
+      about_vision_label: 'Vision',
+      about_vision_text: 'To be a trusted international education community in Myanmar—a bridge to global learning and positive growth for every student we serve.',
+      about_core_values_label: 'Core Values',
+      about_core_values_text: 'Quality teaching & learner progress\nInternational curriculum & partnerships\nInclusive, respectful learning community\nIntegrity and professionalism',
+      about_instructors_section_title: 'Our Instructors',
+      about_facilities_section_title: 'Facilities',
+      about_join_title: 'Join Myanmar New Era',
+      about_join_lead: 'Create your new future with English.',
+      about_join_text: 'At Myanmar New Era International Education Centre, we are committed to helping students achieve their goals and build confidence in using English in everyday life.'
+    };
+    var DEFAULT_ABOUT_INSTRUCTORS = [
+      { name: '', desc: 'MA in TESOL, 10+ years teaching experience. Specialises in IELTS & Speaking.' },
+      { name: '', desc: 'BA English, teaches Business English and Public Speaking. 8 years experience.' },
+      { name: '', desc: 'Cambridge CELTA. Teaches General English and Exam Preparation.' }
+    ];
+    var DEFAULT_ABOUT_FACILITY_ITEMS = [
+      { icon: '📷', title: 'Modern Classrooms', text: 'Comfortable classrooms designed for effective and interactive learning.', image_key: 'about_facility_0_image', image: '../photo/modernclassroom1.png', image_fallbacks: '../photo/modernclassroom1.jpg,photo/modernclassroom1.png' },
+      { icon: '🎤', title: 'Speaking Practice Sessions', text: 'Students participate in group discussions and speaking activities to improve fluency.', image_key: 'about_facility_1_image', image: '../photo/speakingsession.jpg', image_fallbacks: '../photo/speakingsession.png,photo/speakingsession.jpg' },
+      { icon: '🎓', title: 'Student Activities', text: 'Regular learning activities and events that help students practice English in real situations.', image_key: 'about_facility_2_image', image: '../photo/studentactivities.jpg', image_fallbacks: '../photo/studentactivities.png,photo/studentactivities.jpg' }
+    ];
+    var DEFAULT_OUR_COURSES = [
+      { title: 'IGCSE', text: 'Our IGCSE programme prepares you for university and beyond — Pearson Edexcel in Nay Pyi Taw, with core and optional subjects, exam preparation, and experienced teachers.', link: 'course-detail.html?id=exam', image_key: 'our_course_3_image', legacy_image_key: 'course2_image' },
+      { title: 'Pre-IGCSE', text: 'One-year foundation at MNEA (Pearson Edexcel Approved Centre): weekday classes, March intake, pathway to IGCSE — fees from K 5,900,000 with installment & promotion options.', link: 'course-detail.html?id=general', image_key: 'our_course_2_image', legacy_image_key: 'course1_image' },
+      { title: 'Global Primary Learning Program', text: 'Build a strong primary foundation through English, Mathematics, Science, Computing, and supportive enrichment subjects.', link: 'course-detail.html?id=globalprimary', image_key: 'our_course_6_image', legacy_image_key: 'course1_image' },
+      { title: 'English 4 Skills (PEIC, UK)', text: 'Weekend PEIC pathway: free Level Test, June–December 2026 intake (140h + 10 bonus hours), levels Pre-A1–B2 with monthly fees from K 195,000 — exam in Nay Pyi Taw.', link: 'course-detail.html?id=professional', image_key: 'our_course_1_image', legacy_image_key: 'course3_image' },
+      { title: 'Chinese Language Program', text: 'Learn Chinese with structured lessons in communication, characters, pronunciation, and cultural understanding.', link: 'course-detail.html?id=chinese', image_key: 'our_course_5_image', legacy_image_key: 'course5_image' },
+      { title: 'Business & Management', text: '2026 online intake: Business English Level 1 — four skills, evening classes (Myanmar Time), practical workplace modules from greetings to company profiles. Programme fee K 790,000.', link: 'course-detail.html?id=business', image_key: 'our_course_7_image', legacy_image_key: 'course3_image' },
+      { title: 'Coding & Robotics', text: 'Hands-on coding and robotics programme for school-age learners with project-based lessons in logic, programming, and practical problem solving.', link: 'course-detail.html?id=coding', image_key: 'our_course_8_image', legacy_image_key: 'course8_image' },
+      { title: 'Online Class', text: 'Business English - Level 1 (Online Class), 2026 intake: Tue/Wed/Thu at 7:00 pm - 8:30 pm via live Zoom sessions. Practical workplace modules with online registration and payment.', link: 'course-detail.html?id=onlineclass', image_key: 'our_course_9_image', legacy_image_key: 'course9_image' }
+    ];
+    var DEFAULT_HOME_LEARNING_ITEMS = [
+      { icon: '💬', title: 'Interactive Classes', text: 'Students actively participate in discussions and activities.' },
+      { icon: '🎯', title: 'Real Communication Practice', text: 'Practice speaking English in real-life situations.' },
+      { icon: '📖', title: 'International Curriculum', text: 'Learn with globally recognized learning materials.' },
+      { icon: '✨', title: 'Modern Teaching Methods', text: 'Modern techniques for effective learning.' }
+    ];
+    var DEFAULT_HOME_FACILITY_ITEMS = [
+      { icon: 'fa-solid fa-chalkboard-user', title: 'Modern Classrooms', text: 'Well-equipped classrooms designed for comfortable and effective learning.' },
+      { icon: 'fa-solid fa-headphones', title: 'Listening Labs', text: 'Practice listening skills using modern audio equipment and materials.' },
+      { icon: 'fa-solid fa-users', title: 'Small Group Classes', text: 'Small class sizes allow teachers to give more attention to every student.' },
+      { icon: 'fa-solid fa-sun', title: 'Comfortable Learning Environment', text: 'A friendly and supportive atmosphere that helps students learn with confidence.' }
+    ];
+    var DEFAULT_HOME_TEACHERS = [
+      { name: 'Teacher A', exp: '10+ Years Experience', spec: 'IELTS & Academic English', image_key: 'home_teacher1_photo' },
+      { name: 'Teacher B', exp: '10+ Years Experience', spec: 'Business English', image_key: 'home_teacher2_photo' }
+    ];
+    var DEFAULT_HOME_TESTIMONIALS = [
+      { quote: '"The speaking classes improved my confidence a lot. I used to be nervous when talking in English, but now I can join discussions and present without fear. I\'m really grateful to the teachers at Myanmar New Era."', author: 'Aye Aye', meta: 'Speaking · 2024', image_key: 'story1_photo' },
+      { quote: '"I got IELTS Band 6 after studying here. The exam preparation course was very systematic and covered all four skills. The practice tests and feedback helped me understand my weak areas and improve."', author: 'Ko Min', meta: 'IELTS Preparation · 2024', image_key: 'story2_photo' },
+      { quote: '"Great teachers and a friendly learning environment. The course focused on all four skills—listening, speaking, reading, and writing—and I could feel my English getting better every week. I would recommend Myanmar New Era to anyone who wants to learn English properly."', author: 'Thidar', meta: 'General English · 2024', image_key: 'story3_photo' }
+    ];
+    var DEFAULT_HOME_ACTIVITIES_SLIDES = [
+      { caption_en: 'PRIMARY SECTION', caption_my: '', image_key: 'home_activity_slide_0' }
+    ];
+    var BLOG_DEFAULTS = {
+      blog_tip1_title: ' ', blog_tip1_text: '      ',
+      blog_tip2_title: 'Listening ', blog_tip2_text: 'Podcast   ',
+      blog_tip3_title: 'Writing ', blog_tip3_text: ' Diary   '
+    };
+    var ADMISSIONS_DEFAULTS = {
+      pay_kpay: ': +95 9 885 511664, +95 9 885 511665\nAccount: Myanmar New Era Academy',
+      pay_wave: ': +95 9 885 511664, +95 9 885 511665\nAccount: Myanmar New Era Academy',
+      pay_bank: 'KBZ / CB / AYA Bank\nAccount Name: Myanmar New Era Academy\nAccount No: xxxx xxxx xxxx',
+      faq_section_title: 'Frequently Asked Questions'
+    };
+    var DEFAULT_FAQ_ITEMS = [
+      { q: 'How long is each course?', a: 'Each level takes around 3 months.' },
+      { q: 'Do you offer online classes?', a: 'Yes, both online and in-person classes are available.' },
+      { q: 'Is the placement test free?', a: 'Yes, the test is completely free.' },
+      { q: 'How many students are in a class?', a: 'Usually 8–12 students per class.' },
+      { q: 'Do you provide certificates?', a: 'Yes, students receive a certificate after completing each level.' }
+    ];
+    var CONTACT_DEFAULTS = {
+      contact_address: 'No.5311, Myat Lay Street, and Sagaing St, Ottarathiri 15015, Naypyitaw',
+      contact_phone: '+95 9 885 511664, +95 9 885 511665',
+      contact_email: 'office@mmnea.com',
+      contact_email_2: 'myanmarneweraacademy@gmail.com',
+      contact_facebook: 'Myanmar New Era Academy',
+      contact_fb_url: 'https://facebook.com',
+      contact_map: ''
+    };
+    var DEFAULT_POSTS = [
+      {
+        id: 'blog_default_1',
+        title: 'Daily Reading Tips',
+        text: 'Read English for about 15 minutes every day. You can read newspapers, short stories, blogs, or simple English books. Daily reading helps improve vocabulary and comprehension.',
+        date: '2026-03-01',
+        category: 'learning-tips',
+        status: 'published',
+        url: 'blog-reading-tips.html',
+        image: 'photo/daily-reading-tips.jpg'
+      },
+      {
+        id: 'blog_default_2',
+        title: 'Listening Practice',
+        text: 'Listen to podcasts, English songs, or short videos every day. Using subtitles can help you understand pronunciation and sentence patterns better.',
+        date: '2026-03-02',
+        category: 'learning-tips',
+        status: 'published',
+        url: 'blog-listening-practice.html',
+        image: 'photo/listening-practice.jpg'
+      },
+      {
+        id: 'blog_default_3',
+        title: 'Vocabulary Learning',
+        text: 'Learn 5-10 new words daily. Use flashcards and try to write your own sentences using the new vocabulary.',
+        date: '2026-03-03',
+        category: 'study-guides',
+        status: 'published',
+        url: 'blog-vocabulary.html',
+        image: 'photo/vocabulary-learning.jpg'
+      },
+      {
+        id: 'blog_default_4',
+        title: 'New IELTS Preparation Class',
+        text: 'Registration is now open for the new IELTS preparation course. Students will practice Listening, Reading, Writing, and Speaking with experienced instructors.',
+        date: '2026-03-04',
+        category: 'academy-news',
+        status: 'published',
+        url: 'blog-ielts-class.html',
+        image: 'photo/new-ielts-preparation-class.jpg'
+      },
+      {
+        id: 'blog_default_5',
+        title: 'New General English Batch',
+        text: 'A new General English class for Beginner and Elementary levels will start soon. Limited seats are available.',
+        date: '2026-03-05',
+        category: 'academy-news',
+        status: 'published',
+        url: 'blog-general-english-batch.html',
+        image: 'photo/new-general-english-batch.jpg'
+      },
+      {
+        id: 'blog_default_6',
+        title: 'Student Activity Day',
+        text: 'Myanmar New Era will organize a Student English Activity Day with games, speaking activities, and group discussions.',
+        date: '2026-03-06',
+        category: 'academy-news',
+        status: 'published',
+        url: 'blog-activity-day.html',
+        image: 'photo/student-activity-day.jpg'
+      }
+    ];
+
+    /* ── All content field IDs (for collect/fill) ── */
+    var ALL_CONTENT_IDS = Object.keys(HOME_DEFAULTS)
+      .concat(Object.keys(ABOUT_DEFAULTS))
+      .concat(Object.keys(BLOG_DEFAULTS))
+      .concat(Object.keys(ADMISSIONS_DEFAULTS))
+      .concat(Object.keys(CONTACT_DEFAULTS));
+
+    var ALL_DEFAULTS = Object.assign({}, HOME_DEFAULTS, ABOUT_DEFAULTS, BLOG_DEFAULTS, ADMISSIONS_DEFAULTS, CONTACT_DEFAULTS);
+
+    /* ── Live labels ── */
+    function bindLive(inputId, labelId) {
+      var inp = document.getElementById(inputId);
+      var lbl = document.getElementById(labelId);
+      if (!inp || !lbl) return;
+      inp.addEventListener('input', function() { lbl.textContent = this.value || '()'; });
+    }
+    [['about1_title','lbl_about1'],['about2_title','lbl_about2'],['about3_title','lbl_about3'],['about4_title','lbl_about4'],
+     ['blog_tip1_title','lbl_tip1'],['blog_tip2_title','lbl_tip2'],['blog_tip3_title','lbl_tip3']
+    ].forEach(function(p) { bindLive(p[0], p[1]); });
+
+    /* ── Blog post management ── */
+    var blogPosts = [];
+    var blogPostsFromPublicPageCache = null;
+
+    function categoryLabel(v) {
+      if (v === 'learning-tips') return 'Learning Tips';
+      if (v === 'study-guides') return 'Study Guides';
+      return 'Academy News';
+    }
+    function safePost(item) {
+      item = item || {};
+      var titleEn = item.title_en != null ? item.title_en : item.title;
+      var titleMy = item.title_my != null ? item.title_my : '';
+      var textEn = item.text_en != null ? item.text_en : (item.text || item.excerpt);
+      var textMy = item.text_my != null ? item.text_my : '';
+      return {
+        id: item.id || ('news_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7)),
+        title: titleEn || '',
+        text: textEn || '',
+        title_en: titleEn || '',
+        title_my: titleMy || '',
+        text_en: textEn || '',
+        text_my: textMy || '',
+        date: item.date || '',
+        category: item.category || 'academy-news',
+        status: item.status || 'published',
+        url: item.url || '',
+        image: item.image || ''
+      };
+    }
+    function inferCategoryFromLabel(label) {
+      var t = String(label || '').trim().toLowerCase();
+      if (!t) return 'academy-news';
+      if (t.indexOf('learning') >= 0 || t.indexOf('tip') >= 0) return 'learning-tips';
+      if (t.indexOf('study') >= 0 || t.indexOf('guide') >= 0) return 'study-guides';
+      if (t.indexOf('news') >= 0 || t.indexOf('announcement') >= 0) return 'academy-news';
+      return 'academy-news';
+    }
+    function extractDateIsoFromMeta(metaText) {
+      var raw = String(metaText || '').trim();
+      if (!raw) return '';
+      var mIso = raw.match(/\b(\d{4}-\d{2}-\d{2})\b/);
+      if (mIso) return mIso[1];
+      var mMonth = raw.match(/\b([A-Za-z]+)\s+(\d{4})\b/);
+      if (mMonth) {
+        var dt = new Date(mMonth[1] + ' 1, ' + mMonth[2]);
+        if (!isNaN(dt.getTime())) return dt.toISOString().slice(0, 10);
+      }
+      var mSlash = raw.match(/\b(\d{1,2})\/(\d{1,2})\/(\d{4})\b/);
+      if (mSlash) {
+        var dd = ('0' + mSlash[1]).slice(-2);
+        var mm = ('0' + mSlash[2]).slice(-2);
+        return mSlash[3] + '-' + mm + '-' + dd;
+      }
+      return '';
+    }
+    function loadBlogPostsFromPublicPage(callback) {
+      if (Array.isArray(blogPostsFromPublicPageCache)) {
+        if (callback) callback(blogPostsFromPublicPageCache.slice());
+        return;
+      }
+      if (typeof fetch !== 'function' || typeof DOMParser === 'undefined') {
+        if (callback) callback([]);
+        return;
+      }
+      fetch('../public-page/blog.html', { cache: 'no-store' }).then(function(res) {
+        if (!res || !res.ok) throw new Error('fetch failed');
+        return res.text();
+      }).then(function(html) {
+        var doc = new DOMParser().parseFromString(String(html || ''), 'text/html');
+        var rows = [];
+        doc.querySelectorAll('#blogGrid .blog-card').forEach(function(card, idx) {
+          var title = (card.querySelector('h3') && card.querySelector('h3').textContent || '').trim();
+          var text = (card.querySelector('.blog-excerpt') && card.querySelector('.blog-excerpt').textContent || '').trim();
+          var catLabel = (card.querySelector('.blog-card-category') && card.querySelector('.blog-card-category').textContent || '').trim();
+          var meta = (card.querySelector('.blog-meta') && card.querySelector('.blog-meta').textContent || '').trim();
+          var link = (card.querySelector('.blog-read-more') && card.querySelector('.blog-read-more').getAttribute('href') || '').trim();
+          var img = (card.querySelector('.blog-card-thumb') && card.querySelector('.blog-card-thumb').getAttribute('src') || '').trim();
+          if (!title && !text) return;
+          rows.push(safePost({
+            id: 'blog_html_' + idx,
+            title: title,
+            text: text,
+            date: extractDateIsoFromMeta(meta),
+            category: inferCategoryFromLabel(catLabel),
+            status: 'published',
+            url: link,
+            image: img
+          }));
+        });
+        blogPostsFromPublicPageCache = rows;
+        if (callback) callback(rows.slice());
+      }).catch(function() {
+        if (callback) callback([]);
+      });
+    }
+
+    function renderBlogPostList() {
+      var list = document.getElementById('blogPostsList');
+      if (!list) return;
+      if (!blogPosts.length) { list.innerHTML = '<p class="text-muted" style="font-size:.87rem;"> </p>'; return; }
+      list.innerHTML = blogPosts.map(function(p, i) {
+        p = safePost(p);
+        var displayTitle = p.title_en || p.title_my || p.title || '()';
+        var statusText = (p.status || '').toLowerCase() === 'published' ? 'Published' : 'Draft';
+        var imageHtml = p.image
+          ? '<div class="upload-preview"><img src="' + escAttr(p.image) + '" alt="post image"></div>'
+          : '<div class="post-item-meta"></div>';
+        return '<div class="post-item" id="postItem_'+i+'">' +
+          '<div class="post-item-title">' + escHtml(displayTitle) + '</div>' +
+          '<div class="post-item-meta">' + escHtml((p.date||'') + ' · ' + categoryLabel(p.category) + ' · ' + statusText) + '</div>' +
+          imageHtml +
+          '<div class="post-item-actions">' +
+            '<button type="button" class="btn-post-edit" data-idx="'+i+'" aria-label="Edit post">✏️ Edit</button>' +
+            '<button type="button" class="btn-post-del"  data-idx="'+i+'" aria-label="Delete post">🗑 Delete</button>' +
+          '</div>' +
+          '<div class="post-edit-form" id="postEdit_'+i+'">' +
+            '<div class="form-group"><label>Title (English)</label><input type="text" class="post-edit-title-en" value="'+escAttr(p.title_en||p.title||'')+'"></div>' +
+            '<div class="form-group"><label>Title (Myanmar)</label><input type="text" class="post-edit-title-my" value="'+escAttr(p.title_my||'')+'"></div>' +
+            '<div class="form-group"><label>Excerpt (English)</label><textarea class="post-edit-text-en" rows="3">'+escHtml(p.text_en||p.text||'')+'</textarea></div>' +
+            '<div class="form-group"><label>Excerpt (Myanmar)</label><textarea class="post-edit-text-my" rows="3">'+escHtml(p.text_my||'')+'</textarea></div>' +
+            '<div class="form-group"><label>Date</label><input type="date" class="post-edit-date" lang="en-GB" placeholder="dd/mm/yyyy" value="'+escAttr(p.date||'')+'"></div>' +
+            '<div class="form-group"><label>Category</label><select class="post-edit-category"><option value="academy-news"'+(p.category==='academy-news'?' selected':'')+'>Academy News</option><option value="learning-tips"'+(p.category==='learning-tips'?' selected':'')+'>Learning Tips</option><option value="study-guides"'+(p.category==='study-guides'?' selected':'')+'>Study Guides</option></select></div>' +
+            '<div class="form-group"><label>Status</label><select class="post-edit-status"><option value="published"'+(p.status==='published'?' selected':'')+'>Published</option><option value="draft"'+(p.status==='draft'?' selected':'')+'>Draft</option></select></div>' +
+            '<div class="form-group"><label>Read More URL</label><input type="text" class="post-edit-url" value="'+escAttr(p.url||'')+'"></div>' +
+            '<div class="form-group"><label>Current Image</label><div class="upload-preview">'+(p.image?('<img src="'+escAttr(p.image)+'" alt="post image">'):'<span class="text-muted">No image yet</span>')+'</div></div>' +
+            '<div class="form-group"><label>Replace Image (Select)</label><input type="file" class="post-edit-image" data-idx="'+i+'" accept="image/*"></div>' +
+            '<button type="button" class="btn-post-del post-remove-image" data-idx="'+i+'">🗑 Remove Image</button> ' +
+            '<button type="button" class="btn-add post-edit-save" data-idx="'+i+'">✔ Save Changes</button>' +
+          '</div>' +
+        '</div>';
+      }).join('');
+      list.querySelectorAll('.btn-post-edit').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          var idx = this.getAttribute('data-idx');
+          var form = document.getElementById('postEdit_'+idx);
+          if (form) form.classList.toggle('open');
+        });
+      });
+      list.querySelectorAll('.btn-post-del').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          var idx = parseInt(this.getAttribute('data-idx'), 10);
+          var post = safePost(blogPosts[idx] || {});
+          var label = post.title_en || post.title_my || post.title || '';
+          if (confirm('Delete "' + label + '" ?')) {
+            blogPosts.splice(idx, 1);
+            renderBlogPostList();
+          }
+        });
+      });
+      list.querySelectorAll('.post-edit-save').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          var idx = parseInt(this.getAttribute('data-idx'), 10);
+          var form = document.getElementById('postEdit_'+idx);
+          if (!form) return;
+          var old = safePost(blogPosts[idx]);
+          var nextTitleEn = form.querySelector('.post-edit-title-en').value.trim();
+          var nextTitleMy = form.querySelector('.post-edit-title-my').value.trim();
+          var nextTextEn = form.querySelector('.post-edit-text-en').value.trim();
+          var nextTextMy = form.querySelector('.post-edit-text-my').value.trim();
+          blogPosts[idx] = {
+            id: old.id,
+            title: nextTitleEn || nextTitleMy,
+            text: nextTextEn || nextTextMy,
+            title_en: nextTitleEn,
+            title_my: nextTitleMy,
+            text_en: nextTextEn,
+            text_my: nextTextMy,
+            date:  form.querySelector('.post-edit-date').value.trim(),
+            category: form.querySelector('.post-edit-category').value,
+            status: form.querySelector('.post-edit-status').value,
+            url: form.querySelector('.post-edit-url').value.trim(),
+            image: old.image || ''
+          };
+          renderBlogPostList();
+        });
+      });
+      list.querySelectorAll('.post-edit-image').forEach(function(inp) {
+        inp.addEventListener('change', function() {
+          var idx = parseInt(inp.getAttribute('data-idx'), 10);
+          var f = inp.files && inp.files[0];
+          if (!f || !f.type.match(/^image\//)) return;
+          var reader = new FileReader();
+          reader.onload = function() {
+            var old = safePost(blogPosts[idx]);
+            old.image = reader.result;
+            blogPosts[idx] = old;
+            renderBlogPostList();
+          };
+          reader.readAsDataURL(f);
+        });
+      });
+      list.querySelectorAll('.post-remove-image').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          var idx = parseInt(btn.getAttribute('data-idx'), 10);
+          var old = safePost(blogPosts[idx]);
+          old.image = '';
+          blogPosts[idx] = old;
+          renderBlogPostList();
+        });
+      });
+      applyEnglishUiText(list);
+    }
+
+    var newPostImageData = '';
+    var newPostImageInput = document.getElementById('newPost_image');
+    if (newPostImageInput) {
+      newPostImageInput.addEventListener('change', function() {
+        var preview = document.getElementById('newPost_image_preview');
+        var f = this.files && this.files[0];
+        if (!f || !f.type.match(/^image\//)) { newPostImageData = ''; if (preview) preview.innerHTML = ''; return; }
+        var reader = new FileReader();
+        reader.onload = function() {
+          newPostImageData = reader.result || '';
+          if (preview) preview.innerHTML = newPostImageData ? '<img src="' + escAttr(newPostImageData) + '" alt="preview">' : '';
+        };
+        reader.readAsDataURL(f);
+      });
+    }
+
+    document.getElementById('btnAddPost').addEventListener('click', function() {
+      var titleEn = document.getElementById('newPost_title_en').value.trim();
+      var titleMy = document.getElementById('newPost_title_my').value.trim();
+      var textEn  = document.getElementById('newPost_text_en').value.trim();
+      var textMy  = document.getElementById('newPost_text_my').value.trim();
+      var date  = document.getElementById('newPost_date').value.trim();
+      var category = document.getElementById('newPost_category').value.trim() || 'academy-news';
+      var status = document.getElementById('newPost_status').value.trim() || 'published';
+      var url = document.getElementById('newPost_url').value.trim();
+      if (!titleEn && !titleMy && !textEn && !textMy) { alert('Please enter title or excerpt in English or Myanmar.'); return; }
+      blogPosts.unshift({
+        id: 'news_' + Date.now(),
+        title: titleEn || titleMy,
+        text: textEn || textMy,
+        title_en: titleEn,
+        title_my: titleMy,
+        text_en: textEn,
+        text_my: textMy,
+        date: date || new Date().toISOString().slice(0, 10),
+        category: category,
+        status: status,
+        url: url,
+        image: newPostImageData || ''
+      });
+      document.getElementById('newPost_title_en').value = '';
+      document.getElementById('newPost_title_my').value = '';
+      document.getElementById('newPost_text_en').value  = '';
+      document.getElementById('newPost_text_my').value  = '';
+      document.getElementById('newPost_date').value  = '';
+      document.getElementById('newPost_url').value  = '';
+      document.getElementById('newPost_status').value = 'published';
+      document.getElementById('newPost_category').value = 'academy-news';
+      if (newPostImageInput) newPostImageInput.value = '';
+      newPostImageData = '';
+      var preview = document.getElementById('newPost_image_preview');
+      if (preview) preview.innerHTML = '';
+      renderBlogPostList();
+    });
+
+    /* ── Placement Test helpers ── */
+
+    var currentPlacementSnapshot = null;
+
+    function fillPlacementTest(pt) {
+      pt = pt || AcademyContent.DEFAULT_PLACEMENT_TEST;
+      currentPlacementSnapshot = pt;
+      function sv(id, val) { var el=document.getElementById(id); if(el&&val!=null) el.value=val; }
+      sv('pt_pageTitle', pt.pageTitle); sv('pt_pageSubtitle', pt.pageSubtitle); sv('pt_stepperLabel', pt.stepperLabel);
+      sv('pt_step1_title', pt.step1&&pt.step1.title); sv('pt_step1_subtitle', pt.step1&&pt.step1.subtitle);
+      sv('pt_step4_instruction', pt.step4&&pt.step4.instruction);
+      sv('pt_step5_instruction', pt.step5&&pt.step5.instruction); sv('pt_step5_buttonRecord', pt.step5&&pt.step5.buttonRecord);
+      sv('pt_step5_buttonStop', pt.step5&&pt.step5.buttonStop); sv('pt_step5_buttonSubmit', pt.step5&&pt.step5.buttonSubmit);
+      sv('pt_step6_title', pt.step6&&pt.step6.title); sv('pt_step6_message', pt.step6&&pt.step6.message);
+      sv('pt_step6_thankYou', pt.step6&&pt.step6.thankYou); sv('pt_step6_buttonBack', pt.step6&&pt.step6.buttonBack);
+    }
+
+    function buildPlacementTest() {
+      var D = AcademyContent.DEFAULT_PLACEMENT_TEST;
+      var B = currentPlacementSnapshot || D;
+      function gv(id, fb) { var el=document.getElementById(id); return el&&el.value.trim() ? el.value.trim() : (fb||''); }
+      var s2Base = (B && B.step2 && typeof B.step2 === 'object') ? B.step2 : {};
+      var d2 = (D && D.step2) ? D.step2 : {};
+      var listenN = parseInt(s2Base.listenLimit, 10);
+      if (isNaN(listenN) || listenN < 1) listenN = (d2.listenLimit != null ? parseInt(d2.listenLimit, 10) : NaN);
+      if (isNaN(listenN) || listenN < 1) listenN = 2;
+      var pt = {
+        pageTitle: gv('pt_pageTitle', D.pageTitle), pageSubtitle: gv('pt_pageSubtitle', D.pageSubtitle),
+        stepperLabel: gv('pt_stepperLabel', D.stepperLabel),
+        step1: { title: gv('pt_step1_title', D.step1.title), subtitle: gv('pt_step1_subtitle', D.step1.subtitle), labelName: D.step1.labelName, labelPhone: D.step1.labelPhone, labelEmail: D.step1.labelEmail, btnNext: D.step1.btnNext },
+        step2: {
+          title: s2Base.title || 'Listening',
+          introDesc: s2Base.introDesc != null ? s2Base.introDesc : d2.introDesc,
+          duration: s2Base.duration != null ? s2Base.duration : d2.duration,
+          instruction: s2Base.instruction != null ? s2Base.instruction : d2.instruction,
+          listenLimit: listenN,
+          audioUrl: s2Base.audioUrl != null ? s2Base.audioUrl : d2.audioUrl,
+          questions: (B.step2 && Array.isArray(B.step2.questions)) ? B.step2.questions.slice() : (Array.isArray(d2.questions) ? d2.questions.slice() : [])
+        },
+        step3: { title: 'Step 3: Reading', instruction: D.step3.instruction, items: (B.step3 && Array.isArray(B.step3.items)) ? B.step3.items.slice() : D.step3.items.slice() },
+        step4: { title: 'Step 4: Writing', instruction: gv('pt_step4_instruction', D.step4.instruction), prompts: (B.step4 && Array.isArray(B.step4.prompts)) ? B.step4.prompts.slice() : ((D.step4.prompts && D.step4.prompts.length) ? D.step4.prompts.slice() : []) },
+        step5: { title: 'Step 5: Speaking', instruction: gv('pt_step5_instruction', D.step5.instruction), buttonRecord: gv('pt_step5_buttonRecord','Record'), buttonStop: gv('pt_step5_buttonStop','Stop'), statusIdle: D.step5.statusIdle, buttonSubmit: gv('pt_step5_buttonSubmit','') },
+        step6: { title: gv('pt_step6_title', D.step6.title), message: gv('pt_step6_message', D.step6.message), thankYou: gv('pt_step6_thankYou', D.step6.thankYou), buttonBack: gv('pt_step6_buttonBack', D.step6.buttonBack) }
+      };
+      currentPlacementSnapshot = pt;
+      return pt;
+    }
+
+    /* ── Load all saved data (run when DOM ready so content shows immediately) ── */
+    function programsSectionHeadingValue(id, raw) {
+      if (!/^(course_our_title|course_features_title|course_join_title|course_outcomes_title|course_cta_title)$/.test(id)) return raw;
+      return typeof AcademyContent.normalizeProgramsSectionHeading === 'function'
+        ? AcademyContent.normalizeProgramsSectionHeading(id, raw) : raw;
+    }
+    function fillFormFromStorage() {
+      var saved = AcademyContent.load();
+      if (!saved || typeof saved !== 'object') saved = {};
+      if (saved.about_facilities_section_title === 'Facilities / Gallery') saved.about_facilities_section_title = 'Facilities';
+      ALL_CONTENT_IDS.forEach(function(id) {
+        var el = document.getElementById(id);
+        if (!el) return;
+        var v = (saved[id] !== undefined && saved[id] !== '') ? saved[id] : (ALL_DEFAULTS[id] || '');
+        el.value = programsSectionHeadingValue(id, v);
+      });
+      renderGalleryAlbumsAdmin(saved, AcademyContent.loadUploads());
+    }
+    function applyLoadedData(data) {
+      data = data || {};
+      var saved = data.content || {};
+      if (saved.about_facilities_section_title === 'Facilities / Gallery') saved.about_facilities_section_title = 'Facilities';
+      ALL_CONTENT_IDS.forEach(function(id) {
+        var el = document.getElementById(id);
+        if (!el) return;
+        var v = (saved[id] !== undefined && saved[id] !== '') ? saved[id] : (ALL_DEFAULTS[id] || '');
+        el.value = programsSectionHeadingValue(id, v);
+      });
+      /* Trigger live labels */
+      [['about1_title','lbl_about1'],['about2_title','lbl_about2'],['about3_title','lbl_about3'],['about4_title','lbl_about4'],
+       ['blog_tip1_title','lbl_tip1'],['blog_tip2_title','lbl_tip2'],['blog_tip3_title','lbl_tip3']
+      ].forEach(function(p) { var inp=document.getElementById(p[0]); var lbl=document.getElementById(p[1]); if(inp&&lbl) lbl.textContent=inp.value||'()'; });
+      /* Upload previews +   (localStorage  // ) */
+      var uploads = AcademyContent.loadUploads();
+      if (data.uploads && typeof data.uploads === 'object' && Object.keys(data.uploads).length > 0) {
+        for (var uk in data.uploads) { uploads[uk] = data.uploads[uk]; }
+      }
+      var DEFAULT_IMAGES = { course1_image: 'photo/classroom.jpg', course2_image: 'photo/study.jpg', course3_image: 'photo/business.jpg' };
+      UPLOAD_IDS.forEach(function(id) {
+        var url = uploads[id] || (DEFAULT_IMAGES[id] || null);
+        if (typeof updateCurrentImage === 'function') updateCurrentImage(id, url);
+        var preview = document.getElementById('preview_' + id);
+        if (preview && url && !document.getElementById('current_' + (id.replace(/_image$/, '')) + '_img')) preview.innerHTML = '<img src="'+url+'" alt="Preview"> ()';
+      });
+      setTimeout(function() {
+        UPLOAD_IDS.forEach(function(id) {
+          var url = uploads[id] || (DEFAULT_IMAGES[id] || null);
+          if (typeof updateCurrentImage === 'function') updateCurrentImage(id, url);
+        });
+      }, 100);
+      ['home_activity_video_1_upload', 'home_activity_video_2_upload'].forEach(function(id) {
+        var url = uploads[id];
+        var preview = document.getElementById('preview_' + id);
+        if (preview && url) preview.textContent = '✓  ';
+      });
+      /* Blog posts: prefer saved CMS; fallback to current public-page cards, then hardcoded defaults. */
+      var incomingPosts = (data.blogPosts && data.blogPosts.length ? data.blogPosts : null);
+      if (incomingPosts && incomingPosts.length) {
+        blogPosts = incomingPosts.map(safePost);
+        renderBlogPostList();
+      } else {
+        loadBlogPostsFromPublicPage(function(fromPage) {
+          blogPosts = (fromPage && fromPage.length ? fromPage : DEFAULT_POSTS).map(safePost);
+          renderBlogPostList();
+        });
+      }
+      /* Placement test */
+      fillPlacementTest(data.placementTest);
+      /* FAQ list (dynamic); migrate old faq1_q/a... to faq_items */
+      var faqItems = (saved.faq_items && Array.isArray(saved.faq_items) && saved.faq_items.length > 0) ? saved.faq_items : null;
+      if (!faqItems || !faqItems.length) {
+        faqItems = [];
+        for (var fi = 1; fi <= 5; fi++) {
+          if (saved['faq' + fi + '_q'] != null || saved['faq' + fi + '_a'] != null)
+            faqItems.push({ q: (saved['faq' + fi + '_q'] != null ? saved['faq' + fi + '_q'] : ''), a: (saved['faq' + fi + '_a'] != null ? saved['faq' + fi + '_a'] : '') });
+        }
+        if (!faqItems.length) faqItems = DEFAULT_FAQ_ITEMS;
+      }
+      renderFAQList(faqItems);
+      /* About Instructors (dynamic); migrate legacy about_instructor1_name/desc to array */
+      var instItems = (saved.about_instructors && Array.isArray(saved.about_instructors) && saved.about_instructors.length > 0) ? saved.about_instructors : null;
+      if (!instItems || !instItems.length) {
+        instItems = [];
+        for (var ai = 1; ai <= 3; ai++) {
+          if (saved['about_instructor' + ai + '_name'] != null || saved['about_instructor' + ai + '_desc'] != null)
+            instItems.push({ name: (saved['about_instructor' + ai + '_name'] != null ? saved['about_instructor' + ai + '_name'] : ''), desc: (saved['about_instructor' + ai + '_desc'] != null ? saved['about_instructor' + ai + '_desc'] : '') });
+        }
+        if (!instItems.length) instItems = DEFAULT_ABOUT_INSTRUCTORS;
+      }
+      renderAboutInstructorsList(instItems, uploads);
+      var abFacItems = (saved.about_facility_items && Array.isArray(saved.about_facility_items) && saved.about_facility_items.length) ? saved.about_facility_items.slice() : null;
+      if (!abFacItems) abFacItems = DEFAULT_ABOUT_FACILITY_ITEMS.slice();
+      renderAboutFacilitiesList(abFacItems, uploads);
+      renderGalleryAlbumsAdmin(saved, uploads);
+      var ourCourses = (saved.our_courses && Array.isArray(saved.our_courses) && saved.our_courses.length > 0) ? saved.our_courses : null;
+      if (!ourCourses || !ourCourses.length) {
+        ourCourses = [];
+        var slugForLegacyCourseIndex = { 1: 'general', 2: 'exam', 3: 'professional', 4: 'english4skills', 5: 'chinese', 6: 'globalprimary', 7: 'business' };
+        var canonicalCourseBySlug = {
+          general: { image_key: 'our_course_2_image', legacy_image_key: 'course1_image' },
+          exam: { image_key: 'our_course_3_image', legacy_image_key: 'course2_image' },
+          professional: { image_key: 'our_course_1_image', legacy_image_key: 'course3_image' },
+          english4skills: { image_key: 'our_course_1_image', legacy_image_key: 'course4_image' },
+          chinese: { image_key: 'our_course_5_image', legacy_image_key: 'course5_image' },
+          globalprimary: { image_key: 'our_course_6_image', legacy_image_key: 'course1_image' },
+          business: { image_key: 'our_course_7_image', legacy_image_key: 'course3_image' }
+        };
+        for (var ci = 1; ci <= 7; ci++) {
+          if (saved['course' + ci + '_title'] != null || saved['course' + ci + '_text'] != null) {
+            var slugLegacy = slugForLegacyCourseIndex[ci] || 'general';
+            if (slugLegacy === 'english4skills') {
+              var hasProLegacy = false;
+              for (var cj = 1; cj <= 7; cj++) {
+                if ((saved['course' + cj + '_title'] != null || saved['course' + cj + '_text'] != null) && slugForLegacyCourseIndex[cj] === 'professional') {
+                  hasProLegacy = true;
+                  break;
+                }
+              }
+              if (hasProLegacy) continue;
+              slugLegacy = 'professional';
+            }
+            var canLegacy = canonicalCourseBySlug[slugLegacy] || { image_key: 'our_course_' + ci + '_image', legacy_image_key: 'course' + ci + '_image' };
+            ourCourses.push({
+              title: (saved['course' + ci + '_title'] != null ? saved['course' + ci + '_title'] : ''),
+              text: (saved['course' + ci + '_text'] != null ? saved['course' + ci + '_text'] : ''),
+              link: 'course-detail.html?id=' + slugLegacy,
+              image_key: canLegacy.image_key,
+              legacy_image_key: canLegacy.legacy_image_key
+            });
+          }
+        }
+        if (!ourCourses.length) ourCourses = DEFAULT_OUR_COURSES.slice();
+      }
+      renderOurCoursesList(ourCourses, uploads);
+
+      var learnItems = (saved.home_learning_items && Array.isArray(saved.home_learning_items) && saved.home_learning_items.length) ? saved.home_learning_items.slice() : null;
+      if (!learnItems) learnItems = DEFAULT_HOME_LEARNING_ITEMS.slice();
+      renderHomeLearningMethodList(learnItems);
+
+      var facItems2 = (saved.home_facility_items && Array.isArray(saved.home_facility_items) && saved.home_facility_items.length) ? saved.home_facility_items.slice() : null;
+      if (!facItems2) facItems2 = DEFAULT_HOME_FACILITY_ITEMS.slice();
+      renderHomeFacilitiesList(facItems2);
+
+      var hTeachers = (saved.home_teachers && Array.isArray(saved.home_teachers) && saved.home_teachers.length) ? saved.home_teachers.slice() : null;
+      if (!hTeachers || !hTeachers.length) {
+        hTeachers = [];
+        if (saved.home_teacher1_name != null || saved.home_teacher1_exp != null || saved.home_teacher1_spec != null) {
+          hTeachers.push({
+            name: saved.home_teacher1_name != null ? String(saved.home_teacher1_name) : '',
+            exp: saved.home_teacher1_exp != null ? String(saved.home_teacher1_exp) : '',
+            spec: saved.home_teacher1_spec != null ? String(saved.home_teacher1_spec) : '',
+            image_key: 'home_teacher1_photo'
+          });
+        }
+        if (saved.home_teacher2_name != null || saved.home_teacher2_exp != null || saved.home_teacher2_spec != null) {
+          hTeachers.push({
+            name: saved.home_teacher2_name != null ? String(saved.home_teacher2_name) : '',
+            exp: saved.home_teacher2_exp != null ? String(saved.home_teacher2_exp) : '',
+            spec: saved.home_teacher2_spec != null ? String(saved.home_teacher2_spec) : '',
+            image_key: 'home_teacher2_photo'
+          });
+        }
+        if (!hTeachers.length) hTeachers = DEFAULT_HOME_TEACHERS.slice();
+      }
+      renderHomeTeachersList(hTeachers, uploads);
+
+      var hTst = (saved.home_testimonials && Array.isArray(saved.home_testimonials) && saved.home_testimonials.length) ? saved.home_testimonials.slice() : null;
+      if (!hTst || !hTst.length) {
+        hTst = [];
+        for (var hi = 1; hi <= 3; hi++) {
+          var sq = saved['story' + hi + '_quote'];
+          var sa = saved['story' + hi + '_author'];
+          var sm = saved['story' + hi + '_meta'];
+          if (sq != null || sa != null || sm != null) {
+            hTst.push({
+              quote: sq != null ? String(sq) : '',
+              author: sa != null ? String(sa) : '',
+              meta: sm != null ? String(sm) : '',
+              image_key: 'story' + hi + '_photo'
+            });
+          }
+        }
+        if (!hTst.length) hTst = DEFAULT_HOME_TESTIMONIALS.slice();
+      }
+      renderHomeTestimonialsList(hTst, uploads);
+
+      var actSlides = AcademyContent.coerceHomeActivitiesSlides(saved.home_activities_slides);
+      if (actSlides == null) actSlides = DEFAULT_HOME_ACTIVITIES_SLIDES.slice();
+      renderHomeActivitiesSlidesList(actSlides.slice(), uploads);
+    }
+
+    /** Carousel row   — updateCurrentImage()  _image suffix  key/body id   */
+    function updateHomeActivitySlidePreviewRow(row, dataUrl) {
+      if (!row) return;
+      var wrap = row.querySelector('.current-img-wrap-photo');
+      if (!wrap) return;
+      var placeholder = wrap.querySelector('.no-img');
+      var img = wrap.querySelector('img');
+      if (img) {
+        img.style.display = dataUrl ? 'inline-block' : 'none';
+        img.src = dataUrl || '';
+        img.removeAttribute('hidden');
+        if (!dataUrl) img.setAttribute('hidden', '');
+      }
+      if (placeholder) placeholder.style.display = dataUrl ? 'none' : 'inline';
+    }
+
+    function compressImageForUpload(file, done) {
+      if (!file || !file.type || !file.type.match(/^image\//)) { done(null); return; }
+      var maxW = 960, maxH = 720;
+      var targetMaxBytes = 260 * 1024; /* keep small to avoid localStorage quota failures */
+      var blobUrl = URL.createObjectURL(file);
+      var img = new Image();
+      img.onload = function() {
+        try {
+          var w = img.naturalWidth || img.width || 0;
+          var h = img.naturalHeight || img.height || 0;
+          if (!w || !h) { URL.revokeObjectURL(blobUrl); done(null); return; }
+          var scale = Math.min(1, maxW / w, maxH / h);
+          var tw = Math.max(1, Math.round(w * scale));
+          var th = Math.max(1, Math.round(h * scale));
+          var c = document.createElement('canvas');
+          c.width = tw; c.height = th;
+          var ctx = c.getContext('2d');
+          ctx.drawImage(img, 0, 0, tw, th);
+          var q = 0.82;
+          var out = c.toDataURL('image/jpeg', q);
+          while (out && out.length > targetMaxBytes * 1.37 && q > 0.42) {
+            q -= 0.08;
+            out = c.toDataURL('image/jpeg', q);
+          }
+          URL.revokeObjectURL(blobUrl);
+          done(out);
+        } catch (e) {
+          try { URL.revokeObjectURL(blobUrl); } catch (_e) {}
+          done(null);
+        }
+      };
+      img.onerror = function() { try { URL.revokeObjectURL(blobUrl); } catch (_e2) {} done(null); };
+      img.src = blobUrl;
+    }
+
+    function wireHomeActivitySlideRow(row, item, uploads) {
+      if (!row) return;
+      var key = row.getAttribute('data-image-key') || (item && item.image_key) || '';
+      var url = (uploads && key && uploads[key]) ? uploads[key] : null;
+      updateHomeActivitySlidePreviewRow(row, url);
+      var inp = row.querySelector('.home-activity-upload-input');
+      var btnImport = row.querySelector('.home-activity-upload-import');
+      var rm = row.querySelector('.home-activity-remove-upload');
+      if (btnImport && inp) btnImport.addEventListener('click', function() { inp.click(); });
+      if (rm && inp) rm.addEventListener('click', function() {
+        if (key && typeof AcademyContent !== 'undefined' && AcademyContent.removeUpload) AcademyContent.removeUpload(key);
+        updateHomeActivitySlidePreviewRow(row, null);
+        inp.value = '';
+      });
+      if (inp) inp.addEventListener('change', function() {
+        var file = this.files && this.files[0];
+        if (!file || !file.type.match(/^image\//)) return;
+        var k = key;
+        var hint = row.querySelector('.home-activity-upload-size');
+        saveImageUploadWithUi(file, k, hint, function(ok, dataUrl) {
+          if (!ok) return;
+          updateHomeActivitySlidePreviewRow(row, dataUrl);
+        });
+      });
+    }
+
+    function renderHomeActivitiesSlidesList(items, uploads) {
+      var container = document.getElementById('homeActivitiesSlidesList');
+      if (!container) return;
+      uploads = uploads || AcademyContent.loadUploads();
+      if (!items || !items.length) {
+        container.innerHTML = '';
+        return;
+      }
+      var esc = function(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); };
+      container.innerHTML = items.map(function(item, i) {
+        var key = item.image_key || ('home_activity_slide_' + i);
+        return '<div class="content-card home-activity-slide-row" data-image-key="' + esc(key) + '">' +
+          '<div class="content-card-header"><span class="content-card-icon">🖼</span><span class="content-card-live">Carousel ' + (i + 1) + '</span>' +
+          '<button type="button" class="btn-remove-img btn-remove-home-activity-slide" style="margin-left:auto;">🗑 </button></div>' +
+          '<div class="form-group edit-zone"><label> (upload)</label><div class="image-edit-block">' +
+          '<div class="current-img-wrap current-img-wrap-photo"><span class="no-img">No picture yet.</span><img src="" alt="" style="display:none; max-width:160px; max-height:100px; border-radius:6px; object-fit:cover;"></div>' +
+          '<input type="file" accept="image/*" class="input-file-hidden home-activity-upload-input" autocomplete="off">' +
+          '<div class="home-activity-upload-size" style="font-size:.78rem;color:#64748b;margin:.2rem 0 .45rem;"></div>' +
+          '<button type="button" class="btn-import-image home-activity-upload-import">📷 </button>' +
+          '<button type="button" class="btn-remove-img home-activity-remove-upload">🗑 </button></div></div>' +
+          '<div class="form-group edit-zone"><label>Caption — English</label><input type="text" class="home-activity-caption-en" value="' + esc(item.caption_en || '') + '" autocomplete="off"></div>' +
+          '<div class="form-group edit-zone"><label>Caption — </label><input type="text" class="home-activity-caption-my" value="' + esc(item.caption_my || '') + '" autocomplete="off"></div>' +
+        '</div>';
+      }).join('');
+      container.querySelectorAll('.btn-remove-home-activity-slide').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          var row = this.closest('.home-activity-slide-row');
+          if (!row || !confirm(' carousel   ?')) return;
+          var pk = row.getAttribute('data-image-key') || '';
+          if (pk && typeof AcademyContent !== 'undefined' && AcademyContent.removeUpload) AcademyContent.removeUpload(pk);
+          row.remove();
+        });
+      });
+      var rows = container.querySelectorAll('.home-activity-slide-row');
+      items.forEach(function(item, i) {
+        wireHomeActivitySlideRow(rows[i], item, uploads);
+      });
+      setTimeout(function() {
+        var rows2 = container.querySelectorAll('.home-activity-slide-row');
+        items.forEach(function(item, i) {
+          var row = rows2[i];
+          if (!row) return;
+          var key = row.getAttribute('data-image-key') || (item && item.image_key) || ('home_activity_slide_' + i);
+          var url = (uploads && key && uploads[key]) ? uploads[key] : null;
+          updateHomeActivitySlidePreviewRow(row, url);
+        });
+      }, 80);
+    }
+
+    function renderFAQList(items) {
+      var container = document.getElementById('faqList');
+      if (!container) return;
+      if (!items || !items.length) { container.innerHTML = ''; return; }
+      container.innerHTML = items.map(function(item, i) {
+        var num = i + 1;
+        var esc = function(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); };
+        var q = esc(item.q || '');
+        var a = esc(item.a || '');
+        return '<div class="content-card faq-row" data-faq-index="' + num + '">' +
+          '<div class="content-card-header">' +
+            '<span class="content-card-icon">' + num + '</span><span class="content-card-live">FAQ ' + num + '</span>' +
+            '<button type="button" class="btn-remove-img btn-remove-faq" style="margin-left:auto;">🗑 </button>' +
+          '</div>' +
+          '<div class="form-group edit-zone"><label> (Question)</label><input type="text" class="faq-input-q" value="' + q + '" placeholder="Question"></div>' +
+          '<div class="form-group edit-zone"><label> (Answer)</label><textarea class="faq-input-a" rows="2" placeholder="Answer">' + a + '</textarea></div>' +
+        '</div>';
+      }).join('');
+      container.querySelectorAll('.btn-remove-faq').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          var row = this.closest('.faq-row');
+          if (row && confirm(' FAQ   ?')) row.remove();
+        });
+      });
+    }
+    document.getElementById('btnAddFaq').addEventListener('click', function() {
+      var container = document.getElementById('faqList');
+      if (!container) return;
+      var count = container.querySelectorAll('.faq-row').length + 1;
+      var div = document.createElement('div');
+      div.className = 'content-card faq-row';
+      div.setAttribute('data-faq-index', count);
+      div.innerHTML = '<div class="content-card-header">' +
+        '<span class="content-card-icon">' + count + '</span><span class="content-card-live">FAQ ' + count + '</span>' +
+        '<button type="button" class="btn-remove-img btn-remove-faq" style="margin-left:auto;">🗑 </button>' +
+      '</div>' +
+      '<div class="form-group edit-zone"><label> (Question)</label><input type="text" class="faq-input-q" placeholder="Question"></div>' +
+      '<div class="form-group edit-zone"><label> (Answer)</label><textarea class="faq-input-a" rows="2" placeholder="Answer"></textarea></div>';
+      container.appendChild(div);
+      div.querySelector('.btn-remove-faq').addEventListener('click', function() {
+        var row = this.closest('.faq-row');
+        if (row && confirm(' FAQ   ?')) row.remove();
+      });
+    });
+
+    function renderAboutInstructorsList(items, uploads) {
+      var container = document.getElementById('aboutInstructorsList');
+      if (!container) return;
+      uploads = uploads || AcademyContent.loadUploads();
+      if (!items || !items.length) { container.innerHTML = ''; return; }
+      var esc = function(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); };
+      container.innerHTML = items.map(function(item, i) {
+        var id = 'about_instructor_' + i + '_photo';
+        var name = esc(item.name || '');
+        var desc = esc(item.desc || '');
+        return '<div class="content-card about-instructor-row" data-instructor-index="' + i + '">' +
+          '<div class="content-card-header"><span class="content-card-icon">👩‍🏫</span><span class="content-card-live">/ ' + (i + 1) + '</span><button type="button" class="btn-remove-img btn-remove-instructor" style="margin-left:auto;">🗑 </button></div>' +
+          '<div class="form-group edit-zone"><label></label><div class="image-edit-block">' +
+          '<div class="current-img-wrap current-img-wrap-photo" id="current_' + id + '_wrap"><span class="no-img" id="current_' + id + '_placeholder">No picture yet.</span><img id="current_' + id + '_img" src="" alt="" style="display:none;max-width:120px;max-height:80px;border-radius:6px;object-fit:cover;"></div>' +
+          '<input type="file" id="upload_' + id + '" accept="image/*" class="input-file-hidden"><button type="button" class="btn-import-image" id="btn_import_' + id + '">📷 </button><button type="button" class="btn-remove-img" id="remove_' + id + '">🗑 </button>' +
+          '</div></div>' +
+          '<div class="form-group edit-zone"><label>/ </label><input type="text" class="about-instructor-name" value="' + name + '" placeholder=""></div>' +
+          '<div class="form-group edit-zone"><label></label><textarea class="about-instructor-desc" rows="2" placeholder=" ...">' + desc + '</textarea></div>' +
+        '</div>';
+      }).join('');
+      items.forEach(function(_, i) {
+        var id = 'about_instructor_' + i + '_photo';
+        var url = uploads[id] || null;
+        if (typeof updateCurrentImage === 'function') updateCurrentImage(id, url);
+      });
+      setTimeout(function() { items.forEach(function(_, i) { var id = 'about_instructor_' + i + '_photo'; if (typeof updateCurrentImage === 'function') updateCurrentImage(id, uploads[id] || null); }); }, 50);
+      container.querySelectorAll('.btn-remove-instructor').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          var row = this.closest('.about-instructor-row');
+          if (row && confirm(' /   ?')) row.remove();
+        });
+      });
+      container.querySelectorAll('[id^="btn_import_about_instructor_"]').forEach(function(btn) {
+        var id = btn.id.replace('btn_import_', '');
+        var fileInput = document.getElementById('upload_' + id);
+        if (fileInput) btn.addEventListener('click', function() { fileInput.click(); });
+      });
+      container.querySelectorAll('[id^="remove_about_instructor_"]').forEach(function(btn) {
+        var id = btn.id.replace('remove_', '');
+        var input = document.getElementById('upload_' + id);
+        btn.addEventListener('click', function() {
+          AcademyContent.removeUpload(id);
+          if (typeof updateCurrentImage === 'function') updateCurrentImage(id, null);
+          if (input) input.value = '';
+        });
+      });
+      container.querySelectorAll('input[type="file"][id^="upload_about_instructor_"]').forEach(function(inp) {
+        var id = inp.id.replace('upload_', '');
+        inp.addEventListener('change', function() {
+          var file = this.files && this.files[0];
+          if (!file || !file.type.match(/^image\//)) return;
+          saveImageUploadWithUi(file, id, null, function(ok, dataUrl) {
+            if (!ok) return;
+            if (typeof updateCurrentImage === 'function') updateCurrentImage(id, dataUrl);
+          });
+        });
+      });
+    }
+    document.getElementById('btnAddAboutInstructor').addEventListener('click', function() {
+      var container = document.getElementById('aboutInstructorsList');
+      if (!container) return;
+      var items = [];
+      container.querySelectorAll('.about-instructor-row').forEach(function(row) {
+        var nameEl = row.querySelector('.about-instructor-name');
+        var descEl = row.querySelector('.about-instructor-desc');
+        items.push({ name: (nameEl && nameEl.value) ? nameEl.value.trim() : '', desc: (descEl && descEl.value) ? descEl.value.trim() : '' });
+      });
+      items.push({ name: '', desc: '' });
+      var uploads = AcademyContent.loadUploads();
+      renderAboutInstructorsList(items, uploads);
+    });
+
+    function renderAboutFacilitiesList(items, uploads) {
+      var container = document.getElementById('aboutFacilitiesList');
+      if (!container) return;
+      uploads = uploads || AcademyContent.loadUploads();
+      if (!items || !items.length) { container.innerHTML = ''; return; }
+      var esc = function(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); };
+      container.innerHTML = items.map(function(it, i) {
+        var imgKey = (it && it.image_key) ? String(it.image_key) : ('about_facility_' + i + '_image');
+        return '<div class="content-card about-page-facility-row" data-image-key="' + esc(imgKey) + '">' +
+          '<div class="content-card-header"><span class="content-card-icon">' + (i + 1) + '</span><span class="content-card-live">Facility ' + (i + 1) + '</span>' +
+          '<button type="button" class="btn-remove-img btn-remove-about-facility" style="margin-left:auto;">🗑 </button></div>' +
+          '<div class="form-group edit-zone"><label> (About page gallery)</label><div class="image-edit-block">' +
+          '<div class="current-img-wrap current-img-wrap-photo" id="current_' + imgKey + '_wrap"><span class="no-img" id="current_' + imgKey + '_placeholder"></span><img id="current_' + imgKey + '_img" src="" alt="" style="display:none;max-width:200px;max-height:120px;border-radius:8px;object-fit:cover;"></div>' +
+          '<input type="file" id="upload_' + imgKey + '" accept="image/*" class="input-file-hidden"><button type="button" class="btn-import-image" id="btn_import_' + imgKey + '">📷 </button><button type="button" class="btn-remove-img" id="remove_' + imgKey + '">🗑 </button>' +
+          '</div></div>' +
+          '<div class="form-group edit-zone"><label>Icon (emoji — fallback only)</label><input type="text" class="about-facility-icon" value="' + esc(it.icon || '') + '" placeholder="📷"></div>' +
+          '<div class="form-group edit-zone"><label></label><input type="text" class="about-facility-title" value="' + esc(it.title || '') + '"></div>' +
+          '<div class="form-group edit-zone"><label></label><textarea class="about-facility-text" rows="2">' + esc(it.text || '') + '</textarea></div>' +
+        '</div>';
+      }).join('');
+      items.forEach(function(it, i) {
+        var imgKey = (it && it.image_key) ? String(it.image_key) : ('about_facility_' + i + '_image');
+        var fb = (it && it.image) ? String(it.image) : null;
+        var url = uploads[imgKey] || fb;
+        if (typeof updateCurrentImage === 'function') updateCurrentImage(imgKey, url || null);
+      });
+      setTimeout(function() {
+        items.forEach(function(it, i) {
+          var imgKey = (it && it.image_key) ? String(it.image_key) : ('about_facility_' + i + '_image');
+          var fb = (it && it.image) ? String(it.image) : null;
+          if (typeof updateCurrentImage === 'function') updateCurrentImage(imgKey, uploads[imgKey] || fb || null);
+        });
+      }, 50);
+      container.querySelectorAll('.btn-remove-about-facility').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          var row = this.closest('.about-page-facility-row');
+          if (row && confirm(' ?')) row.remove();
+        });
+      });
+      container.querySelectorAll('[id^="btn_import_about_facility_"]').forEach(function(btn) {
+        var id = btn.id.replace('btn_import_', '');
+        var fileInput = document.getElementById('upload_' + id);
+        if (fileInput) btn.addEventListener('click', function() { fileInput.click(); });
+      });
+      container.querySelectorAll('[id^="remove_about_facility_"]').forEach(function(btn) {
+        var id = btn.id.replace('remove_', '');
+        var input = document.getElementById('upload_' + id);
+        btn.addEventListener('click', function() {
+          AcademyContent.removeUpload(id);
+          if (typeof updateCurrentImage === 'function') updateCurrentImage(id, null);
+          if (input) input.value = '';
+        });
+      });
+      container.querySelectorAll('input[type="file"][id^="upload_about_facility_"]').forEach(function(inp) {
+        var id = inp.id.replace('upload_', '');
+        inp.addEventListener('change', function() {
+          var file = this.files && this.files[0];
+          if (!file || !file.type.match(/^image\//)) return;
+          saveImageUploadWithUi(file, id, null, function(ok, dataUrl) {
+            if (!ok) return;
+            if (typeof updateCurrentImage === 'function') updateCurrentImage(id, dataUrl);
+          });
+        });
+      });
+    }
+
+    var DEFAULT_GALLERY_ALBUM_TITLES_ADMIN = [
+      'Awarding Ceremony',
+      'Sports & Activities',
+      'Festivals',
+      'Happy Moments',
+      'Classroom Fun',
+      'School Trips',
+      'Donations',
+      'Community Service',
+      'Free Classes'
+    ];
+    var GALLERY_ALBUM_COUNT_ADMIN = 9;
+    var GALLERY_INITIAL_SLOTS_ADMIN = 3;
+    var GALLERY_MAX_SLOTS_PER_ALBUM_ADMIN = 12;
+    function galleryAdminSlotKey(ai, pi) {
+      return 'gallery_a' + ai + '_p' + pi;
+    }
+    function computeGalleryAlbumSlotCounts(saved, uploads) {
+      var counts = [];
+      uploads = uploads || {};
+      for (var ai = 0; ai < GALLERY_ALBUM_COUNT_ADMIN; ai++) {
+        var raw = saved.gallery_album_slot_counts && saved.gallery_album_slot_counts[ai];
+        if (raw != null && raw !== '' && !isNaN(parseInt(raw, 10))) {
+          var n = parseInt(raw, 10);
+          counts[ai] = Math.max(GALLERY_INITIAL_SLOTS_ADMIN, Math.min(GALLERY_MAX_SLOTS_PER_ALBUM_ADMIN, n));
+          continue;
+        }
+        var maxPi = -1;
+        for (var pi = 0; pi < GALLERY_MAX_SLOTS_PER_ALBUM_ADMIN; pi++) {
+          if (uploads[galleryAdminSlotKey(ai, pi)]) maxPi = pi;
+        }
+        counts[ai] = Math.min(
+          GALLERY_MAX_SLOTS_PER_ALBUM_ADMIN,
+          Math.max(GALLERY_INITIAL_SLOTS_ADMIN, maxPi + 1)
+        );
+      }
+      return counts;
+    }
+    function readGalleryAlbumStateFromAdminForm() {
+      var titles = [];
+      var counts = [];
+      for (var ai = 0; ai < GALLERY_ALBUM_COUNT_ADMIN; ai++) {
+        var tiEl = document.getElementById('gallery_album_title_' + ai);
+        titles.push(
+          tiEl && tiEl.value.trim() ? tiEl.value.trim() : DEFAULT_GALLERY_ALBUM_TITLES_ADMIN[ai]
+        );
+        var card = document.querySelector('#galleryAlbumsAdmin .gallery-admin-album[data-album-index="' + ai + '"]');
+        var c = card ? parseInt(card.getAttribute('data-slot-count'), 10) : GALLERY_INITIAL_SLOTS_ADMIN;
+        if (isNaN(c) || c < GALLERY_INITIAL_SLOTS_ADMIN) c = GALLERY_INITIAL_SLOTS_ADMIN;
+        if (c > GALLERY_MAX_SLOTS_PER_ALBUM_ADMIN) c = GALLERY_MAX_SLOTS_PER_ALBUM_ADMIN;
+        counts.push(c);
+      }
+      return { gallery_album_titles: titles, gallery_album_slot_counts: counts };
+    }
+    function renderGalleryAlbumsAdmin(saved, uploads) {
+      var container = document.getElementById('galleryAlbumsAdmin');
+      if (!container) return;
+      uploads = uploads || AcademyContent.loadUploads();
+      saved = saved || {};
+      var titles = DEFAULT_GALLERY_ALBUM_TITLES_ADMIN.slice();
+      if (saved.gallery_album_titles && Array.isArray(saved.gallery_album_titles)) {
+        for (var t = 0; t < GALLERY_ALBUM_COUNT_ADMIN; t++) {
+          if (saved.gallery_album_titles[t] != null && String(saved.gallery_album_titles[t]).trim()) {
+            titles[t] = String(saved.gallery_album_titles[t]).trim();
+          }
+        }
+      }
+      var slotCounts = computeGalleryAlbumSlotCounts(saved, uploads);
+      var esc = function(s) {
+        return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+      };
+      var parts = [];
+      for (var ai = 0; ai < GALLERY_ALBUM_COUNT_ADMIN; ai++) {
+        var nSlots = slotCounts[ai];
+        var slots = [];
+        for (var pi = 0; pi < nSlots; pi++) {
+          var key = galleryAdminSlotKey(ai, pi);
+          slots.push(
+            '<div class="gallery-admin-slot">' +
+              '<div class="current-img-wrap current-img-wrap-photo" style="min-height:72px;" id="current_' +
+              key +
+              '_wrap"><span class="no-img" id="current_' +
+              key +
+              '_placeholder">+</span><img id="current_' +
+              key +
+              '_img" src="" alt="" style="display:none;max-width:100%;max-height:80px;border-radius:6px;object-fit:cover;"></div>' +
+              '<input type="file" id="upload_' +
+              key +
+              '" accept="image/*" class="input-file-hidden">' +
+              '<button type="button" class="btn-import-image" id="btn_import_' +
+              key +
+              '">📷</button>' +
+              '<button type="button" class="btn-remove-img" id="remove_' +
+              key +
+              '">🗑</button>' +
+              '</div>'
+          );
+        }
+        var atMax = nSlots >= GALLERY_MAX_SLOTS_PER_ALBUM_ADMIN;
+        parts.push(
+          '<div class="content-card gallery-admin-album" data-album-index="' +
+            ai +
+            '" data-slot-count="' +
+            nSlots +
+            '">' +
+            '<div class="content-card-header"><span class="content-card-icon">' +
+            (ai + 1) +
+            '</span><span>Photo Gallery album</span></div>' +
+            '<div class="form-group edit-zone"><label>Sidebar </label><input type="text" id="gallery_album_title_' +
+            ai +
+            '" value="' +
+            esc(titles[ai]) +
+            '"></div>' +
+            '<div class="form-group edit-zone"><label> (   — Add  )</label><div class="gallery-admin-slots" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(104px,1fr));gap:0.5rem;">' +
+            slots.join('') +
+            '</div>' +
+            '<button type="button" class="btn-add btn-add-gallery-slot" data-album-index="' +
+            ai +
+            '"' +
+            (atMax ? ' disabled' : '') +
+            '>➕ Add photo slot</button>' +
+            (atMax
+              ? '<span class="form-hint" style="display:block;margin-top:0.35rem;font-size:0.85rem;color:var(--text-muted,#666);"> ' +
+                GALLERY_MAX_SLOTS_PER_ALBUM_ADMIN +
+                '  </span>'
+              : '<span class="form-hint" style="display:block;margin-top:0.35rem;font-size:0.85rem;color:var(--text-muted,#666);"> ' +
+                GALLERY_MAX_SLOTS_PER_ALBUM_ADMIN +
+                ' </span>') +
+            '</div></div>'
+        );
+      }
+      container.innerHTML = parts.join('');
+      for (var ai2 = 0; ai2 < GALLERY_ALBUM_COUNT_ADMIN; ai2++) {
+        for (var pi2 = 0; pi2 < slotCounts[ai2]; pi2++) {
+          var k = galleryAdminSlotKey(ai2, pi2);
+          if (typeof updateCurrentImage === 'function') updateCurrentImage(k, uploads[k] || null);
+        }
+      }
+      container.querySelectorAll('[id^="btn_import_gallery_a"]').forEach(function(btn) {
+        var id = btn.id.replace('btn_import_', '');
+        var fileInput = document.getElementById('upload_' + id);
+        if (fileInput) {
+          btn.addEventListener('click', function() {
+            fileInput.click();
+          });
+        }
+      });
+      container.querySelectorAll('[id^="remove_gallery_a"]').forEach(function(btn) {
+        var id = btn.id.replace('remove_', '');
+        btn.addEventListener('click', function() {
+          AcademyContent.removeUpload(id);
+          if (typeof updateCurrentImage === 'function') updateCurrentImage(id, null);
+          var inp = document.getElementById('upload_' + id);
+          if (inp) inp.value = '';
+        });
+      });
+      container.querySelectorAll('input[type="file"][id^="upload_gallery_a"]').forEach(function(inp) {
+        var id = inp.id.replace('upload_', '');
+        inp.addEventListener('change', function() {
+          var file = this.files && this.files[0];
+          if (!file || !file.type.match(/^image\//)) return;
+          saveImageUploadWithUi(file, id, null, function(ok, dataUrl) {
+            if (!ok) return;
+            if (typeof updateCurrentImage === 'function') updateCurrentImage(id, dataUrl);
+          });
+        });
+      });
+      container.querySelectorAll('.btn-add-gallery-slot').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          if (btn.disabled) return;
+          var ai = parseInt(btn.getAttribute('data-album-index'), 10);
+          if (isNaN(ai)) return;
+          var baseSaved = AcademyContent.load();
+          if (!baseSaved || typeof baseSaved !== 'object') baseSaved = {};
+          var st = readGalleryAlbumStateFromAdminForm();
+          st.gallery_album_slot_counts[ai] = Math.min(
+            GALLERY_MAX_SLOTS_PER_ALBUM_ADMIN,
+            (st.gallery_album_slot_counts[ai] || GALLERY_INITIAL_SLOTS_ADMIN) + 1
+          );
+          var merged = Object.assign({}, baseSaved, st);
+          renderGalleryAlbumsAdmin(merged, AcademyContent.loadUploads());
+        });
+      });
+    }
+
+    document.getElementById('btnAddAboutFacility').addEventListener('click', function() {
+      var container = document.getElementById('aboutFacilitiesList');
+      if (!container) return;
+      var items = [];
+      container.querySelectorAll('.about-page-facility-row').forEach(function(row) {
+        var ic = row.querySelector('.about-facility-icon');
+        var ti = row.querySelector('.about-facility-title');
+        var tx = row.querySelector('.about-facility-text');
+        var ik = row.getAttribute('data-image-key') || '';
+        items.push({ icon: ic && ic.value ? ic.value.trim() : '', title: ti && ti.value ? ti.value.trim() : '', text: tx && tx.value ? tx.value.trim() : '', image_key: ik });
+      });
+      var nextI = items.length;
+      items.push({ icon: '', title: '', text: '', image_key: 'about_facility_' + nextI + '_image' });
+      renderAboutFacilitiesList(items, AcademyContent.loadUploads());
+    });
+
+    function renderOurCoursesList(items, uploads) {
+      var container = document.getElementById('ourCoursesList');
+      if (!container) return;
+      uploads = uploads || AcademyContent.loadUploads();
+      if (!items || !items.length) { container.innerHTML = ''; return; }
+      var esc = function(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); };
+      container.innerHTML = items.map(function(item, i) {
+        var keyRaw = (item && item.image_key) ? String(item.image_key) : ('our_course_' + (i + 1) + '_image');
+        var key = /^course\d+_image$/.test(keyRaw) ? keyRaw.replace(/^course(\d+)_image$/, 'our_course_$1_image') : keyRaw;
+        var title = esc(item.title || '');
+        var text = esc(item.text || '');
+        var link = esc(item.link || '');
+        var legacy = (item && item.legacy_image_key) ? String(item.legacy_image_key) : '';
+        return '<div class="content-card our-course-row" data-course-index="' + i + '" data-image-key="' + esc(key) + '">' +
+          '<div class="content-card-header"><span class="content-card-icon">📘</span><span class="content-card-live">Course ' + (i + 1) + '</span><button type="button" class="btn-remove-img btn-remove-our-course" style="margin-left:auto;">🗑 </button></div>' +
+          '<div class="form-group edit-zone"><label></label><div class="image-edit-block">' +
+            '<div class="current-img-wrap" id="current_' + key + '_wrap"><span class="no-img" id="current_' + key + '_placeholder"></span><img id="current_' + key + '_img" src="" alt="" style="display:none;"></div>' +
+            '<input type="file" id="upload_' + key + '" accept="image/*" class="input-file-hidden">' +
+            '<button type="button" class="btn-import-image" id="btn_import_' + key + '">📷 </button>' +
+            '<button type="button" class="btn-remove-img" id="remove_' + key + '">🗑 </button>' +
+          '</div></div>' +
+          '<div class="form-group edit-zone"><label></label><input type="text" class="our-course-title" value="' + title + '" placeholder="General English"></div>' +
+          '<div class="form-group edit-zone"><label></label><textarea class="our-course-text" rows="2" placeholder="Course description...">' + text + '</textarea></div>' +
+          '<div class="form-group edit-zone"><label>View Details Link</label><input type="text" class="our-course-link" value="' + link + '" placeholder="course-detail.html?id=general"></div>' +
+          '<input type="hidden" class="our-course-legacy-image-key" value="' + esc(legacy) + '">' +
+        '</div>';
+      }).join('');
+      items.forEach(function(item, i) {
+        var keyRaw = (item && item.image_key) ? String(item.image_key) : ('our_course_' + (i + 1) + '_image');
+        var key = /^course\d+_image$/.test(keyRaw) ? keyRaw.replace(/^course(\d+)_image$/, 'our_course_$1_image') : keyRaw;
+        var legacy = (item && item.legacy_image_key) ? String(item.legacy_image_key) : '';
+        var ocFb = ['photo/classroom.jpg', 'photo/study.jpg', 'photo/business.jpg', 'photo/classroom.jpg', 'photo/study.jpg'];
+        var fallback = ocFb[Math.min(i, ocFb.length - 1)] || null;
+        if (typeof updateCurrentImage === 'function') updateCurrentImage(key, uploads[key] || uploads[legacy] || fallback);
+      });
+      container.querySelectorAll('.btn-remove-our-course').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          var row = this.closest('.our-course-row');
+          if (row && confirm(' Our Course   ?')) row.remove();
+        });
+      });
+      container.querySelectorAll('[id^="btn_import_"]').forEach(function(btn) {
+        var id = btn.id.replace('btn_import_', '');
+        if (id.indexOf('our_course_') !== 0 && id.indexOf('course') !== 0) return;
+        var fileInput = document.getElementById('upload_' + id);
+        if (fileInput) btn.addEventListener('click', function() { fileInput.click(); });
+      });
+      container.querySelectorAll('[id^="remove_"]').forEach(function(btn) {
+        var id = btn.id.replace('remove_', '');
+        if (id.indexOf('our_course_') !== 0 && id.indexOf('course') !== 0) return;
+        var input = document.getElementById('upload_' + id);
+        btn.addEventListener('click', function() {
+          AcademyContent.removeUpload(id);
+          if (typeof updateCurrentImage === 'function') updateCurrentImage(id, null);
+          if (input) input.value = '';
+        });
+      });
+      container.querySelectorAll('input[type="file"][id^="upload_"]').forEach(function(inp) {
+        var id = inp.id.replace('upload_', '');
+        if (id.indexOf('our_course_') !== 0 && id.indexOf('course') !== 0) return;
+        inp.addEventListener('change', function() {
+          var file = this.files && this.files[0];
+          if (!file || !file.type.match(/^image\//)) return;
+          saveImageUploadWithUi(file, id, null, function(ok, dataUrl) {
+            if (!ok) return;
+            if (typeof updateCurrentImage === 'function') updateCurrentImage(id, dataUrl);
+          });
+        });
+      });
+    }
+    document.getElementById('btnAddOurCourse').addEventListener('click', function() {
+      var container = document.getElementById('ourCoursesList');
+      if (!container) return;
+      var items = [];
+      container.querySelectorAll('.our-course-row').forEach(function(row) {
+        var titleEl = row.querySelector('.our-course-title');
+        var textEl = row.querySelector('.our-course-text');
+        var linkEl = row.querySelector('.our-course-link');
+        items.push({
+          title: (titleEl && titleEl.value) ? titleEl.value.trim() : '',
+          text: (textEl && textEl.value) ? textEl.value.trim() : '',
+          link: (linkEl && linkEl.value) ? linkEl.value.trim() : '',
+          image_key: row.getAttribute('data-image-key') || ''
+        });
+      });
+      items.push({
+        title: '',
+        text: '',
+        link: 'placement-test.html',
+        image_key: 'our_course_' + Date.now() + '_image'
+      });
+      renderOurCoursesList(items, AcademyContent.loadUploads());
+    });
+
+    function renderHomeLearningMethodList(items) {
+      var container = document.getElementById('homeLearningMethodList');
+      if (!container) return;
+      if (!items || !items.length) { container.innerHTML = ''; return; }
+      var esc = function(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); };
+      container.innerHTML = items.map(function(it, i) {
+        return '<div class="content-card home-learning-row">' +
+          '<div class="content-card-header"><span class="content-card-icon">' + (i + 1) + '</span><span class="content-card-live">Learning item ' + (i + 1) + '</span>' +
+          '<button type="button" class="btn-remove-img btn-remove-home-learning" style="margin-left:auto;">🗑 </button></div>' +
+          '<div class="form-group edit-zone"><label>Icon (emoji)</label><input type="text" class="home-learning-icon" value="' + esc(it.icon || '') + '" placeholder="💬"></div>' +
+          '<div class="form-group edit-zone"><label></label><input type="text" class="home-learning-title" value="' + esc(it.title || '') + '"></div>' +
+          '<div class="form-group edit-zone"><label></label><textarea class="home-learning-text" rows="2">' + esc(it.text || '') + '</textarea></div>' +
+        '</div>';
+      }).join('');
+      container.querySelectorAll('.btn-remove-home-learning').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          var row = this.closest('.home-learning-row');
+          if (row && confirm(' ?')) row.remove();
+        });
+      });
+    }
+
+    function renderHomeFacilitiesList(items) {
+      var container = document.getElementById('homeFacilitiesList');
+      if (!container) return;
+      if (!items || !items.length) { container.innerHTML = ''; return; }
+      var esc = function(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); };
+      container.innerHTML = items.map(function(it, i) {
+        return '<div class="content-card home-facility-row">' +
+          '<div class="content-card-header"><span class="content-card-icon">' + (i + 1) + '</span><span class="content-card-live">Facility ' + (i + 1) + '</span>' +
+          '<button type="button" class="btn-remove-img btn-remove-home-facility" style="margin-left:auto;">🗑 </button></div>' +
+          '<div class="form-group edit-zone"><label>Icon (emoji  Font Awesome — e.g. fa-solid fa-building)</label><input type="text" class="home-facility-icon" value="' + esc(it.icon || '') + '" placeholder="fa-solid fa-chalkboard-user"></div>' +
+          '<div class="form-group edit-zone"><label></label><input type="text" class="home-facility-title" value="' + esc(it.title || '') + '"></div>' +
+          '<div class="form-group edit-zone"><label></label><textarea class="home-facility-text" rows="2">' + esc(it.text || '') + '</textarea></div>' +
+        '</div>';
+      }).join('');
+      container.querySelectorAll('.btn-remove-home-facility').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          var row = this.closest('.home-facility-row');
+          if (row && confirm(' ?')) row.remove();
+        });
+      });
+    }
+
+    function wireHomeTeacherRow(item, i, uploads) {
+      var key = item.image_key || ('home_teacher_' + i + '_photo');
+      var url = (uploads && uploads[key]) ? uploads[key] : null;
+      if (typeof updateCurrentImage === 'function') updateCurrentImage(key, url);
+      var btn = document.getElementById('btn_import_' + key);
+      var inp = document.getElementById('upload_' + key);
+      var rm = document.getElementById('remove_' + key);
+      if (btn && inp) btn.addEventListener('click', function() { inp.click(); });
+      if (rm && inp) rm.addEventListener('click', function() {
+        AcademyContent.removeUpload(key);
+        if (typeof updateCurrentImage === 'function') updateCurrentImage(key, null);
+        inp.value = '';
+      });
+      if (inp) inp.addEventListener('change', function() {
+        var file = this.files && this.files[0];
+        if (!file || !file.type.match(/^image\//)) return;
+        saveImageUploadWithUi(file, key, null, function(ok, dataUrl) {
+          if (!ok) return;
+          if (typeof updateCurrentImage === 'function') updateCurrentImage(key, dataUrl);
+        });
+      });
+    }
+
+    function renderHomeTeachersList(items, uploads) {
+      var container = document.getElementById('homeTeachersList');
+      if (!container) return;
+      uploads = uploads || AcademyContent.loadUploads();
+      if (!items || !items.length) { container.innerHTML = ''; return; }
+      var esc = function(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); };
+      container.innerHTML = items.map(function(item, i) {
+        var key = item.image_key || ('home_teacher_' + i + '_photo');
+        return '<div class="content-card home-teacher-row" data-photo-key="' + esc(key) + '">' +
+          '<div class="content-card-header"><span class="content-card-icon">👩‍🏫</span><span class="content-card-live">/ ' + (i + 1) + '</span>' +
+          '<button type="button" class="btn-remove-img btn-remove-home-teacher" style="margin-left:auto;">🗑 </button></div>' +
+          '<div class="form-group edit-zone"><label></label><div class="image-edit-block">' +
+          '<div class="current-img-wrap current-img-wrap-photo" id="current_' + key + '_wrap"><span class="no-img" id="current_' + key + '_placeholder">No picture yet.</span><img id="current_' + key + '_img" src="" alt="" style="display:none; max-width:140px; max-height:100px; border-radius:6px; object-fit:cover;"></div>' +
+          '<input type="file" id="upload_' + key + '" accept="image/*" class="input-file-hidden">' +
+          '<button type="button" class="btn-import-image" id="btn_import_' + key + '">📷 </button>' +
+          '<button type="button" class="btn-remove-img" id="remove_' + key + '">🗑 </button></div></div>' +
+          '<div class="form-group edit-zone"><label></label><input type="text" class="home-teacher-name" value="' + esc(item.name || '') + '"></div>' +
+          '<div class="form-group edit-zone"><label></label><input type="text" class="home-teacher-exp" value="' + esc(item.exp || '') + '"></div>' +
+          '<div class="form-group edit-zone"><label></label><input type="text" class="home-teacher-spec" value="' + esc(item.spec || '') + '"></div>' +
+        '</div>';
+      }).join('');
+      container.querySelectorAll('.btn-remove-home-teacher').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          var row = this.closest('.home-teacher-row');
+          if (row && confirm(' ?')) row.remove();
+        });
+      });
+      items.forEach(function(item, i) { wireHomeTeacherRow(item, i, uploads); });
+      setTimeout(function() {
+        items.forEach(function(item, i) {
+          var key = item.image_key || ('home_teacher_' + i + '_photo');
+          if (typeof updateCurrentImage === 'function') updateCurrentImage(key, (uploads && uploads[key]) ? uploads[key] : null);
+        });
+      }, 80);
+    }
+
+    function wireHomeTestimonialRow(item, i, uploads) {
+      var key = item.image_key || ('home_testimonial_' + i + '_photo');
+      var url = (uploads && uploads[key]) ? uploads[key] : null;
+      if (typeof updateCurrentImage === 'function') updateCurrentImage(key, url);
+      var btn = document.getElementById('btn_import_' + key);
+      var inp = document.getElementById('upload_' + key);
+      var rm = document.getElementById('remove_' + key);
+      if (btn && inp) btn.addEventListener('click', function() { inp.click(); });
+      if (rm && inp) rm.addEventListener('click', function() {
+        AcademyContent.removeUpload(key);
+        if (typeof updateCurrentImage === 'function') updateCurrentImage(key, null);
+        inp.value = '';
+      });
+      if (inp) inp.addEventListener('change', function() {
+        var file = this.files && this.files[0];
+        if (!file || !file.type.match(/^image\//)) return;
+        saveImageUploadWithUi(file, key, null, function(ok, dataUrl) {
+          if (!ok) return;
+          if (typeof updateCurrentImage === 'function') updateCurrentImage(key, dataUrl);
+        });
+      });
+    }
+
+    function renderHomeTestimonialsList(items, uploads) {
+      var container = document.getElementById('homeTestimonialsList');
+      if (!container) return;
+      uploads = uploads || AcademyContent.loadUploads();
+      if (!items || !items.length) { container.innerHTML = ''; return; }
+      var esc = function(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); };
+      container.innerHTML = items.map(function(item, i) {
+        var key = item.image_key || ('home_testimonial_' + i + '_photo');
+        return '<div class="content-card home-testimonial-row" data-photo-key="' + esc(key) + '">' +
+          '<div class="content-card-header"><span class="content-card-icon">👤</span><span class="content-card-live">Testimonial ' + (i + 1) + '</span>' +
+          '<button type="button" class="btn-remove-img btn-remove-home-testimonial" style="margin-left:auto;">🗑 </button></div>' +
+          '<div class="form-group edit-zone"><label></label><div class="image-edit-block">' +
+          '<div class="current-img-wrap current-img-wrap-photo" id="current_' + key + '_wrap"><span class="no-img" id="current_' + key + '_placeholder">No picture yet.</span><img id="current_' + key + '_img" src="" alt="" style="display:none; max-width:140px; max-height:100px; border-radius:6px; object-fit:cover;"></div>' +
+          '<input type="file" id="upload_' + key + '" accept="image/*" class="input-file-hidden">' +
+          '<button type="button" class="btn-import-image" id="btn_import_' + key + '">📷 </button>' +
+          '<button type="button" class="btn-remove-img" id="remove_' + key + '">🗑 </button></div></div>' +
+          '<div class="form-group edit-zone"><label> (Quote)</label><textarea class="home-testimonial-quote" rows="4">' + esc(item.quote || '') + '</textarea></div>' +
+          '<div class="form-group edit-zone"><label></label><input type="text" class="home-testimonial-author" value="' + esc(item.author || '') + '"></div>' +
+          '<div class="form-group edit-zone"><label> · </label><input type="text" class="home-testimonial-meta" value="' + esc(item.meta || '') + '"></div>' +
+        '</div>';
+      }).join('');
+      container.querySelectorAll('.btn-remove-home-testimonial').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          var row = this.closest('.home-testimonial-row');
+          if (row && confirm(' ?')) row.remove();
+        });
+      });
+      items.forEach(function(item, i) { wireHomeTestimonialRow(item, i, uploads); });
+      setTimeout(function() {
+        items.forEach(function(item, i) {
+          var key = item.image_key || ('home_testimonial_' + i + '_photo');
+          if (typeof updateCurrentImage === 'function') updateCurrentImage(key, (uploads && uploads[key]) ? uploads[key] : null);
+        });
+      }, 80);
+    }
+
+    document.getElementById('btnAddHomeActivitySlide').addEventListener('click', function() {
+      var container = document.getElementById('homeActivitiesSlidesList');
+      if (!container) return;
+      var items = [];
+      container.querySelectorAll('.home-activity-slide-row').forEach(function(row) {
+        var pk = row.getAttribute('data-image-key') || '';
+        var en = row.querySelector('.home-activity-caption-en');
+        var my = row.querySelector('.home-activity-caption-my');
+        items.push({
+          caption_en: en && en.value ? en.value.trim() : '',
+          caption_my: my && my.value ? my.value.trim() : '',
+          image_key: pk
+        });
+      });
+      items.push({
+        caption_en: '',
+        caption_my: '',
+        image_key: 'home_activity_slide_' + Date.now() + '_' + Math.random().toString(36).slice(2, 11)
+      });
+      renderHomeActivitiesSlidesList(items, AcademyContent.loadUploads());
+    });
+
+    document.getElementById('btnAddHomeLearning').addEventListener('click', function() {
+      var container = document.getElementById('homeLearningMethodList');
+      if (!container) return;
+      var items = [];
+      container.querySelectorAll('.home-learning-row').forEach(function(row) {
+        var ic = row.querySelector('.home-learning-icon');
+        var ti = row.querySelector('.home-learning-title');
+        var tx = row.querySelector('.home-learning-text');
+        items.push({ icon: ic && ic.value ? ic.value.trim() : '', title: ti && ti.value ? ti.value.trim() : '', text: tx && tx.value ? tx.value.trim() : '' });
+      });
+      items.push({ icon: '', title: '', text: '' });
+      renderHomeLearningMethodList(items);
+    });
+
+    document.getElementById('btnAddHomeFacility').addEventListener('click', function() {
+      var container = document.getElementById('homeFacilitiesList');
+      if (!container) return;
+      var items = [];
+      container.querySelectorAll('.home-facility-row').forEach(function(row) {
+        var ic = row.querySelector('.home-facility-icon');
+        var ti = row.querySelector('.home-facility-title');
+        var tx = row.querySelector('.home-facility-text');
+        items.push({ icon: ic && ic.value ? ic.value.trim() : '', title: ti && ti.value ? ti.value.trim() : '', text: tx && tx.value ? tx.value.trim() : '' });
+      });
+      items.push({ icon: '', title: '', text: '' });
+      renderHomeFacilitiesList(items);
+    });
+
+    document.getElementById('btnAddHomeTeacher').addEventListener('click', function() {
+      var container = document.getElementById('homeTeachersList');
+      if (!container) return;
+      var items = [];
+      container.querySelectorAll('.home-teacher-row').forEach(function(row) {
+        var pk = row.getAttribute('data-photo-key') || '';
+        var n = row.querySelector('.home-teacher-name');
+        var e = row.querySelector('.home-teacher-exp');
+        var s = row.querySelector('.home-teacher-spec');
+        items.push({
+          name: n && n.value ? n.value.trim() : '',
+          exp: e && e.value ? e.value.trim() : '',
+          spec: s && s.value ? s.value.trim() : '',
+          image_key: pk
+        });
+      });
+      items.push({ name: '', exp: '', spec: '', image_key: 'home_teacher_' + Date.now() + '_photo' });
+      renderHomeTeachersList(items, AcademyContent.loadUploads());
+    });
+
+    document.getElementById('btnAddHomeTestimonial').addEventListener('click', function() {
+      var container = document.getElementById('homeTestimonialsList');
+      if (!container) return;
+      var items = [];
+      container.querySelectorAll('.home-testimonial-row').forEach(function(row) {
+        var pk = row.getAttribute('data-photo-key') || '';
+        var q = row.querySelector('.home-testimonial-quote');
+        var a = row.querySelector('.home-testimonial-author');
+        var m = row.querySelector('.home-testimonial-meta');
+        items.push({
+          quote: q && q.value ? q.value.trim() : '',
+          author: a && a.value ? a.value.trim() : '',
+          meta: m && m.value ? m.value.trim() : '',
+          image_key: pk
+        });
+      });
+      items.push({ quote: '', author: '', meta: '', image_key: 'home_testimonial_' + Date.now() + '_photo' });
+      renderHomeTestimonialsList(items, AcademyContent.loadUploads());
+    });
+
+    function onAdminPageReady() {
+      fillFormFromStorage();
+      AcademyContent.getSiteContent(applyLoadedData);
+      applyEnglishUiText(document.body);
+    }
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', onAdminPageReady);
+    } else {
+      onAdminPageReady();
+    }
+
+    /* ── Save (single-page: only current page data; full: all) ── */
+    var CONTENT_IDS_BY_TAB = {
+      home: ['hero_title','hero_subtitle','hero_check1','hero_check2','hero_check3','hero_btn1','hero_btn2','home_activity_video_1','home_activity_video_2','home_activities_carousel_interval_sec','why_title','why_lead','about1_title','about1_text','about2_title','about2_text','about3_title','about3_text','about4_title','about4_text','pt_cta_title','pt_cta_subtitle','pt_cta_check1','pt_cta_check2','pt_cta_btn','learning_method_section_title','learning_method_section_lead','facilities_section_title','facilities_section_lead','teachers_section_title','teachers_section_subtitle','testimonials_title','testimonials_subtitle','faq_section_title'],
+      about: ['about_page_title','about_mv_section_title','about_mission_label','about_mission_text','about_vision_label','about_vision_text','about_core_values_label','about_core_values_text','about_instructors_section_title','about_facilities_section_title','about_join_title','about_join_lead','about_join_text'],
+      course: ['courses_title','course_page_title','course_page_subtitle','course_our_title','course_features_title','course_feature1_title','course_feature1_text','course_feature2_title','course_feature2_text','course_feature3_title','course_feature3_text','course_feature4_title','course_feature4_text','course_feature5_title','course_feature5_text','course_join_title','course_join1','course_join2','course_join3','course_join4','course_outcomes_title','course_outcomes_intro','course_outcome1','course_outcome2','course_outcome3','course_outcome4','course_cta_title','course_cta_subtitle','course_cta_check1','course_cta_check2','course_cta_btn'],
+      news: ['blog_tip1_title','blog_tip1_text','blog_tip2_title','blog_tip2_text','blog_tip3_title','blog_tip3_text'],
+      admissions: ['pay_kpay','pay_wave','pay_bank'],
+      contact: ['contact_address','contact_phone','contact_email','contact_email_2','contact_facebook','contact_fb_url','contact_map']
+    };
+    function syncMirrorCourseSlotsFromOurCourses(content) {
+      if (!content || !Array.isArray(content.our_courses)) return;
+      for (var i = 0; i < 3; i++) {
+        var row = content.our_courses[i];
+        var n = i + 1;
+        if (!row) {
+          content['course' + n + '_title'] = '';
+          content['course' + n + '_text'] = '';
+          continue;
+        }
+        content['course' + n + '_title'] = row.title != null ? String(row.title) : '';
+        content['course' + n + '_text'] = row.text != null ? String(row.text) : '';
+      }
+    }
+
+    document.getElementById('adminForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      var singlePage = (function() { var m = location.search.match(/[?&]page=([a-z]+)/); return m ? m[1] : null; })();
+      var content = AcademyContent.load();
+      var idsToUpdate = singlePage && CONTENT_IDS_BY_TAB[singlePage] ? CONTENT_IDS_BY_TAB[singlePage] : ALL_CONTENT_IDS;
+      idsToUpdate.forEach(function(id) {
+        var el = document.getElementById(id);
+        if (!el) return;
+        content[id] = (el.value !== undefined && el.value !== null) ? String(el.value).trim() : (ALL_DEFAULTS[id] || '');
+      });
+      var faqList = document.getElementById('faqList');
+      if (faqList) {
+        var rows = faqList.querySelectorAll('.faq-row');
+        var faq_items = [];
+        rows.forEach(function(row) {
+          var qEl = row.querySelector('.faq-input-q');
+          var aEl = row.querySelector('.faq-input-a');
+          faq_items.push({ q: (qEl && qEl.value) ? String(qEl.value).trim() : '', a: (aEl && aEl.value) ? String(aEl.value).trim() : '' });
+        });
+        content.faq_items = faq_items;
+      }
+      var aboutList = document.getElementById('aboutInstructorsList');
+      if (aboutList) {
+        var instRows = aboutList.querySelectorAll('.about-instructor-row');
+        var about_instructors = [];
+        instRows.forEach(function(row) {
+          var nameEl = row.querySelector('.about-instructor-name');
+          var descEl = row.querySelector('.about-instructor-desc');
+          about_instructors.push({ name: (nameEl && nameEl.value) ? String(nameEl.value).trim() : '', desc: (descEl && descEl.value) ? String(descEl.value).trim() : '' });
+        });
+        content.about_instructors = about_instructors;
+      }
+      var aboutFacList = document.getElementById('aboutFacilitiesList');
+      if (aboutFacList) {
+        var about_facility_items = [];
+        aboutFacList.querySelectorAll('.about-page-facility-row').forEach(function(row) {
+          var ic = row.querySelector('.about-facility-icon');
+          var ti = row.querySelector('.about-facility-title');
+          var tx = row.querySelector('.about-facility-text');
+          var ike = row.getAttribute('data-image-key');
+          var rowObj = {
+            icon: ic && ic.value ? String(ic.value).trim() : '',
+            title: ti && ti.value ? String(ti.value).trim() : '',
+            text: tx && tx.value ? String(tx.value).trim() : ''
+          };
+          if (ike) rowObj.image_key = String(ike).trim();
+          about_facility_items.push(rowObj);
+        });
+        content.about_facility_items = about_facility_items;
+      }
+      var galleryTitlesOut = [];
+      for (var gix = 0; gix < GALLERY_ALBUM_COUNT_ADMIN; gix++) {
+        var gEl = document.getElementById('gallery_album_title_' + gix);
+        galleryTitlesOut.push(
+          gEl && gEl.value.trim() ? gEl.value.trim() : DEFAULT_GALLERY_ALBUM_TITLES_ADMIN[gix]
+        );
+      }
+      content.gallery_album_titles = galleryTitlesOut;
+      var gallerySlotCountsOut = [];
+      for (var six = 0; six < GALLERY_ALBUM_COUNT_ADMIN; six++) {
+        var gCard = document.querySelector('#galleryAlbumsAdmin .gallery-admin-album[data-album-index="' + six + '"]');
+        var sc = gCard ? parseInt(gCard.getAttribute('data-slot-count'), 10) : GALLERY_INITIAL_SLOTS_ADMIN;
+        if (isNaN(sc)) sc = GALLERY_INITIAL_SLOTS_ADMIN;
+        sc = Math.max(GALLERY_INITIAL_SLOTS_ADMIN, Math.min(GALLERY_MAX_SLOTS_PER_ALBUM_ADMIN, sc));
+        gallerySlotCountsOut.push(sc);
+      }
+      content.gallery_album_slot_counts = gallerySlotCountsOut;
+      var ourCoursesList = document.getElementById('ourCoursesList');
+      if (ourCoursesList) {
+        var courseRows = ourCoursesList.querySelectorAll('.our-course-row');
+        var our_courses = [];
+        courseRows.forEach(function(row) {
+          var titleEl = row.querySelector('.our-course-title');
+          var textEl = row.querySelector('.our-course-text');
+          var linkEl = row.querySelector('.our-course-link');
+          var legacyKeyEl = row.querySelector('.our-course-legacy-image-key');
+          our_courses.push({
+            title: (titleEl && titleEl.value) ? String(titleEl.value).trim() : '',
+            text: (textEl && textEl.value) ? String(textEl.value).trim() : '',
+            link: (linkEl && linkEl.value) ? String(linkEl.value).trim() : '',
+            image_key: row.getAttribute('data-image-key') || '',
+            legacy_image_key: (legacyKeyEl && legacyKeyEl.value) ? String(legacyKeyEl.value).trim() : ''
+          });
+        });
+        content.our_courses = our_courses;
+        syncMirrorCourseSlotsFromOurCourses(content);
+      }
+      var hLearn = document.getElementById('homeLearningMethodList');
+      if (hLearn) {
+        var home_learning_items = [];
+        hLearn.querySelectorAll('.home-learning-row').forEach(function(row) {
+          var ic = row.querySelector('.home-learning-icon');
+          var ti = row.querySelector('.home-learning-title');
+          var tx = row.querySelector('.home-learning-text');
+          home_learning_items.push({
+            icon: ic && ic.value ? String(ic.value).trim() : '',
+            title: ti && ti.value ? String(ti.value).trim() : '',
+            text: tx && tx.value ? String(tx.value).trim() : ''
+          });
+        });
+        content.home_learning_items = home_learning_items;
+      }
+      var hFac = document.getElementById('homeFacilitiesList');
+      if (hFac) {
+        var home_facility_items = [];
+        hFac.querySelectorAll('.home-facility-row').forEach(function(row) {
+          var ic = row.querySelector('.home-facility-icon');
+          var ti = row.querySelector('.home-facility-title');
+          var tx = row.querySelector('.home-facility-text');
+          home_facility_items.push({
+            icon: ic && ic.value ? String(ic.value).trim() : '',
+            title: ti && ti.value ? String(ti.value).trim() : '',
+            text: tx && tx.value ? String(tx.value).trim() : ''
+          });
+        });
+        content.home_facility_items = home_facility_items;
+      }
+      var hTch = document.getElementById('homeTeachersList');
+      if (hTch) {
+        var home_teachers = [];
+        hTch.querySelectorAll('.home-teacher-row').forEach(function(row) {
+          var pk = row.getAttribute('data-photo-key') || '';
+          var n = row.querySelector('.home-teacher-name');
+          var e = row.querySelector('.home-teacher-exp');
+          var s = row.querySelector('.home-teacher-spec');
+          home_teachers.push({
+            name: n && n.value ? String(n.value).trim() : '',
+            exp: e && e.value ? String(e.value).trim() : '',
+            spec: s && s.value ? String(s.value).trim() : '',
+            image_key: pk
+          });
+        });
+        content.home_teachers = home_teachers;
+      }
+      var hTest = document.getElementById('homeTestimonialsList');
+      if (hTest) {
+        var home_testimonials = [];
+        hTest.querySelectorAll('.home-testimonial-row').forEach(function(row) {
+          var pk = row.getAttribute('data-photo-key') || '';
+          var q = row.querySelector('.home-testimonial-quote');
+          var a = row.querySelector('.home-testimonial-author');
+          var m = row.querySelector('.home-testimonial-meta');
+          home_testimonials.push({
+            quote: q && q.value ? String(q.value).trim() : '',
+            author: a && a.value ? String(a.value).trim() : '',
+            meta: m && m.value ? String(m.value).trim() : '',
+            image_key: pk
+          });
+        });
+        content.home_testimonials = home_testimonials;
+      }
+      var actSlidesEl = document.getElementById('homeActivitiesSlidesList');
+      if (actSlidesEl) {
+        var home_activities_slides = [];
+        actSlidesEl.querySelectorAll('.home-activity-slide-row').forEach(function(row) {
+          var pk = row.getAttribute('data-image-key') || '';
+          var en = row.querySelector('.home-activity-caption-en');
+          var my = row.querySelector('.home-activity-caption-my');
+          home_activities_slides.push({
+            caption_en: en && en.value ? String(en.value).trim() : '',
+            caption_my: my && my.value ? String(my.value).trim() : '',
+            image_key: pk
+          });
+        });
+        /*  default  —  page    */
+        content.home_activities_slides = home_activities_slides;
+      }
+      var uploads = AcademyContent.loadUploads();
+      /* Auto-clean unused uploads to free localStorage quota. */
+      (function pruneUnusedUploads() {
+        var used = {};
+        function mark(k) { if (k) used[k] = true; }
+        /* fixed image keys */
+        UPLOAD_IDS.forEach(mark);
+        ['home_activity_video_1_upload', 'home_activity_video_2_upload', 'logo', 'hero_image'].forEach(mark);
+        /* dynamic keys from current editor rows */
+        document.querySelectorAll('.home-activity-slide-row[data-image-key]').forEach(function(r) { mark(r.getAttribute('data-image-key')); });
+        document.querySelectorAll('.about-instructor-row').forEach(function(_, i) { mark('about_instructor_' + i + '_photo'); });
+        document.querySelectorAll('.about-page-facility-row[data-image-key]').forEach(function(r) { mark(r.getAttribute('data-image-key')); });
+        for (var _gai = 0; _gai < GALLERY_ALBUM_COUNT_ADMIN; _gai++) {
+          for (var _gpi = 0; _gpi < GALLERY_MAX_SLOTS_PER_ALBUM_ADMIN; _gpi++) {
+            mark('gallery_a' + _gai + '_p' + _gpi);
+          }
+        }
+        document.querySelectorAll('.our-course-row[data-image-key]').forEach(function(r) {
+          mark(r.getAttribute('data-image-key'));
+          var legacy = r.querySelector('.our-course-legacy-image-key');
+          if (legacy && legacy.value) mark(String(legacy.value).trim());
+        });
+        document.querySelectorAll('.home-teacher-row[data-photo-key]').forEach(function(r) { mark(r.getAttribute('data-photo-key')); });
+        document.querySelectorAll('.home-testimonial-row[data-photo-key]').forEach(function(r) { mark(r.getAttribute('data-photo-key')); });
+        Object.keys(uploads || {}).forEach(function(k) {
+          if (!used[k]) delete uploads[k];
+        });
+      })();
+      var placementTest = (singlePage === 'placement') ? buildPlacementTest() : AcademyContent.loadPlacementTest();
+      var postsToSave = (singlePage === 'news') ? blogPosts : (AcademyContent.loadBlogPosts() || []);
+      AcademyContent.saveAll({ content: content, uploads: uploads, placementTest: placementTest, blogPosts: postsToSave }, function() {
+        var st = document.getElementById('saveStatus');
+        if (st) {
+          st.textContent = 'Changes saved successfully';
+          st.style.display = 'inline';
+          st.style.visibility = 'visible';
+          st.style.opacity = '1';
+          setTimeout(function() { st.style.display = 'none'; }, 3500);
+        }
+      });
+    });
+
+    /* ── Escape helpers ── */
+    function escHtml(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+    function escAttr(s) { return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;'); }
+
+    /* ── Submissions viewer ── */
+    var currentSubmissionsList = [];
+    function renderSubmissions(list) {
+      var container = document.getElementById('submissionsContainer');
+      if (!container) return;
+      currentSubmissionsList = list || [];
+      if (!list || !list.length) {
+        container.innerHTML = '<p class="text-muted" style="font-size:.87rem;">📭 Submission </p>';
+        return;
+      }
+      container.innerHTML = '<p style="font-size:.85rem; color:#666; margin-bottom:.75rem;"> <strong>' + list.length + '</strong>  </p>' +
+        list.map(function(s, i) {
+          var date = s.submittedAt ? new Date(s.submittedAt).toLocaleString('en-GB') : '—';
+          var liAnswers = (s.listening || []).join(', ') || '—';
+          var rdAnswers = (s.reading   || []).join(', ') || '—';
+          var writing   = (s.writing   || '').substring(0, 300);
+          var lid = escAttr(s._id || '');
+          return '<div style="border:1px solid #d1d5db; border-radius:8px; padding:.85rem 1rem; margin-bottom:.75rem; background:#fff;">' +
+            '<div style="display:flex; justify-content:space-between; flex-wrap:wrap; gap:.25rem; margin-bottom:.5rem;">' +
+              '<strong style="font-size:.95rem;">👤 ' + escHtml(s.name || '( )') + '</strong>' +
+              '<span style="display:flex; gap:.35rem; flex-wrap:wrap;">' +
+              '<button type="button" class="btn-post-edit sub-mark-btn" data-id="' + lid + '" aria-label="Edit">✏️ </button>' +
+              '<button type="button" class="btn-post-del sub-del-btn" data-id="' + lid + '" aria-label="Delete">🗑 </button>' +
+              '</span>' +
+            '</div>' +
+            '<div style="font-size:.83rem; color:#555; line-height:1.7;">' +
+              (s.parent_name && String(s.parent_name).trim() ? '👪 Parent: <strong>' + escHtml(String(s.parent_name).trim()) + '</strong><br>' : '') +
+              '📞 ' + escHtml(s.phone||'—') + ' &nbsp;|&nbsp; ✉️ ' + escHtml(s.email||'—') + '<br>' +
+              '📅 ' + escHtml(date) + '<br>' +
+              '🎧 Listening: <strong>' + escHtml(liAnswers) + '</strong><br>' +
+              '📖 Reading: <strong>'   + escHtml(rdAnswers) + '</strong><br>' +
+              '✍️ Writing (' + (s.wordCount||0) + ' words): ' + (writing ? '<span style="color:#333">' + escHtml(writing) + (s.writing&&s.writing.length>300?'…':'') + '</span>' : '()') + '<br>' +
+              '🎤 Speaking: ' + (s.hasSpeaking ? '✅ ' : '❌ ') +
+            '</div>' +
+          '</div>';
+        }).join('');
+      container.querySelectorAll('.sub-del-btn').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          var id = this.getAttribute('data-id');
+          if (!id || !confirm(' submission   ?')) return;
+          if (window.AcademyFirebase && AcademyFirebase.deleteSubmission) {
+            AcademyFirebase.deleteSubmission(id, function() { loadSubmissions(); });
+          }
+        });
+      });
+      container.querySelectorAll('.sub-mark-btn').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          var id = this.getAttribute('data-id');
+          var s = (currentSubmissionsList || []).find(function(x) { return (x._id || '') === id; });
+          if (!s) return;
+          openSubmissionMarkModal(s);
+        });
+      });
+      applyEnglishUiText(container);
+    }
+
+    function scoreToLevel(n) {
+      n = Math.min(100, Math.max(0, parseInt(n, 10) || 0));
+      if (n <= 20) return 'Pre-Foundation';
+      if (n <= 30) return 'Foundation 1';
+      if (n <= 40) return 'Foundation 2';
+      if (n <= 50) return 'Pre-Elementary';
+      if (n <= 65) return 'Elementary';
+      if (n <= 75) return 'Pre-Intermediate';
+      if (n <= 85) return 'Intermediate';
+      return 'Upper Intermediate';
+    }
+    function openSubmissionMarkModal(s) {
+      var modal = document.getElementById('submissionMarkModal');
+      if (!modal) return;
+      var lid = (s.listening_score != null && s.listening_score !== '') ? parseInt(s.listening_score, 10) : 0;
+      var rid = (s.reading_score != null && s.reading_score !== '') ? parseInt(s.reading_score, 10) : 0;
+      document.getElementById('smName').textContent = (s.name || '()');
+      var smPn = document.getElementById('smParentName');
+      if (smPn) smPn.textContent = (s.parent_name != null && String(s.parent_name).trim() !== '') ? String(s.parent_name).trim() : '—';
+      document.getElementById('smListening').textContent = lid;
+      document.getElementById('smReading').textContent = rid;
+      var wText = document.getElementById('smWritingText');
+      if (wText) { wText.value = (s.writing || ''); }
+      document.getElementById('smSpeakingStatus').textContent = s.hasSpeaking ? ' ( )' : '';
+      document.getElementById('smWritingScore').value = (s.writing_score != null ? s.writing_score : 0);
+      document.getElementById('smSpeakingScore').value = (s.speaking_score != null ? s.speaking_score : 0);
+      modal.setAttribute('data-submission-id', s._id || '');
+      modal.style.display = 'flex';
+      modal.setAttribute('aria-hidden', 'false');
+    }
+    function closeSubmissionMarkModal() {
+      var modal = document.getElementById('submissionMarkModal');
+      if (modal) { modal.style.display = 'none'; modal.setAttribute('aria-hidden', 'true'); }
+    }
+    document.getElementById('submissionMarkModalClose').addEventListener('click', closeSubmissionMarkModal);
+    document.getElementById('submissionMarkModal').addEventListener('click', function(e) { if (e.target === this) closeSubmissionMarkModal(); });
+    document.getElementById('submissionMarkSave').addEventListener('click', function() {
+      var modal = document.getElementById('submissionMarkModal');
+      var id = modal ? modal.getAttribute('data-submission-id') : '';
+      if (!id || !window.AcademyFirebase || !AcademyFirebase.updateSubmission) return;
+      var s = (currentSubmissionsList || []).find(function(x) { return (x._id || '') === id; });
+      var g = (s && (s.grammar_score != null && s.grammar_score !== '')) ? parseInt(s.grammar_score, 10) : 0;
+      var v = (s && (s.vocabulary_score != null && s.vocabulary_score !== '')) ? parseInt(s.vocabulary_score, 10) : 0;
+      var rid = (s && (s.reading_score != null && s.reading_score !== '')) ? parseInt(s.reading_score, 10) : 0;
+      var lid = (s && (s.listening_score != null && s.listening_score !== '')) ? parseInt(s.listening_score, 10) : 0;
+      var wScore = Math.min(20, Math.max(0, parseInt(document.getElementById('smWritingScore').value, 10) || 0));
+      var spScore = Math.min(20, Math.max(0, parseInt(document.getElementById('smSpeakingScore').value, 10) || 0));
+      var total = Math.min(100, g + v + rid + lid + wScore + spScore);
+      var suggested = scoreToLevel(total);
+      AcademyFirebase.updateSubmission(id, { writing_score: wScore, speaking_score: spScore, total_score: total, suggested_level: suggested }, function(ok) {
+        if (ok) { closeSubmissionMarkModal(); loadSubmissions(); }
+        else alert(' Firebase ');
+      });
+    });
+
+    function loadSubmissions() {
+      var container = document.getElementById('submissionsContainer');
+      if (!container) return;
+      if (!window.AcademyFirebase || !AcademyFirebase.getSubmissions) {
+        container.innerHTML = '<div style="background:#fef3c7; border:1px solid #f59e0b; border-radius:7px; padding:.75rem; font-size:.87rem;">' +
+          '⚠️ Script  assets/js/content-firebase.js </div>';
+        return;
+      }
+      container.innerHTML = '<p style="font-size:.87rem; color:#888;">⏳ ...</p>';
+      AcademyFirebase.getSubmissions(function(list) { renderSubmissions(list); });
+    }
+
+    document.getElementById('btnLoadSubmissions').addEventListener('click', loadSubmissions);
+
+    /* Auto-load submissions when switching to that tab */
+    document.querySelectorAll('.tab-btn').forEach(function(btn) {
+      if (btn.getAttribute('data-tab') === 'submissions') {
+        btn.addEventListener('click', function() { setTimeout(loadSubmissions, 100); });
+      }
+    });
+
+  })();
+  </script>
+</body>
+</html>

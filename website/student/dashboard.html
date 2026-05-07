@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="my">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="../assets/js/desktop-layout-viewport.js"></script>
+  <title>Student Dashboard | Myanmar New Era Academy</title>
+  <link rel="stylesheet" href="../assets/css/main.css">
+  <link rel="stylesheet" href="../assets/css/dashboard.css">
+  <link rel="stylesheet" href="../assets/css/teacher-portal.css">
+</head>
+<body class="admin-dashboard-glass" data-toolbar="student" data-notif-admin-base="../admin/">
+  <div class="dashboard-wrap glass-dashboard">
+    <aside class="dashboard-sidebar">
+      <a href="../public-page/index.html" class="logo-link"><span class="logo-brand-row"><img src="../photo/logo.png" alt="" class="logo-mark-img" width="72" decoding="async" /><span class="logo-headlines"><span class="logo-title-line">MYANMAR</span><span class="logo-title-line">NEW ERA</span></span></span></a>
+      <nav>
+        <a href="dashboard.html" class="active">Dashboard</a>
+        <a href="courses.html">My Courses</a>
+        <a href="attendance.html">Attendance</a>
+        <a href="exam-results.html">Exam Results</a>
+        <a href="notice-board.html">Notice Board</a>
+        <a href="../public-page/placement-test.html">Placement Test</a>
+        <a href="progress.html">Progress Report</a>
+        <a href="profile.html">Profile</a>
+      </nav>
+    </aside>
+    <main class="dashboard-main">
+      <div class="dashboard-header glass-toolbar">
+        <div>
+          <p class="dashboard-toolbar-title">Student Dashboard</p>
+          <p class="teacher-toolbar-sub">Myanmar New Era International Education Centre · <span id="teacherToolbarRole">Student</span> · <strong id="userName">—</strong></p>
+        </div>
+        <div class="auth-info">
+          <div class="notification-wrap">
+            <button type="button" class="btn-notification" id="btnNotification" aria-haspopup="true" aria-expanded="false">
+              &#x1F514; <span id="notificationLabel">Notifications</span> (<span id="notificationCount" class="notification-count-num">0</span>)
+              <span class="notification-badge" id="notificationBadge" style="display:none;">0</span>
+            </button>
+            <div class="notification-dropdown" id="notificationDropdown" role="menu">
+              <h3>Notifications</h3>
+              <ul id="notificationList"><li class="notif-empty">Loading…</li></ul>
+            </div>
+          </div>
+          <div class="profile-wrap">
+            <button type="button" class="btn-profile" id="btnProfile" aria-haspopup="true" aria-expanded="false">&#x1F464; <span id="profileName">Student</span> &#x25BC;</button>
+            <div class="profile-dropdown" id="profileDropdown" role="menu">
+              <span class="profile-dropdown-label" style="display:block;padding:0.5rem 1rem;font-size:0.78rem;color:var(--text-muted);font-weight:700;text-transform:uppercase;">Student menu</span>
+              <a href="profile.html">Profile</a>
+              <a href="profile.html#password">Change password</a>
+              <a href="notice-board.html">Notice board</a>
+              <div class="divider"></div>
+              <button type="button" id="btnAdminToolbarLogout">Logout</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="teacher-context-card">
+        <div class="row">
+          <span style="font-weight:700;font-size:0.88rem;">School student ID</span>
+          <span class="text-muted" style="font-size:0.82rem;">Must match Academic → Students (login uses this ID as password)</span>
+        </div>
+        <div class="row" style="margin-top:0.65rem;">
+          <input type="text" id="stuSchoolId" placeholder="e.g. STU_1001" autocomplete="username" aria-label="School student ID">
+          <button type="button" class="btn-primary" id="stuSaveSchoolId">Save</button>
+          <span class="text-muted" style="font-size:0.85rem;">Active: <strong id="stuSavedSchoolId">—</strong></span>
+        </div>
+      </div>
+
+      <div class="teacher-action-grid">
+        <a href="courses.html" class="teacher-action-tile">
+          <div class="tile-label">My Courses</div>
+          <div class="tile-val" id="dashCourseCount">—</div>
+        </a>
+        <a href="attendance.html" class="teacher-action-tile">
+          <div class="tile-label">Attendance</div>
+          <div class="tile-val" id="dashAttPct">—</div>
+          <div class="tile-hint">Overall rate</div>
+        </a>
+        <a href="exam-results.html" class="teacher-action-tile">
+          <div class="tile-label">Exam Results</div>
+          <div class="tile-hint">GPA &amp; transcript</div>
+        </a>
+        <a href="notice-board.html" class="teacher-action-tile">
+          <div class="tile-label">Notices</div>
+          <div class="tile-val" id="dashNoticeCount">—</div>
+        </a>
+      </div>
+
+      <div class="teacher-analytics-grid">
+        <div class="card teacher-analytics-card">
+          <h3>Attendance by batch</h3>
+          <div id="stuDashAttBars">
+            <p class="text-muted" style="margin:0;font-size:0.88rem;">Save student ID and connect to the API to load rates.</p>
+          </div>
+        </div>
+        <div class="card teacher-analytics-card">
+          <h3>CEFR &amp; placement</h3>
+          <div class="cefr-badge" id="cefrLevel" style="font-size:1.25rem;margin:0.5rem 0;">—</div>
+          <p class="text-muted" style="margin:0;font-size:0.85rem;" id="cefrNote">Latest placement test summary.</p>
+        </div>
+      </div>
+
+      <div class="score-cards">
+        <div class="score-card">
+          <h3>Grammar</h3>
+          <div class="value" id="grammarScore">—<sub id="grammarTotal">/40</sub></div>
+        </div>
+        <div class="score-card">
+          <h3>Reading</h3>
+          <div class="value" id="readingScore">—<sub id="readingTotal">/40</sub></div>
+        </div>
+        <div class="score-card">
+          <h3>Writing</h3>
+          <div class="value" id="writingScore">—<sub id="writingTotal">/40</sub></div>
+        </div>
+      </div>
+
+      <div class="dashboard-actions">
+        <a href="../public-page/placement-test.html" class="btn-primary">Placement Test</a>
+        <a href="progress.html" class="btn-primary" style="background: var(--primary-blue);">Progress Report</a>
+      </div>
+
+      <section id="progress" class="mt-2">
+        <h2 style="margin-bottom:1rem; color: var(--primary);">Placement history</h2>
+        <div id="progressList" class="card">
+          <p class="text-muted" id="progressEmpty">No placement test results yet.</p>
+          <ul id="progressItems" style="list-style:none; padding:0; margin:0; display:none;"></ul>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+  <script src="../assets/js/firebase-config.js"></script>
+  <script src="../assets/js/auth.js"></script>
+  <script src="../assets/js/school-api.js"></script>
+  <script src="../assets/js/content-firebase.js"></script>
+  <script src="../assets/js/student-context.js"></script>
+  <script src="../assets/js/admin-top-toolbar.js"></script>
+  <script src="../assets/js/lang-switcher.js"></script>
+  <script>
+    (function() {
+      function toCEFR(total) {
+        if (total == null || total === undefined) return '—';
+        if (total >= 90) return 'C1/C2';
+        if (total >= 75) return 'B2';
+        if (total >= 60) return 'B1';
+        if (total >= 45) return 'A2';
+        if (total >= 30) return 'A1';
+        return 'Pre-A1';
+      }
+      function esc(s) {
+        if (s == null) return '';
+        return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;');
+      }
+      function renderAttBars(byBatch) {
+        var el = document.getElementById('stuDashAttBars');
+        if (!el) return;
+        if (!byBatch || !byBatch.length) {
+          el.innerHTML = '<p class="text-muted" style="margin:0;font-size:0.88rem;">No attendance rows yet.</p>';
+          return;
+        }
+        el.innerHTML = byBatch.map(function(b) {
+          var title = esc(b.batch_name || b.batch_id || 'Batch');
+          var rate = Math.min(100, Math.max(0, Number(b.rate) || 0));
+          var w = Math.round(rate);
+          return '<div class="t-bar-row"><span>' + title.slice(0, 16) + (title.length > 16 ? '…' : '') + '</span><div class="t-bar-track"><div class="t-bar-fill" style="width:' + w + '%;"></div></div><span class="t-bar-val">' + w + '%</span></div>';
+        }).join('');
+      }
+      function syncSchoolIdInput() {
+        StudentContext.resolve(function(sid) {
+          var inp = document.getElementById('stuSchoolId');
+          var disp = document.getElementById('stuSavedSchoolId');
+          if (disp) disp.textContent = sid || '—';
+          try {
+            var ls = (localStorage.getItem(StudentContext.STORAGE_KEY) || '').trim();
+            if (inp && ls) inp.value = ls;
+            else if (inp && sid && !ls) inp.value = sid;
+          } catch (e) {}
+        });
+      }
+      function refreshWidgets() {
+        StudentContext.resolve(function(sid) {
+          if (!sid) {
+            document.getElementById('dashAttPct').textContent = '—';
+            document.getElementById('dashCourseCount').textContent = '—';
+            renderAttBars([]);
+            return;
+          }
+          if (window.SchoolAPI && SchoolAPI.getStudentAttendanceReport) {
+            SchoolAPI.getStudentAttendanceReport(sid).then(function(r) {
+              if (r && r.ok) {
+                document.getElementById('dashAttPct').textContent =
+                  r.attendance_percentage != null ? String(r.attendance_percentage) + '%' : '—';
+                renderAttBars(r.by_batch || []);
+              } else {
+                document.getElementById('dashAttPct').textContent = '—';
+                renderAttBars([]);
+              }
+            }).catch(function() {
+              document.getElementById('dashAttPct').textContent = '—';
+              renderAttBars([]);
+            });
+          }
+          if (window.SchoolAPI && SchoolAPI.getStudent) {
+            SchoolAPI.getStudent(sid).then(function(gr) {
+              var st = gr && gr.ok && gr.student ? gr.student : {};
+              var bid = st.batch_id;
+              document.getElementById('dashCourseCount').textContent = bid ? '1' : '0';
+            }).catch(function() {
+              document.getElementById('dashCourseCount').textContent = '—';
+            });
+          }
+        });
+        if (window.SchoolAPI && SchoolAPI.getNotices) {
+          SchoolAPI.getNotices().then(function(list) {
+            document.getElementById('dashNoticeCount').textContent = String((list || []).length);
+          }).catch(function() {
+            document.getElementById('dashNoticeCount').textContent = '—';
+          });
+        }
+      }
+
+      var user = window.AcademyAuth && AcademyAuth.currentUser();
+      if (!user) {
+        window.location.href = '../public-page/login.html?redirect=student/dashboard.html';
+        return;
+      }
+      AcademyAuth.getUserProfile(user.uid, function(profile) {
+        var role = (profile && profile.role) || 'student';
+        if (role === 'admin') {
+          window.location.href = '../admin/dashboard.html';
+          return;
+        }
+        if (role === 'teacher') {
+          window.location.href = '../teacher/dashboard.html';
+          return;
+        }
+        var name = (profile && profile.displayName) || user.email || 'Student';
+        var un = document.getElementById('userName');
+        if (un) un.textContent = name;
+      });
+      if (window.AdminTopToolbar) AdminTopToolbar.init();
+
+      var inp = document.getElementById('stuSchoolId');
+      var btn = document.getElementById('stuSaveSchoolId');
+      if (btn) {
+        btn.addEventListener('click', function() {
+          var v = (inp && inp.value || '').trim();
+          try {
+            if (v) localStorage.setItem(StudentContext.STORAGE_KEY, v);
+            else localStorage.removeItem(StudentContext.STORAGE_KEY);
+          } catch (e) {}
+          syncSchoolIdInput();
+          refreshWidgets();
+        });
+      }
+      syncSchoolIdInput();
+      refreshWidgets();
+      setInterval(refreshWidgets, 60000);
+
+      var prevNotices = -1;
+      setInterval(function() {
+        if (!window.SchoolAPI || !SchoolAPI.getNotices) return;
+        SchoolAPI.getNotices().then(function(list) {
+          var n = (list || []).length;
+          if (prevNotices >= 0 && n > prevNotices && window.__playAdminNotifSound) {
+            window.__playAdminNotifSound();
+          }
+          prevNotices = n;
+        }).catch(function() {});
+      }, 45000);
+
+      if (window.AcademyFirebase && AcademyFirebase.getSubmissionsByUser) {
+        AcademyFirebase.getSubmissionsByUser(user.uid, function(list) {
+          var emptyEl = document.getElementById('progressEmpty');
+          var listEl = document.getElementById('progressItems');
+          if (!list || list.length === 0) {
+            emptyEl.style.display = 'block';
+            listEl.style.display = 'none';
+            document.getElementById('cefrLevel').textContent = '—';
+            document.getElementById('grammarScore').innerHTML = '—<sub>/40</sub>';
+            document.getElementById('readingScore').innerHTML = '—<sub>/40</sub>';
+            document.getElementById('writingScore').innerHTML = '—<sub>/40</sub>';
+            return;
+          }
+          var latest = list[0];
+          emptyEl.style.display = 'none';
+          listEl.style.display = 'block';
+          var total = latest.totalScore != null ? latest.totalScore : (latest.grammarScore || 0) + (latest.readingScore || 0) + (latest.writingScore || 0);
+          document.getElementById('cefrLevel').textContent = total != null ? (total + ' · ' + toCEFR(total)) : '—';
+          document.getElementById('grammarScore').innerHTML = (latest.grammarScore != null ? latest.grammarScore : '—') + '<sub>/' + (latest.grammarTotal || 40) + '</sub>';
+          document.getElementById('readingScore').innerHTML = (latest.readingScore != null ? latest.readingScore : '—') + '<sub>/' + (latest.readingTotal || 40) + '</sub>';
+          document.getElementById('writingScore').innerHTML = (latest.writingScore != null ? latest.writingScore : '—') + '<sub>/' + (latest.writingTotal || 40) + '</sub>';
+
+          listEl.innerHTML = list.map(function(s) {
+            var d = s.submittedAt ? new Date(s.submittedAt).toLocaleDateString('en-GB') : '—';
+            var t = s.totalScore != null ? s.totalScore : '—';
+            return '<li style="padding:0.6rem 0; border-bottom:1px solid var(--border);"><strong>' + d + '</strong> — Total: ' + t + ' (' + toCEFR(s.totalScore) + ')</li>';
+          }).join('');
+        });
+      }
+    })();
+  </script>
+  <script src="../assets/js/dashboard-sidebar.js" defer></script>
+</body>
+</html>

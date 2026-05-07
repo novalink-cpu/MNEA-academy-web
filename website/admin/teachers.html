@@ -1,0 +1,1344 @@
+<!DOCTYPE html>
+<html lang="my">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="../assets/js/desktop-layout-viewport.js"></script>
+  <title>Teacher Management | Admin</title>
+  <link rel="stylesheet" href="../assets/css/main.css">
+  <link rel="stylesheet" href="../assets/css/dashboard.css">
+  <style>
+    .teacher-mgmt-cards { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-bottom: 1.5rem; }
+    @media (max-width: 900px) { .teacher-mgmt-cards { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 500px) { .teacher-mgmt-cards { grid-template-columns: 1fr; } }
+    .teacher-mgmt-card {
+      background: #fff; border-radius: 14px; padding: 1.35rem; text-align: center; cursor: pointer;
+      box-shadow: 0 4px 16px rgba(0,0,0,.06), 0 2px 8px rgba(0,0,0,.04);
+      border: 2px solid transparent; transition: box-shadow .25s ease, transform .25s ease, border-color .2s, background .2s;
+    }
+    .teacher-mgmt-card:nth-child(1) { background: linear-gradient(180deg, #fef3c7, #fde68a); border-color: rgba(245,158,11,.25); }
+    .teacher-mgmt-card:nth-child(2) { background: linear-gradient(180deg, #d1fae5, #a7f3d0); border-color: rgba(16,185,129,.25); }
+    .teacher-mgmt-card:nth-child(3) { background: linear-gradient(180deg, #e0e7ff, #c7d2fe); border-color: rgba(99,102,241,.25); }
+    .teacher-mgmt-card:nth-child(4) { background: linear-gradient(180deg, #fef3c7, #fde68a); border-color: rgba(245,158,11,.25); }
+    .teacher-mgmt-card:hover { box-shadow: 0 8px 24px rgba(0,0,0,.1), 0 4px 12px rgba(0,0,0,.05); transform: translateY(-3px); }
+    .teacher-mgmt-card.active { border-color: #059669; box-shadow: 0 16px 42px rgba(16,185,129,.18); transform: translateY(-4px); }
+    .teacher-mgmt-card .icon { font-size: 2rem; margin-bottom: 0.5rem; }
+    .teacher-mgmt-card h3 { margin: 0; font-size: 1rem; color: var(--text); font-weight: 800; }
+    .teacher-view { display: none; }
+    .teacher-view.show { display: block; }
+    .form-two-cols { display: flex; flex-direction: column; gap: 0; }
+    .form-row-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 3rem; align-items: start; min-height: 2.5rem; margin-bottom: 0.75rem; }
+    .form-row-pair .form-group.label-left { margin-bottom: 0; align-items: center; }
+    .form-row-pair .form-group.label-left input,
+    .form-row-pair .form-group.label-left select,
+    .form-row-pair .form-group.label-left .dob-inputs select { height: 2.25rem; box-sizing: border-box; }
+    .form-row-pair.form-row-single .form-group.label-left { max-width: none; }
+    .form-group.label-left.enrollment-date-row {
+      display: grid;
+      grid-template-columns: 11rem minmax(0, 1fr);
+      column-gap: 1rem;
+      align-items: center;
+    }
+    .form-group.label-left.enrollment-date-row input { min-width: 10rem; grid-column: 2; width: 100%; max-width: 100%; }
+    .form-group.label-left.enrollment-date-row label { grid-column: 1; }
+    @media (max-width: 700px) { .form-row-pair { grid-template-columns: 1fr; } }
+    .form-group { margin-bottom: 0.75rem; }
+    .form-group.label-left {
+      display: grid;
+      grid-template-columns: 11rem minmax(0, 1fr);
+      column-gap: 1rem;
+      align-items: center;
+    }
+    .form-group.label-left label,
+    .form-group.label-left .dob-label {
+      grid-column: 1;
+      margin-bottom: 0;
+      font-weight: 500;
+      font-size: 0.9rem;
+      color: #0ea5e9;
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+      min-width: 0;
+    }
+    .form-group label { display: block; margin-bottom: 0.25rem; font-weight: 500; font-size: 0.9rem; color: #0ea5e9; }
+    .form-group.label-left > input,
+    .form-group.label-left > select {
+      grid-column: 2;
+      width: 100%;
+      min-width: 0;
+      padding: 0.5rem;
+      box-sizing: border-box;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+    }
+    .form-group input, .form-group select { width: 100%; padding: 0.5rem; box-sizing: border-box; border: 1px solid var(--border); border-radius: 4px; }
+    .form-group input[readonly] { background: var(--surface-hover); color: var(--text-muted); }
+    .form-group.label-left .field-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 1.35rem;
+      min-width: 1.35rem;
+      flex-shrink: 0;
+      font-size: 1rem;
+      text-align: center;
+    }
+    .form-group.label-left > div:not([class]) {
+      grid-column: 2;
+      min-width: 0;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+    .form-group.label-left input[type="file"] { font-size: 0.85rem; max-width: 100%; }
+    .form-group.label-left.dob-in-one-row {
+      display: grid;
+      grid-template-columns: 11rem minmax(0, 1fr);
+      column-gap: 1rem;
+      align-items: center;
+    }
+    .form-group.label-left.dob-in-one-row .dob-label { grid-column: 1; }
+    .form-group.label-left.dob-in-one-row .dob-inputs {
+      grid-column: 2;
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: nowrap;
+      min-width: 0;
+      align-items: center;
+    }
+    .form-group.label-left.dob-in-one-row .dob-inputs select { flex: 1; min-width: 3rem; padding: 0.5rem; border: 1px solid var(--border); border-radius: 4px; height: 2.25rem; box-sizing: border-box; }
+    .btn-choose-photo { padding: 0.4rem 0.75rem; font-size: 0.875rem; background: var(--surface-hover); border: 1px solid var(--border); border-radius: 4px; cursor: pointer; }
+    .btn-choose-photo:hover { background: var(--border); }
+    .reg-photo-grid {
+      display: grid;
+      grid-template-columns: 11rem minmax(0, 240px);
+      grid-template-rows: auto auto;
+      column-gap: 1rem;
+      row-gap: 0.65rem;
+      margin-bottom: 1rem;
+    }
+    .reg-photo-label-cell {
+      grid-column: 1;
+      grid-row: 1;
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      min-height: 140px;
+      font-weight: 500;
+      font-size: 0.9rem;
+      color: #0a0a0a;
+      padding-right: 0.15rem;
+    }
+    .reg-photo-label-cell .field-icon { margin-right: 0.35rem; }
+    .reg-photo-preview {
+      grid-column: 2;
+      grid-row: 1;
+      width: 140px;
+      height: 140px;
+      border-radius: 12px;
+      object-fit: cover;
+      border: 1px solid #262626;
+      background: #0a0a0a;
+      display: block;
+    }
+    .reg-photo-actions {
+      grid-column: 2;
+      grid-row: 2;
+      display: flex;
+      flex-direction: row;
+      flex-wrap: nowrap;
+      gap: 0.5rem;
+      align-items: center;
+    }
+    .btn-reg-photo-choose {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0.5rem 1rem;
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: #fff !important;
+      background: #2563eb;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      box-shadow: 0 1px 2px rgba(37, 99, 235, 0.25);
+    }
+    .btn-reg-photo-choose:hover { background: #1d4ed8; color: #fff !important; }
+    .btn-reg-photo-remove {
+      padding: 0.5rem 0.9rem;
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: #b91c1c;
+      background: #fef2f2;
+      border: 1px solid #fecaca;
+      border-radius: 8px;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .btn-reg-photo-remove:hover { background: #fee2e2; }
+    .form-actions { margin-top: 1.25rem; display: flex; justify-content: center; align-items: center; gap: 0.75rem; flex-wrap: wrap; }
+    .btn-save { background: #22c55e; color: #fff; border: none; padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer; font-weight: 600; }
+    #teacherForm .form-actions .btn-save[type="submit"] {
+      background: #dc2626;
+      padding: 0.55rem 1.35rem;
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(220, 38, 38, 0.25);
+    }
+    #teacherForm .form-actions .btn-save[type="submit"]:hover { background: #b91c1c; }
+    .btn-reset { background: #fff; border: 1px solid var(--border); padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer; }
+    .table-wrap { overflow-x: auto; }
+    .dashboard-table { width: 100%; border-collapse: collapse; }
+    .dashboard-table th, .dashboard-table td { padding: 0.5rem 0.75rem; border-bottom: 1px solid var(--border); }
+    .dashboard-table thead th { text-align: center; }
+    .dashboard-table td { text-align: left; }
+    .dashboard-table th { background: var(--table-header-bg); color: var(--table-header-text); font-weight: 700; }
+    .dashboard-table tbody tr:nth-child(even) { background: #f8fafc; }
+    .btn-sm { padding: 0.25rem 0.5rem; font-size: 0.875rem; margin-right: 0.25rem; border-radius: 4px; border: none; cursor: pointer; }
+    .list-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem; margin-bottom: 1rem; }
+    .list-toolbar select, .list-toolbar input[type="text"] { padding: 0.4rem 0.6rem; border: 1px solid var(--border); border-radius: 4px; }
+    .list-toolbar .total { color: var(--text-muted); font-size: 0.9rem; }
+    .doc-table th, .doc-table td { padding: 0.5rem 0.75rem; border: 1px solid var(--border); }
+    .doc-table th { background: var(--table-header-bg); color: var(--table-header-text); font-weight: 700; text-align: center; }
+    .doc-table td { text-align: left; }
+    .upload-zone { border: 2px dashed var(--border); border-radius: 8px; padding: 2rem; text-align: center; margin: 1rem 0; cursor: pointer; background: var(--surface); }
+    .upload-zone.dragover { border-color: var(--primary); background: #f0fdf4; }
+    .doc-gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 1rem; margin-top: 1rem; }
+    .doc-card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 0.75rem; text-align: center; }
+    .doc-card .thumb { width: 100%; height: 100px; object-fit: cover; border-radius: 4px; background: #eee; }
+    .doc-card .title { font-size: 0.85rem; margin: 0.35rem 0; }
+    .doc-card .date { font-size: 0.75rem; color: var(--text-muted); }
+    .doc-card .actions { margin-top: 0.5rem; }
+    .doc-card .actions button { margin: 0 0.2rem; padding: 0.2rem 0.4rem; font-size: 0.75rem; cursor: pointer; border-radius: 4px; border: none; }
+    .photo-cell { width: 40px; height: 40px; border-radius: 4px; background: #eee; object-fit: cover; }
+    .profile-card {
+      background: linear-gradient(180deg, #fff 0%, #f8fcff 100%); border-radius: 16px; padding: 1.5rem; max-width: 380px;
+      box-shadow: 0 4px 20px rgba(14,165,233,.1), 0 2px 10px rgba(0,0,0,.05);
+      border: 1px solid rgba(224,242,254,.8); transition: box-shadow .25s ease, transform .25s ease;
+    }
+    .profile-card:hover { box-shadow: 0 8px 28px rgba(14,165,233,.14), 0 4px 14px rgba(0,0,0,.06); transform: translateY(-2px); }
+    .profile-card .profile-top { display: flex; align-items: center; gap: 1rem; margin-bottom: 0.75rem; }
+    .profile-card .profile-avatar { width: 56px; height: 56px; border-radius: 50%; background: #e0f2fe; color: #0369a1; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; font-weight: 600; flex-shrink: 0; }
+    .profile-card .profile-avatar img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
+    .profile-card .profile-name { font-size: 1.25rem; font-weight: 600; color: var(--text); margin: 0 0 0.15rem 0; }
+    .profile-card .profile-meta { font-size: 0.875rem; color: var(--text-muted); margin: 0; }
+    .profile-card .profile-contact { margin-top: 1rem; }
+    .profile-card .profile-contact-item { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem; font-size: 0.95rem; }
+    .profile-card .profile-contact-item .icon { width: 20px; flex-shrink: 0; color: #0ea5e9; }
+    .profile-card .profile-contact-item a { color: #0369a1; text-decoration: none; }
+    .profile-card .btn-view-profile { display: block; width: 100%; margin-top: 1.25rem; padding: 0.6rem 1rem; background: #f5f5dc; color: var(--text); border: 1px solid var(--border); border-radius: 8px; font-size: 0.95rem; cursor: pointer; font-weight: 500; }
+    .profile-cards-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1rem; }
+    .profile-modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.4); z-index: 1000; display: none; align-items: center; justify-content: center; padding: 1rem; }
+    .profile-modal-overlay.show { display: flex; }
+    .profile-modal { background: #fff; border-radius: 12px; max-width: 560px; width: 100%; max-height: 90vh; overflow-y: auto; box-shadow: 0 8px 32px rgba(0,0,0,.2); }
+    .profile-modal .modal-header { display: flex; justify-content: space-between; align-items: center; padding: 1rem 1.25rem; border-bottom: 1px solid var(--border); }
+    .profile-modal .modal-header h3 { margin: 0; font-size: 1.1rem; color: var(--text); }
+    .profile-modal .modal-header-label {
+      font-size: 0.78rem; font-weight: 800; color: var(--text-muted);
+      text-transform: uppercase; letter-spacing: 0.07em;
+    }
+    .profile-modal .modal-close { background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--text-muted); line-height: 1; padding: 0 0.25rem; }
+    .profile-modal .modal-body { padding: 1.25rem 1.35rem 1.5rem; }
+    .teacher-detail-name {
+      text-align: center; font-size: 1.35rem; font-weight: 800; color: var(--text);
+      margin: 0 0 1.1rem; line-height: 1.35; padding: 0 0.25rem;
+    }
+    .teacher-detail-photo-row {
+      display: flex; justify-content: center; align-items: center;
+      margin: 0 0 1.4rem;
+    }
+    .teacher-detail-photo-img {
+      width: 120px; height: 120px; border-radius: 50%; object-fit: cover; display: block;
+      border: 3px solid rgba(14, 165, 233, 0.35);
+      box-shadow: 0 6px 20px rgba(15, 23, 42, 0.1);
+    }
+    .teacher-detail-photo-fallback {
+      width: 120px; height: 120px; border-radius: 50%;
+      background: linear-gradient(145deg, #e0f2fe, #bae6fd);
+      color: #0369a1; border: 3px solid rgba(14, 165, 233, 0.35);
+      display: none; align-items: center; justify-content: center;
+      font-size: 2.35rem; font-weight: 800;
+      box-shadow: 0 6px 20px rgba(15, 23, 42, 0.08);
+    }
+    .profile-modal .profile-section { margin-bottom: 1.25rem; }
+    .profile-modal .profile-section-title { font-size: 0.95rem; font-weight: 700; color: #16a34a; margin: 0 0 0.5rem 0; }
+    .profile-modal .profile-section p { margin: 0.35rem 0; font-size: 0.9rem; display: flex; justify-content: space-between; gap: 1rem; }
+    .profile-modal .profile-section p strong { color: var(--text-muted); font-weight: 500; }
+  </style>
+</head>
+<body class="admin-dashboard-glass">
+  <div class="dashboard-wrap glass-dashboard">
+    <aside class="dashboard-sidebar">
+      <a href="../public-page/index.html" class="logo-link"><span class="logo-brand-row"><img src="../photo/logo.png" alt="" class="logo-mark-img" width="72" decoding="async" /><span class="logo-headlines"><span class="logo-title-line">MYANMAR</span><span class="logo-title-line">NEW ERA</span></span></span></a>
+      <nav>
+        <a href="dashboard.html">Dashboard</a>
+        <a href="admissions.html">Admission Management</a>
+        <a href="students.html">Student Management</a>
+        <a href="teachers.html" class="active">Teacher Management</a>
+        <a href="academic.html">Academic Management</a>
+        <a href="attendance.html">Attendance Management</a>
+        <a href="exams.html">Exam Management</a>
+        <a href="gpa-transcript.html">GPA & Transcript Management</a>
+        <a href="inquiries.html">Communication <span class="nav-inquiry-badge" id="navInquiryCount"></span></a>
+        <a href="content-management.html">Page Content Management</a>
+        <a href="question-bank.html">Question Bank Management</a>
+        <a href="reports.html">Reports & Analytics</a>
+        <a href="settings.html">Settings & Configuration</a>
+      </nav>
+    </aside>
+    <main class="dashboard-main">
+      <div class="dashboard-header glass-toolbar">
+        <p class="dashboard-toolbar-title" data-lang-en="Teacher Management" data-lang-my="Teacher Management">Teacher Management</p>
+        <div class="auth-info">
+          <div class="notification-wrap">
+            <button type="button" class="btn-notification" id="btnNotification" aria-haspopup="true" aria-expanded="false">
+              &#x1F514; <span id="notificationLabel">Notifications</span> (<span id="notificationCount" class="notification-count-num">0</span>)
+              <span class="notification-badge" id="notificationBadge" style="display:none;">0</span>
+            </button>
+            <div class="notification-dropdown" id="notificationDropdown" role="menu">
+              <h3>Notifications</h3>
+              <ul id="notificationList">
+                <li><a href="inquiries.html">No new notifications</a></li>
+              </ul>
+            </div>
+          </div>
+          <div class="profile-wrap">
+            <button type="button" class="btn-profile" id="btnProfile" aria-haspopup="true" aria-expanded="false">&#x1F464; <span id="profileName">Admin</span> &#x25BC;</button>
+            <div class="profile-dropdown" id="profileDropdown" role="menu">
+              <a href="settings.html">Profile</a>
+              <a href="settings.html#password">Change Password</a>
+              <div class="divider"></div>
+              <button type="button" id="btnAdminToolbarLogout">Logout</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <p class="text-muted" style="margin:0 0 1.15rem;font-size:0.88rem;line-height:1.5;max-width:48rem;">
+        <strong>Academic link:</strong> Register teachers here first. Assign each as <strong>homeroom teacher</strong> (name + attendance login) per batch in
+        <a href="academic.html">Academic Management → Batches</a>. Enrol students into those batches in <a href="students.html">Student Management</a>.
+      </p>
+
+      <div class="teacher-mgmt-cards">
+        <div class="teacher-mgmt-card" data-view="registration" title="Teacher Registration">
+          <div class="icon">📝</div>
+          <h3>Teacher Registration</h3>
+        </div>
+        <div class="teacher-mgmt-card active" data-view="list" title="Teacher List">
+          <div class="icon">📋</div>
+          <h3>Teacher List</h3>
+        </div>
+        <div class="teacher-mgmt-card" data-view="profile" title="Teacher Profile">
+          <div class="icon">👤</div>
+          <h3>Teacher Profile</h3>
+        </div>
+        <div class="teacher-mgmt-card" data-view="documents" title="Teacher Documents">
+          <div class="icon">📁</div>
+          <h3>Teacher Documents</h3>
+        </div>
+      </div>
+
+      <!-- View: Teacher Registration -->
+      <div id="viewRegistration" class="teacher-view">
+        <div class="card">
+          <h2 style="margin:0 0 1rem;">Enter details</h2>
+          <form id="teacherForm">
+            <input type="hidden" id="teacherFormUsername" value="">
+            <div class="reg-photo-grid">
+              <div class="reg-photo-label-cell" id="teacherPhotoLabelCell"><span class="field-icon" aria-hidden="true">📷</span>Photo</div>
+              <img id="teacherPhotoPreview" class="reg-photo-preview" alt="Profile preview">
+              <div class="reg-photo-actions">
+                <input type="file" id="teacherPhoto" accept="image/*" hidden>
+                <label for="teacherPhoto" class="btn-reg-photo-choose">Choose photo</label>
+                <button type="button" class="btn-reg-photo-remove" id="btnRemoveTeacherPhoto">Remove</button>
+              </div>
+            </div>
+            <div class="form-two-cols">
+              <div class="form-row-pair">
+                <div class="form-group label-left">
+                  <label><span class="field-icon" aria-hidden="true">🪪</span>Teacher ID</label>
+                  <input type="text" id="teacherId" readonly placeholder="TCH_xxxx">
+                </div>
+                <div class="form-group label-left">
+                  <label><span class="field-icon" aria-hidden="true">👤</span>Teacher Name</label>
+                  <input type="text" id="teacherName" required placeholder="Teacher name">
+                </div>
+              </div>
+              <div class="form-row-pair">
+                <div class="form-group label-left dob-in-one-row">
+                  <label class="dob-label"><span class="field-icon" aria-hidden="true">📅</span>Date of Birth</label>
+                  <div class="dob-inputs">
+                    <select id="teacherDobDay"><option value="">Day</option></select>
+                    <select id="teacherDobMonth"><option value="">Month</option></select>
+                    <select id="teacherDobYear"><option value="">Year</option></select>
+                  </div>
+                </div>
+                <div class="form-group label-left">
+                  <label><span class="field-icon" aria-hidden="true">🎂</span>Age</label>
+                  <input type="number" id="teacherAge" placeholder="Age" min="0" readonly title="Auto from Date of Birth">
+                </div>
+              </div>
+              <div class="form-row-pair">
+                <div class="form-group label-left">
+                  <label><span class="field-icon" aria-hidden="true">⚧</span>Gender</label>
+                  <select id="teacherGender"><option value="">-</option><option value="Male">Male</option><option value="Female">Female</option></select>
+                </div>
+                <div class="form-group label-left">
+                  <label><span class="field-icon" aria-hidden="true">🩸</span>Blood Group</label>
+                  <select id="teacherBlood"><option value="">-</option><option value="A+">A+</option><option value="A-">A-</option><option value="B+">B+</option><option value="B-">B-</option><option value="AB+">AB+</option><option value="AB-">AB-</option><option value="O+">O+</option><option value="O-">O-</option></select>
+                </div>
+              </div>
+              <div class="form-row-pair">
+                <div class="form-group label-left">
+                  <label><span class="field-icon" aria-hidden="true">📄</span>NRC</label>
+                  <input type="text" id="teacherNrc" placeholder="NRC">
+                </div>
+                <div class="form-group label-left">
+                  <label><span class="field-icon" aria-hidden="true">📧</span>Email</label>
+                  <input type="email" id="teacherEmail" placeholder="email@example.com">
+                </div>
+              </div>
+              <div class="form-row-pair">
+                <div class="form-group label-left">
+                  <label><span class="field-icon" aria-hidden="true">📞</span>Phone</label>
+                  <input type="text" id="teacherPhone" placeholder="09xxxxxxxx">
+                </div>
+                <div class="form-group label-left">
+                  <label><span class="field-icon" aria-hidden="true">📚</span>Program</label>
+                  <select id="teacherCourse">
+                    <option value="">Select program</option>
+                  </select>
+                </div>
+              </div>
+              <div class="form-row-pair">
+                <div class="form-group label-left">
+                  <label><span class="field-icon" aria-hidden="true">📊</span>Level</label>
+                  <select id="teacherLevel">
+                    <option value="">-</option>
+                    <option value="Pre-Foundation">Pre-Foundation</option>
+                    <option value="Foundation I">Foundation I</option>
+                    <option value="Foundation II">Foundation II</option>
+                    <option value="Pre-Elementary">Pre-Elementary</option>
+                    <option value="Elementary">Elementary</option>
+                    <option value="Pre-Intermediate">Pre-Intermediate</option>
+                    <option value="Intermediate">Intermediate</option>
+                    <option value="Intermediate Plus">Intermediate Plus</option>
+                    <option value="Upper Intermediate (B2)">Upper Intermediate (B2)</option>
+                    <option value="Other">Other</option>
+                  </select>
+                </div>
+                <div class="form-group label-left">
+                  <label><span class="field-icon" aria-hidden="true">📁</span>Batch</label>
+                  <input type="text" id="teacherBatch" placeholder="e.g. 2024-1">
+                </div>
+              </div>
+              <div class="form-row-pair">
+                <div class="form-group label-left">
+                  <label><span class="field-icon" aria-hidden="true">🎓</span>Qualification</label>
+                  <input type="text" id="teacherQualification" placeholder="Degree / Certificate">
+                </div>
+                <div class="form-group label-left">
+                  <label><span class="field-icon" aria-hidden="true">💼</span>Experience</label>
+                  <input type="text" id="teacherExperience" placeholder="e.g. 5 years">
+                </div>
+              </div>
+              <div class="form-row-pair form-row-single">
+                <div class="form-group label-left enrollment-date-row">
+                  <label><span class="field-icon" aria-hidden="true">📅</span>Joining Date</label>
+                  <input type="date" id="teacherJoiningDate" lang="en-GB" placeholder="dd/mm/yyyy">
+                </div>
+                <div></div>
+              </div>
+              <div class="form-row-pair">
+                <div class="form-group label-left">
+                  <label><span class="field-icon" aria-hidden="true">✔</span>Status</label>
+                  <select id="teacherStatus"><option value="Active">Active</option><option value="Inactive">Inactive</option><option value="Leave">Leave</option></select>
+                </div>
+                <div class="form-group label-left"></div>
+              </div>
+            </div>
+            <div class="form-actions">
+              <button type="submit" class="btn-save">Save</button>
+              <button type="button" class="btn-reset" id="regReset">Reset</button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- View: Teacher List -->
+      <div id="viewList" class="teacher-view show">
+        <div class="card">
+          <div style="display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+            <h2 style="margin:0;">Teacher List</h2>
+            <div style="display:flex; gap:0.5rem; align-items:center;">
+              <button type="button" class="btn-export" id="btnImportCsv">Import CSV</button>
+              <button type="button" class="btn-export" id="btnExportCsv">Export CSV</button>
+            </div>
+          </div>
+          <div class="list-toolbar">
+            <label>Program:</label>
+            <select id="filterCourse"><option value="">All</option></select>
+            <label>Status:</label>
+            <select id="filterStatus"><option value="">All</option><option value="Active">Active</option><option value="Inactive">Inactive</option><option value="Leave">Leave</option></select>
+            <span class="total">Total: <span id="listTotal">0</span></span>
+            <input type="text" id="listSearch" placeholder="Search" style="max-width:200px;">
+            <button type="button" class="btn btn-sm btn-primary" id="btnSearch">Search</button>
+          </div>
+          <div class="table-wrap">
+            <table class="dashboard-table">
+              <thead>
+                <tr><th>NO.</th><th>TEACHER NAME</th><th>PROGRAM</th><th>GENDER</th><th>PHONE</th><th>STATUS</th><th>Actions</th></tr>
+              </thead>
+              <tbody id="teachersBody"></tbody>
+            </table>
+          </div>
+          <p id="listHint" class="text-muted mt-1"></p>
+        </div>
+      </div>
+
+      <!-- View: Teacher Profile -->
+      <div id="viewProfile" class="teacher-view">
+        <div class="card">
+          <h2 style="margin:0 0 1rem;">Teacher Profile</h2>
+          <div id="profileCardsGrid" class="profile-cards-grid"></div>
+          <p id="profileCardsHint" class="text-muted mt-1" style="display:none;">No teachers. Use Teacher Registration to add.</p>
+        </div>
+      </div>
+      <!-- Teacher Detail Modal (View Profile) -->
+      <div id="teacherDetailModal" class="profile-modal-overlay">
+        <div class="profile-modal">
+          <div class="modal-header">
+            <span class="modal-header-label">Teacher Profile</span>
+            <button type="button" class="modal-close" id="teacherDetailModalClose" aria-label="Close">&times;</button>
+          </div>
+          <div class="modal-body">
+            <h2 id="teacherDetailTitle" class="teacher-detail-name">—</h2>
+            <div class="teacher-detail-photo-row">
+              <img id="mdTeacherPhoto" class="teacher-detail-photo-img" alt="" width="120" height="120" style="display:none;">
+              <div id="mdTeacherPhotoFallback" class="teacher-detail-photo-fallback" aria-hidden="true">?</div>
+            </div>
+            <div class="profile-section">
+              <p class="profile-section-title">Basic Info</p>
+              <p><strong>Teacher ID</strong> <span id="mdUsername">—</span></p>
+              <p><strong>Date of Birth</strong> <span id="mdDob">—</span></p>
+              <p><strong>Age</strong> <span id="mdAge">—</span></p>
+              <p><strong>Gender</strong> <span id="mdGender">—</span></p>
+              <p><strong>Blood Group</strong> <span id="mdBloodGroup">—</span></p>
+              <p><strong>NRC</strong> <span id="mdNrc">—</span></p>
+            </div>
+            <div class="profile-section">
+              <p class="profile-section-title">Contact</p>
+              <p><strong>Email</strong> <span id="mdEmail">—</span></p>
+              <p><strong>Phone</strong> <span id="mdPhone">—</span></p>
+            </div>
+            <div class="profile-section">
+              <p class="profile-section-title">Professional</p>
+              <p><strong>Program</strong> <span id="mdCourse">—</span></p>
+              <p><strong>Level</strong> <span id="mdLevel">—</span></p>
+              <p><strong>Batch</strong> <span id="mdBatch">—</span></p>
+              <p><strong>Qualification</strong> <span id="mdQualification">—</span></p>
+              <p><strong>Experience</strong> <span id="mdExperience">—</span></p>
+              <p><strong>Joining Date</strong> <span id="mdJoining">—</span></p>
+              <p><strong>Status</strong> <span id="mdStatus">—</span></p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- View: Teacher Documents -->
+      <div id="viewDocuments" class="teacher-view">
+        <div class="card">
+          <h2 style="margin:0 0 1rem;">Teacher Documents</h2>
+          <div class="list-toolbar">
+            <label>Select Teacher:</label>
+            <select id="docTeacherSelect"><option value="">-- Select teacher --</option></select>
+          </div>
+          <h3 style="margin-top:1.5rem;">Document Categories</h3>
+          <table class="dashboard-table doc-table">
+            <thead><tr><th>NO.</th><th>DOCUMENT TYPE</th><th>UPLOADED</th><th>LAST UPDATED</th></tr></thead>
+            <tbody id="docCategoriesBody"></tbody>
+          </table>
+          <h3 style="margin-top:1.5rem;">Document Upload Section</h3>
+          <div class="form-group">
+            <label>Select Document Type</label>
+            <select id="docTypeSelect"><option value="ID Card">ID Card</option><option value="Degree Certificate">Degree Certificate</option><option value="Teaching License">Teaching License</option><option value="NRC">NRC</option><option value="Other">Other</option></select>
+          </div>
+          <div class="upload-zone" id="uploadZone">
+            Drag & Drop files here or Click to Upload<br>
+            <span class="text-muted">Supported: PDF, JPG, PNG (Max 5MB each)</span><br>
+            <span id="uploadFileLabel">No file selected.</span>
+          </div>
+          <div class="form-group">
+            <label>Document Description</label>
+            <input type="text" id="docDescription" placeholder="Add note/description">
+          </div>
+          <div class="form-actions">
+            <button type="button" class="btn-save" id="btnUploadDoc">Upload Files</button>
+            <button type="button" class="btn-reset" id="btnCancelUpload">Cancel</button>
+          </div>
+          <h3 style="margin-top:1.5rem;">Uploaded Documents Gallery</h3>
+          <div id="docGallery" class="doc-gallery"></div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+  <script src="../assets/js/firebase-config.js"></script>
+  <script src="../assets/js/auth.js"></script>
+  <script src="../assets/js/school-api.js"></script>
+  <script src="../assets/js/lang-switcher.js"></script>
+  <script src="../assets/js/content-firebase.js"></script>
+  <script src="../assets/js/admin-top-toolbar.js"></script>
+  <script>
+(function() {
+  var DOC_TYPES = ['ID Card', 'Degree Certificate', 'Teaching License', 'NRC', 'Other'];
+  var DEFAULT_DESIGNATIONS = [
+    { id: 'principal', label_en: 'Principal' },
+    { id: 'vice_principal', label_en: 'Vice Principal' },
+    { id: 'head_of_dept', label_en: 'Head of Department' },
+    { id: 'senior_teacher', label_en: 'Senior Teacher' },
+    { id: 'junior_teacher', label_en: 'Junior Teacher' },
+    { id: 'guest_teacher', label_en: 'Guest Teacher' }
+  ];
+    var u = window.AcademyAuth && AcademyAuth.currentUser();
+  if (!u) { window.location.href = '../public-page/login.html'; return; }
+  AcademyAuth.getUserProfile(u.uid, function(p) { if ((p && p.role) !== 'admin') window.location.href = '../student/dashboard.html'; });
+  if (window.AdminTopToolbar) AdminTopToolbar.init();
+
+  var allTeachers = [];
+  var REG_PHOTO_PLACEHOLDER_SVG = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(
+    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160"><rect fill="#f1f5f9" width="160" height="160"/><circle cx="80" cy="56" r="26" fill="#cbd5e1"/><ellipse cx="80" cy="148" rx="46" ry="48" fill="#cbd5e1"/></svg>'
+  );
+  function clearTeacherRegistrationPhoto() {
+    window._teacherPhotoBase64 = '';
+    var inp = document.getElementById('teacherPhoto');
+    var img = document.getElementById('teacherPhotoPreview');
+    if (inp) inp.value = '';
+    if (img) img.src = REG_PHOTO_PLACEHOLDER_SVG;
+  }
+  var designations = [];
+  var academicCourses = [];
+  var academicLevels = [];
+  var TEACHER_LEVEL_OPTIONS = (window.SchoolAPI && Array.isArray(SchoolAPI.DEFAULT_LEVEL_OPTIONS))
+    ? SchoolAPI.DEFAULT_LEVEL_OPTIONS.slice()
+    : ['Pre-Foundation', 'Foundation I', 'Foundation II', 'Pre-Elementary', 'Elementary', 'Pre-Intermediate', 'Intermediate', 'Intermediate Plus', 'Upper Intermediate (B2)'];
+
+  function esc(s) {
+    if (s == null || s === undefined) return '';
+    var d = document.createElement('div');
+    d.textContent = s;
+    return d.innerHTML;
+  }
+
+  function entityMatchesProgram(entity, programName) {
+    if (window.SchoolAPI && typeof SchoolAPI.entityMatchesProgram === 'function') {
+      return SchoolAPI.entityMatchesProgram(entity, programName);
+    }
+    return !programName || !String(programName).trim();
+  }
+
+  function getTeacherRegistrationProgramOptions() {
+    if (window.SchoolAPI && Array.isArray(SchoolAPI.CANONICAL_PROGRAM_OPTIONS)) {
+      return SchoolAPI.CANONICAL_PROGRAM_OPTIONS.slice();
+    }
+    return [
+      'IGCSE',
+      'Pre-IGCSE',
+      'Global Primary Learning Program',
+      'English 4 Skills (PEIC, UK)',
+      'Chinese Language Program',
+      'Business & Management',
+      'Coding & Robotics',
+      'Online Class'
+    ];
+  }
+
+  function switchView(viewId) {
+    document.querySelectorAll('.teacher-view').forEach(function(el) { el.classList.remove('show'); });
+    document.querySelectorAll('.teacher-mgmt-card').forEach(function(el) { el.classList.remove('active'); });
+    var v = document.getElementById('view' + viewId.charAt(0).toUpperCase() + viewId.slice(1));
+    if (v) v.classList.add('show');
+    var card = document.querySelector('.teacher-mgmt-card[data-view="' + viewId + '"]');
+    if (card) card.classList.add('active');
+    if (viewId === 'list') refreshList();
+    if (viewId === 'profile') renderProfileCardsGrid();
+    if (viewId === 'documents') { fillDocTeacherSelect(); onDocTeacherChange(); }
+    if (viewId === 'registration' && !document.getElementById('teacherFormUsername').value && document.getElementById('teacherId')) {
+      document.getElementById('teacherId').value = generateTeacherId();
+      document.getElementById('teacherId').readOnly = false;
+    }
+  }
+
+  function generateTeacherId() {
+    return 'TCH_' + Math.floor(1000 + Math.random() * 9000);
+  }
+
+  document.querySelectorAll('.teacher-mgmt-card').forEach(function(card) {
+    card.addEventListener('click', function() { switchView(card.getAttribute('data-view')); });
+  });
+  function getInitialTeacherView() {
+    var allowed = { registration: true, list: true, profile: true, documents: true };
+    var fromQuery = '';
+    var fromHash = '';
+    try {
+      var sp = new URLSearchParams(window.location.search || '');
+      fromQuery = (sp.get('view') || '').toLowerCase();
+    } catch (e) {}
+    fromHash = String(window.location.hash || '').replace(/^#/, '').toLowerCase();
+    if (fromQuery && allowed[fromQuery]) return fromQuery;
+    if (fromHash && allowed[fromHash]) return fromHash;
+    return 'list';
+  }
+
+  function fillTeacherCourseFilter() {
+    var seen = {};
+    var out = [];
+    function add(x) {
+      var c = (x || '').toString().trim();
+      if (!c || seen[c]) return;
+      seen[c] = true;
+      out.push(c);
+    }
+    allTeachers.forEach(function(t) { add(t.course); });
+    academicCourses.forEach(function(c) { add(c && c.name); });
+    getTeacherRegistrationProgramOptions().forEach(add);
+    if (window.SchoolAPI && typeof SchoolAPI.orderProgramOptionNames === 'function') {
+      out = SchoolAPI.orderProgramOptionNames(out);
+    } else {
+      out.sort(function(a, b) { return a.toLowerCase().localeCompare(b.toLowerCase()); });
+    }
+    var sel = document.getElementById('filterCourse');
+    if (sel) {
+      var selectedCourse = sel.value || '';
+      sel.innerHTML = '<option value="">All</option>' + out.map(function(c) { return '<option value="' + esc(c) + '">' + esc(c) + '</option>'; }).join('');
+      sel.value = selectedCourse;
+    }
+  }
+
+  function getTeacherLevelOptions() {
+    var levels = [];
+    var selectedProgram = (document.getElementById('teacherCourse') && document.getElementById('teacherCourse').value) || '';
+    academicLevels.forEach(function(level) {
+      if (!level) return;
+      if (selectedProgram && !entityMatchesProgram(level, selectedProgram)) return;
+      var name = (level.name || '').toString().trim();
+      if (name && levels.indexOf(name) === -1) levels.push(name);
+    });
+    levels.sort();
+    return levels;
+  }
+
+  function fillTeacherAcademicDropdowns() {
+    var courseSelect = document.getElementById('teacherCourse');
+    var currentCourse = courseSelect ? courseSelect.value : '';
+    if (courseSelect) {
+      var progOpts = getTeacherRegistrationProgramOptions().slice();
+      if (currentCourse && progOpts.indexOf(currentCourse) < 0) {
+        progOpts.push(currentCourse);
+      }
+      if (window.SchoolAPI && typeof SchoolAPI.orderProgramOptionNames === 'function') {
+        progOpts = SchoolAPI.orderProgramOptionNames(progOpts);
+      }
+      courseSelect.disabled = false;
+      courseSelect.innerHTML = '<option value="">Select program</option>' + progOpts.map(function(course) {
+        return '<option value="' + esc(course) + '">' + esc(course) + '</option>';
+      }).join('');
+      courseSelect.value = currentCourse && progOpts.indexOf(currentCourse) >= 0 ? currentCourse : '';
+    }
+
+    var levelSelect = document.getElementById('teacherLevel');
+    var currentLevel = levelSelect ? levelSelect.value : '';
+    if (levelSelect) {
+      var levelOptions = getTeacherLevelOptions();
+      if (!(courseSelect && courseSelect.value)) {
+        levelSelect.disabled = true;
+        levelSelect.innerHTML = '<option value="">Select program first</option>';
+        levelSelect.value = '';
+      } else if (levelOptions.length) {
+        levelSelect.disabled = false;
+        levelSelect.innerHTML = '<option value="">Select level</option>' + levelOptions.map(function(level) {
+          return '<option value="' + esc(level) + '">' + esc(level) + '</option>';
+        }).join('');
+        levelSelect.value = currentLevel && levelOptions.indexOf(currentLevel) >= 0 ? currentLevel : '';
+      } else {
+        levelSelect.disabled = true;
+        levelSelect.innerHTML = '<option value="">No levels for selected program</option>';
+        levelSelect.value = '';
+      }
+    }
+  }
+
+  function syncTeacherAcademicSelection(courseName, levelName) {
+    document.getElementById('teacherCourse').value = courseName || '';
+    fillTeacherAcademicDropdowns();
+    document.getElementById('teacherLevel').value = levelName || '';
+    fillTeacherAcademicDropdowns();
+  }
+
+  function loadTeacherAcademicData(cb) {
+    if (!window.SchoolAPI) {
+      academicCourses = [];
+      academicLevels = [];
+      fillTeacherAcademicDropdowns();
+      if (cb) cb();
+      return;
+    }
+    Promise.all([
+      SchoolAPI.getCourses ? SchoolAPI.getCourses() : Promise.resolve({ ok: false }),
+      SchoolAPI.getLevels ? SchoolAPI.getLevels() : Promise.resolve({ ok: false })
+    ]).then(function(results) {
+      academicCourses = (results[0] && results[0].ok && Array.isArray(results[0].courses)) ? results[0].courses : [];
+      academicLevels = (results[1] && results[1].ok && Array.isArray(results[1].levels)) ? results[1].levels : [];
+      fillTeacherAcademicDropdowns();
+      if (cb) cb();
+    }).catch(function() {
+      academicCourses = [];
+      academicLevels = [];
+      fillTeacherAcademicDropdowns();
+      if (cb) cb();
+    });
+  }
+
+  function loadTeachersFromApi(cb) {
+    if (!window.SchoolAPI || !SchoolAPI.getTeachers) {
+      fillTeacherAcademicDropdowns();
+      if (cb) cb([]);
+      return;
+    }
+    SchoolAPI.getTeachers().then(function(r) {
+      var list = (r && r.teachers) ? r.teachers : [];
+      allTeachers = list;
+      fillTeacherAcademicDropdowns();
+      if (cb) cb(list);
+    }).catch(function() { allTeachers = []; fillTeacherAcademicDropdowns(); if (cb) cb([]); });
+  }
+
+  function getTeacherDobStr() {
+    var d = document.getElementById('teacherDobDay').value;
+    var m = document.getElementById('teacherDobMonth').value;
+    var y = document.getElementById('teacherDobYear').value;
+    if (!d || !m || !y) return '';
+    return y + '-' + (m.length === 1 ? '0' + m : m) + '-' + (d.length === 1 ? '0' + d : d);
+  }
+
+  function getFormPayload() {
+    var teacherId = document.getElementById('teacherId').value.trim();
+    return {
+      username: teacherId,
+      teacher_id: teacherId,
+      name: document.getElementById('teacherName').value.trim(),
+      date_of_birth: getTeacherDobStr(),
+      dob: getTeacherDobStr(),
+      age: (document.getElementById('teacherAge').value || '').trim(),
+      gender: document.getElementById('teacherGender').value.trim(),
+      blood_group: (document.getElementById('teacherBlood').value || '').trim(),
+      blood_type: document.getElementById('teacherBlood').value.trim(),
+      nrc: document.getElementById('teacherNrc').value.trim(),
+      email: document.getElementById('teacherEmail').value.trim(),
+      phone: document.getElementById('teacherPhone').value.trim(),
+      course: document.getElementById('teacherCourse').value.trim(),
+      level: document.getElementById('teacherLevel').value.trim(),
+      batch: document.getElementById('teacherBatch').value.trim(),
+      qualification: document.getElementById('teacherQualification').value.trim(),
+      experience: document.getElementById('teacherExperience').value.trim(),
+      joining_date: document.getElementById('teacherJoiningDate').value.trim(),
+      status: document.getElementById('teacherStatus').value.trim() || 'Active',
+      photo_note: document.getElementById('teacherPhoto').files.length ? document.getElementById('teacherPhoto').files[0].name : '',
+      photo_data: window._teacherPhotoBase64 || ''
+    };
+  }
+
+  function setFormFromTeacher(t) {
+    if (!t) return;
+    var uname = (t.username || t.teacher_id || '').toString();
+    document.getElementById('teacherFormUsername').value = uname;
+    document.getElementById('teacherId').value = uname;
+    document.getElementById('teacherId').readOnly = true;
+    document.getElementById('teacherName').value = t.name || '';
+    document.getElementById('teacherGender').value = t.gender || '';
+    document.getElementById('teacherBlood').value = (t.blood_group || t.blood_type || '').trim();
+    document.getElementById('teacherNrc').value = t.nrc || '';
+    document.getElementById('teacherEmail').value = t.email || '';
+    document.getElementById('teacherPhone').value = t.phone || '';
+    syncTeacherAcademicSelection(t.course || '', t.level || '');
+    document.getElementById('teacherBatch').value = t.batch || '';
+    document.getElementById('teacherQualification').value = t.qualification || '';
+    document.getElementById('teacherExperience').value = t.experience || '';
+    document.getElementById('teacherJoiningDate').value = (t.joining_date || '').toString().slice(0, 10);
+    document.getElementById('teacherStatus').value = t.status || 'Active';
+    window._teacherPhotoBase64 = t.photo_data || '';
+    var tph = document.getElementById('teacherPhoto');
+    if (tph) tph.value = '';
+    var tpv = document.getElementById('teacherPhotoPreview');
+    if (tpv) {
+      var tpd = t.photo_data || '';
+      var tpds = String(tpd);
+      if (tpds.indexOf('data:image') === 0) tpv.src = tpd;
+      else if (tpds.indexOf('data:') === 0) tpv.src = tpd;
+      else if (tpds.indexOf('/9j') === 0) tpv.src = 'data:image/jpeg;base64,' + tpd;
+      else if (tpds.length > 80 && /^[A-Za-z0-9+/=\s]+$/.test(tpds.slice(0, 200))) tpv.src = 'data:image/png;base64,' + tpds.replace(/\s/g, '');
+      else tpv.src = REG_PHOTO_PLACEHOLDER_SVG;
+    }
+    var dob = (t.date_of_birth || t.dob || '').toString();
+    if (dob.length >= 10) {
+      var parts = dob.split(/[-/]/);
+      document.getElementById('teacherDobYear').value = parts[0] || '';
+      document.getElementById('teacherDobMonth').value = parts[1] ? parseInt(parts[1], 10) : '';
+      document.getElementById('teacherDobDay').value = parts[2] ? parseInt(parts[2], 10) : '';
+    } else {
+      document.getElementById('teacherDobDay').value = '';
+      document.getElementById('teacherDobMonth').value = '';
+      document.getElementById('teacherDobYear').value = '';
+    }
+    updateTeacherAgeFromDob();
+  }
+
+  document.getElementById('teacherForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    var payload = getFormPayload();
+    if (!payload.username) { alert('Teacher ID is required'); return; }
+    if (!payload.name) { alert('Teacher Name is required'); return; }
+    var editUname = document.getElementById('teacherFormUsername').value.trim();
+    var api = window.SchoolAPI;
+    if (!api) { alert('Backend not connected.'); return; }
+    var p = editUname ? api.updateTeacher(editUname, payload) : api.addTeacher(payload);
+    p.then(function(r) {
+      if (r && (r.ok || r.username)) {
+        switchView('list');
+        loadTeachersFromApi(refreshList);
+      } else alert(r && r.error ? r.error : 'Save failed');
+    }).catch(function(err) {
+      var msg = err && (err.message || err.toString());
+      if (msg && msg.indexOf('fetch') >= 0) {
+        alert('Save failed: Cannot reach backend.\n\nRun the backend (python app.py) and open this site from:\nhttp://localhost:5001/admin/teachers.html');
+      } else {
+        alert('Save failed: ' + (msg || 'Unknown error'));
+      }
+    });
+  });
+
+  document.getElementById('regReset').addEventListener('click', function() {
+    document.getElementById('teacherFormUsername').value = '';
+    document.getElementById('teacherId').value = generateTeacherId();
+    document.getElementById('teacherId').readOnly = false;
+    document.getElementById('teacherName').value = '';
+    document.getElementById('teacherDobDay').value = '';
+    document.getElementById('teacherDobMonth').value = '';
+    document.getElementById('teacherDobYear').value = '';
+    document.getElementById('teacherAge').value = '';
+    document.getElementById('teacherGender').value = '';
+    document.getElementById('teacherNrc').value = '';
+    document.getElementById('teacherBlood').value = '';
+    document.getElementById('teacherPhone').value = '';
+    document.getElementById('teacherEmail').value = '';
+    document.getElementById('teacherCourse').value = '';
+    document.getElementById('teacherLevel').value = '';
+    document.getElementById('teacherBatch').value = '';
+    document.getElementById('teacherQualification').value = '';
+    document.getElementById('teacherExperience').value = '';
+    document.getElementById('teacherJoiningDate').value = '';
+    document.getElementById('teacherStatus').value = 'Active';
+    clearTeacherRegistrationPhoto();
+    fillTeacherAcademicDropdowns();
+  });
+
+  document.getElementById('teacherCourse').addEventListener('change', function() {
+    document.getElementById('teacherLevel').value = '';
+    fillTeacherAcademicDropdowns();
+  });
+
+  (function initTeacherPhotoPreview() {
+    var prev = document.getElementById('teacherPhotoPreview');
+    if (prev && !prev.getAttribute('src')) prev.src = REG_PHOTO_PLACEHOLDER_SVG;
+  })();
+  document.getElementById('teacherPhoto').addEventListener('change', function() {
+    var f = this.files[0];
+    var img = document.getElementById('teacherPhotoPreview');
+    if (!f) {
+      if (img) img.src = REG_PHOTO_PLACEHOLDER_SVG;
+      window._teacherPhotoBase64 = '';
+      return;
+    }
+    var r = new FileReader();
+    r.onload = function() {
+      var b = r.result;
+      if (b && String(b).indexOf('base64') >= 0) {
+        window._teacherPhotoBase64 = b;
+        if (img) img.src = b;
+      }
+    };
+    r.readAsDataURL(f);
+  });
+  var btnRmTchPh = document.getElementById('btnRemoveTeacherPhoto');
+  if (btnRmTchPh) btnRmTchPh.addEventListener('click', function() { clearTeacherRegistrationPhoto(); });
+
+  var teacherDays = [], teacherMonths = [], teacherYears = [];
+  for (var i = 1; i <= 31; i++) teacherDays.push(i);
+  [{v:1,l:'Jan'},{v:2,l:'Feb'},{v:3,l:'Mar'},{v:4,l:'Apr'},{v:5,l:'May'},{v:6,l:'Jun'},{v:7,l:'Jul'},{v:8,l:'Aug'},{v:9,l:'Sep'},{v:10,l:'Oct'},{v:11,l:'Nov'},{v:12,l:'Dec'}].forEach(function(m){ teacherMonths.push(m); });
+  for (var y = new Date().getFullYear(); y >= 1950; y--) teacherYears.push(y);
+  (function fillTeacherDobDropdowns() {
+    var selDay = document.getElementById('teacherDobDay');
+    var selMonth = document.getElementById('teacherDobMonth');
+    var selYear = document.getElementById('teacherDobYear');
+    if (selDay) selDay.innerHTML = '<option value="">Day</option>' + teacherDays.map(function(d){ return '<option value="'+d+'">'+d+'</option>'; }).join('');
+    if (selMonth) selMonth.innerHTML = '<option value="">Month</option>' + teacherMonths.map(function(m){ return '<option value="'+m.v+'">'+m.l+'</option>'; }).join('');
+    if (selYear) selYear.innerHTML = '<option value="">Year</option>' + teacherYears.map(function(y){ return '<option value="'+y+'">'+y+'</option>'; }).join('');
+  })();
+  function updateTeacherAgeFromDob() {
+    var d = document.getElementById('teacherDobDay').value;
+    var m = document.getElementById('teacherDobMonth').value;
+    var y = document.getElementById('teacherDobYear').value;
+    var ageEl = document.getElementById('teacherAge');
+    if (!d || !m || !y) { ageEl.value = ''; return; }
+    var day = parseInt(d, 10);
+    var month = parseInt(m, 10) - 1;
+    var year = parseInt(y, 10);
+    var birth = new Date(year, month, day);
+    var today = new Date();
+    if (birth > today) { ageEl.value = ''; return; }
+    var age = today.getFullYear() - birth.getFullYear();
+    if (today.getMonth() < birth.getMonth() || (today.getMonth() === birth.getMonth() && today.getDate() < birth.getDate())) age--;
+    ageEl.value = age;
+  }
+  document.getElementById('teacherDobDay').addEventListener('change', updateTeacherAgeFromDob);
+  document.getElementById('teacherDobMonth').addEventListener('change', updateTeacherAgeFromDob);
+  document.getElementById('teacherDobYear').addEventListener('change', updateTeacherAgeFromDob);
+
+  function refreshList() {
+    loadTeachersFromApi(function(list) {
+      fillTeacherCourseFilter();
+      var courseFilter = (document.getElementById('filterCourse') && document.getElementById('filterCourse').value) || '';
+      var statusFilter = (document.getElementById('filterStatus') && document.getElementById('filterStatus').value) || '';
+      var search = (document.getElementById('listSearch') && document.getElementById('listSearch').value) || '';
+      search = search.toLowerCase().trim();
+      var filtered = list.filter(function(t) {
+        if (courseFilter && (t.course || '').trim() !== courseFilter) return false;
+        if (statusFilter && (t.status || '').trim() !== statusFilter) return false;
+        var tid = (t.teacher_id || t.username || '').toString();
+        if (search && (t.name || '').toLowerCase().indexOf(search) === -1 && tid.toLowerCase().indexOf(search) === -1) return false;
+        return true;
+      });
+      document.getElementById('listTotal').textContent = filtered.length;
+      var tbody = document.getElementById('teachersBody');
+      tbody.innerHTML = filtered.map(function(t, i) {
+        var no = i + 1;
+        var name = (t.name || '').toString();
+        var course = (t.course || '-').toString();
+        var gender = (t.gender || '-').toString();
+        var phone = (t.phone || '-').toString();
+        var status = (t.status || 'Active').toString();
+        var tid = (t.teacher_id || t.username || '').toString();
+        return '<tr><td>'+no+'</td><td>'+esc(name)+'</td><td>'+esc(course)+'</td><td>'+esc(gender)+'</td><td>'+esc(phone)+'</td><td>'+esc(status)+'</td><td><button type="button" class="btn-sm btn-edit-sm btn-edit" data-username="'+esc(tid)+'" aria-label="Edit">Edit</button><button type="button" class="btn-sm btn-delete-sm btn-delete" data-username="'+esc(tid)+'" aria-label="Delete">Delete</button></td></tr>';
+      }).join('');
+      document.getElementById('listHint').textContent = !window.SchoolAPI || !window.SchoolAPI.getTeachers ? 'Connect backend (app.py) to load teachers.' : (list.length ? 'Data from school backend.' : 'No teachers. Use Teacher Registration to add.');
+      bindListButtons();
+    });
+  }
+
+  function bindListButtons() {
+    document.querySelectorAll('#teachersBody .btn-edit').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        var uname = btn.getAttribute('data-username');
+        var t = allTeachers.find(function(x) { return (x.username || x.teacher_id || '') === uname; });
+        setFormFromTeacher(t || { username: uname, teacher_id: uname });
+        switchView('registration');
+      });
+    });
+    document.querySelectorAll('#teachersBody .btn-delete').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        var uname = btn.getAttribute('data-username');
+        if (!confirm('Delete teacher ' + uname + '?')) return;
+        SchoolAPI.deleteTeacher(uname).then(function(r) {
+          if (r && r.ok) loadTeachersFromApi(refreshList);
+          else alert(r && r.error ? r.error : 'Delete failed');
+        }).catch(function() { alert('Delete failed'); });
+      });
+    });
+  }
+
+  document.getElementById('btnSearch').addEventListener('click', refreshList);
+  document.getElementById('filterCourse').addEventListener('change', refreshList);
+  document.getElementById('filterStatus').addEventListener('change', refreshList);
+
+  function buildTeacherCardHtml(t) {
+      t = t || {};
+      var uname = (t.teacher_id || t.username || '').toString();
+      var name = (t.name || '').toString().trim() || '—';
+      var email = (t.email || '').toString().trim() || '—';
+      var phone = (t.phone || '').toString().trim() || '—';
+      var meta = (t.course || t.level || t.batch || '—').toString();
+      var initial = name !== '—' ? name.charAt(0) : '?';
+      var avatarHtml = t.photo_data
+        ? '<img src="' + esc(t.photo_data) + '" alt="">'
+        : '<span>' + esc(initial) + '</span>';
+      return '<div class="profile-card" data-username="' + esc(uname) + '">' +
+        '<div class="profile-top"><div class="profile-avatar">' + avatarHtml + '</div><div>' +
+        '<h3 class="profile-name">' + esc(name) + '</h3><p class="profile-meta">' + esc(meta) + '</p></div></div>' +
+        '<div class="profile-contact">' +
+        '<div class="profile-contact-item"><span class="icon">✉</span><a href="' + (email !== '—' ? 'mailto:' + esc(email) : '#') + '">' + esc(email) + '</a></div>' +
+        '<div class="profile-contact-item"><span class="icon">📞</span><a href="' + (phone !== '—' ? 'tel:' + esc(phone) : '#') + '">' + esc(phone) + '</a></div>' +
+        '</div><button type="button" class="btn-view-profile btn-view-profile-card">View Profile</button></div>';
+    }
+    function renderProfileCardsGrid() {
+      loadTeachersFromApi(function() {
+        var grid = document.getElementById('profileCardsGrid');
+        var hint = document.getElementById('profileCardsHint');
+        if (!grid) return;
+        if (allTeachers.length === 0) {
+          grid.innerHTML = '';
+          if (hint) hint.style.display = 'block';
+          return;
+        }
+        if (hint) hint.style.display = 'none';
+        grid.innerHTML = allTeachers.map(function(t) { return buildTeacherCardHtml(t); }).join('');
+        grid.querySelectorAll('.btn-view-profile-card').forEach(function(btn) {
+          btn.addEventListener('click', function() {
+            var card = btn.closest('.profile-card');
+            var uname = card && card.getAttribute('data-username');
+            if (!uname) return;
+            var t = allTeachers.find(function(x) { return (x.username || x.teacher_id || '') === uname; });
+            if (t) openTeacherDetailModal(t);
+          });
+        });
+      });
+    }
+    function normalizeTeacherPhotoUrl(tpd) {
+      var tpds = String(tpd || '');
+      if (!tpds) return '';
+      if (tpds.indexOf('data:image') === 0) return tpd;
+      if (tpds.indexOf('data:') === 0) return tpd;
+      if (tpds.indexOf('/9j') === 0) return 'data:image/jpeg;base64,' + tpd;
+      if (tpds.length > 80 && /^[A-Za-z0-9+/=\s]+$/.test(tpds.slice(0, 200))) return 'data:image/png;base64,' + tpds.replace(/\s/g, '');
+      return '';
+    }
+    function openTeacherDetailModal(t) {
+      t = t || {};
+      var displayName = (t.name || '—').toString().trim() || '—';
+      document.getElementById('teacherDetailTitle').textContent = displayName;
+      var photoUrl = normalizeTeacherPhotoUrl(t.photo_data);
+      var imgEl = document.getElementById('mdTeacherPhoto');
+      var fbEl = document.getElementById('mdTeacherPhotoFallback');
+      var initial = displayName && displayName !== '—' ? displayName.charAt(0).toUpperCase() : '?';
+      if (photoUrl && imgEl) {
+        imgEl.src = photoUrl;
+        imgEl.style.display = 'block';
+        if (fbEl) fbEl.style.display = 'none';
+      } else {
+        if (imgEl) {
+          imgEl.removeAttribute('src');
+          imgEl.style.display = 'none';
+        }
+        if (fbEl) {
+          fbEl.textContent = initial;
+          fbEl.style.display = 'flex';
+        }
+      }
+      document.getElementById('mdUsername').textContent = t.teacher_id || t.username || '—';
+      document.getElementById('mdDob').textContent = (t.date_of_birth || t.dob || '—').toString().slice(0, 10);
+      document.getElementById('mdAge').textContent = t.age || '—';
+      document.getElementById('mdGender').textContent = t.gender || '—';
+      document.getElementById('mdBloodGroup').textContent = t.blood_group || t.blood_type || '—';
+      document.getElementById('mdNrc').textContent = t.nrc || '—';
+      document.getElementById('mdEmail').textContent = t.email || '—';
+      document.getElementById('mdPhone').textContent = t.phone || '—';
+      document.getElementById('mdCourse').textContent = t.course || '—';
+      document.getElementById('mdLevel').textContent = t.level || '—';
+      document.getElementById('mdBatch').textContent = t.batch || '—';
+      document.getElementById('mdQualification').textContent = t.qualification || '—';
+      document.getElementById('mdExperience').textContent = t.experience || '—';
+      document.getElementById('mdJoining').textContent = (t.joining_date || '—').toString().slice(0, 10);
+      document.getElementById('mdStatus').textContent = t.status || 'Active';
+      document.getElementById('teacherDetailModal').classList.add('show');
+    }
+    document.getElementById('teacherDetailModalClose').addEventListener('click', function() {
+      document.getElementById('teacherDetailModal').classList.remove('show');
+    });
+    document.getElementById('teacherDetailModal').addEventListener('click', function(e) {
+      if (e.target === this) this.classList.remove('show');
+    });
+
+  function fillDocTeacherSelect() {
+    var sel = document.getElementById('docTeacherSelect');
+    var tidKey = function(t) { return (t.teacher_id || t.username || '').toString(); };
+    sel.innerHTML = '<option value="">-- Select teacher --</option>' + allTeachers.map(function(t) {
+      var id = tidKey(t);
+      return '<option value="' + esc(id) + '">' + esc((t.name || '') + ' (' + id + ')') + '</option>';
+    }).join('');
+  }
+
+  var docSelectedFile = null;
+  var uploadZone = document.getElementById('uploadZone');
+  uploadZone.addEventListener('click', function() { document.getElementById('docFileInput').click(); });
+  var inp = document.createElement('input');
+  inp.type = 'file';
+  inp.id = 'docFileInput';
+  inp.accept = 'image/*,.pdf';
+  inp.style.display = 'none';
+  uploadZone.appendChild(inp);
+  inp.addEventListener('change', function() {
+    docSelectedFile = this.files[0];
+    document.getElementById('uploadFileLabel').textContent = docSelectedFile ? docSelectedFile.name : 'No file selected.';
+  });
+  uploadZone.addEventListener('dragover', function(e) { e.preventDefault(); uploadZone.classList.add('dragover'); });
+  uploadZone.addEventListener('dragleave', function() { uploadZone.classList.remove('dragover'); });
+  uploadZone.addEventListener('drop', function(e) {
+    e.preventDefault();
+    uploadZone.classList.remove('dragover');
+    if (e.dataTransfer.files.length) { inp.files = e.dataTransfer.files; docSelectedFile = e.dataTransfer.files[0]; document.getElementById('uploadFileLabel').textContent = docSelectedFile ? docSelectedFile.name : 'No file selected.'; }
+  });
+
+  document.getElementById('docTeacherSelect').addEventListener('change', onDocTeacherChange);
+
+  function onDocTeacherChange() {
+    var teacherId = document.getElementById('docTeacherSelect').value;
+    if (!teacherId) {
+      document.getElementById('docCategoriesBody').innerHTML = DOC_TYPES.map(function(t, i) { return '<tr><td>'+(i+1)+'</td><td>'+esc(t)+'</td><td>—</td><td>—</td></tr>'; }).join('');
+      document.getElementById('docGallery').innerHTML = '';
+      return;
+    }
+    if (!window.SchoolAPI || !SchoolAPI.getTeacherDocuments) {
+      document.getElementById('docCategoriesBody').innerHTML = DOC_TYPES.map(function(t, i) { return '<tr><td>'+(i+1)+'</td><td>'+esc(t)+'</td><td>—</td><td>—</td></tr>'; }).join('');
+      document.getElementById('docGallery').innerHTML = '<p class="text-muted">Connect backend to manage documents.</p>';
+      return;
+    }
+    SchoolAPI.getTeacherDocuments(teacherId).then(function(docs) {
+      var byType = {};
+      docs.forEach(function(d) { byType[d.document_type || ''] = d; });
+      document.getElementById('docCategoriesBody').innerHTML = DOC_TYPES.map(function(t, i) {
+        var d = byType[t];
+        var up = d ? '✔ ' + (d.uploaded_date || d.last_updated || '') : '✖';
+        var last = d ? (d.last_updated || d.uploaded_date || '—') : '—';
+        return '<tr><td>'+(i+1)+'</td><td>'+esc(t)+'</td><td>'+up+'</td><td>'+last+'</td></tr>';
+      }).join('');
+      var gallery = document.getElementById('docGallery');
+      gallery.innerHTML = docs.map(function(d) {
+        var thumb = (d.mime_type && d.mime_type.indexOf('image') >= 0 && d.file_data) ? '<img src="' + d.file_data + '" class="thumb" alt="">' : '<div class="thumb" style="background:#eee; display:flex; align-items:center; justify-content:center;">PDF</div>';
+        return '<div class="doc-card" data-id="'+esc(d.id)+'"><div class="title">'+esc(d.document_type || 'Document')+'</div>'+thumb+'<div class="date">'+(d.uploaded_date || '')+'</div><div class="actions"><button type="button" class="btn-view-doc" aria-label="View document">View</button><button type="button" class="btn-delete-doc" aria-label="Delete document">Delete</button></div></div>';
+      }).join('');
+      gallery.querySelectorAll('.btn-view-doc').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          var card = btn.closest('.doc-card');
+          var id = card.getAttribute('data-id');
+          var d = docs.find(function(x) { return (x.id || '') === id; });
+          if (d && d.file_data) window.open(d.file_data, '_blank');
+        });
+      });
+      gallery.querySelectorAll('.btn-delete-doc').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          var card = btn.closest('.doc-card');
+          var id = card.getAttribute('data-id');
+          if (!confirm('Delete this document?')) return;
+          SchoolAPI.deleteTeacherDocument(id).then(function() { onDocTeacherChange(); });
+        });
+      });
+    }).catch(function() {
+      document.getElementById('docCategoriesBody').innerHTML = DOC_TYPES.map(function(t, i) { return '<tr><td>'+(i+1)+'</td><td>'+esc(t)+'</td><td>—</td><td>—</td></tr>'; }).join('');
+      document.getElementById('docGallery').innerHTML = '';
+    });
+  }
+
+  document.getElementById('btnUploadDoc').addEventListener('click', function() {
+    var teacherId = document.getElementById('docTeacherSelect').value;
+    if (!teacherId) { alert('Select a teacher first.'); return; }
+    if (!docSelectedFile) { alert('Choose a file.'); return; }
+    if (docSelectedFile.size > 5 * 1024 * 1024) { alert('Max 5MB per file.'); return; }
+    var type = document.getElementById('docTypeSelect').value;
+    var desc = document.getElementById('docDescription').value.trim();
+    var reader = new FileReader();
+    reader.onload = function() {
+      var entry = {
+        teacher_id: teacherId,
+        document_type: type,
+        file_name: docSelectedFile.name,
+        mime_type: docSelectedFile.type || 'application/octet-stream',
+        file_data: reader.result,
+        description: desc,
+        uploaded_date: new Date().toISOString().slice(0, 10),
+        last_updated: new Date().toISOString().slice(0, 10)
+      };
+      SchoolAPI.addTeacherDocument(entry).then(function() {
+        docSelectedFile = null;
+        inp.value = '';
+        document.getElementById('uploadFileLabel').textContent = 'No file selected.';
+        document.getElementById('docDescription').value = '';
+        onDocTeacherChange();
+      }).catch(function() { alert('Upload failed.'); });
+    };
+    reader.readAsDataURL(docSelectedFile);
+  });
+
+  document.getElementById('btnCancelUpload').addEventListener('click', function() {
+    docSelectedFile = null;
+    inp.value = '';
+    document.getElementById('uploadFileLabel').textContent = 'No file selected.';
+  });
+
+  document.getElementById('btnImportCsv').addEventListener('click', function() {
+    var input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.csv';
+    input.onchange = function() {
+      if (!this.files[0] || !SchoolAPI) return;
+      var fr = new FileReader();
+      fr.onload = function() {
+        var text = fr.result;
+        var lines = text.split(/\r?\n/).filter(function(l) { return l.trim(); });
+        if (lines.length < 2) { alert('CSV must have header and at least one row.'); return; }
+        var headers = lines[0].split(',').map(function(h) { return h.trim().replace(/^"|"$/g, ''); });
+        var map = function(row) {
+          var vals = row.match(/(?:[^,"]+|"[^"]*")+/g) || [];
+          var o = {}; headers.forEach(function(h, i) { o[h] = (vals[i] || '').replace(/^"|"$/g, '').trim(); });
+          return o;
+        };
+        var count = 0;
+        function next(i) {
+          if (i >= lines.length - 1) { alert('Imported ' + count + ' teachers.'); loadTeachersFromApi(refreshList); return; }
+          var obj = map(lines[i + 1]);
+          var tid = (obj.teacher_id || obj['Teacher ID'] || obj.username || obj['Username'] || '').toString().trim() || ('TCH_' + Math.floor(1000 + Math.random() * 9000));
+          obj.username = tid;
+          obj.teacher_id = tid;
+          if (!obj.name) obj.name = (obj.name || obj['Name'] || tid).toString().trim();
+          SchoolAPI.addTeacher(obj).then(function() { count++; next(i + 1); }).catch(function() { next(i + 1); });
+        }
+        next(0);
+      };
+      fr.readAsText(this.files[0], 'UTF-8');
+    };
+    input.click();
+  });
+
+  document.getElementById('btnExportCsv').addEventListener('click', function() {
+    var headers = ['teacher_id','name','course','level','batch','gender','phone','email','nrc','blood_group','qualification','experience','joining_date','status'];
+    var rows = allTeachers.map(function(t) {
+      var tid = (t.teacher_id || t.username || '').toString();
+      return headers.map(function(h) {
+        var v = h === 'teacher_id' ? tid : (t[h] || (t.blood_type && h === 'blood_group' ? t.blood_type : '')).toString();
+        if (v.indexOf(',') >= 0 || v.indexOf('"') >= 0) v = '"' + v.replace(/"/g, '""') + '"';
+        return v;
+      }).join(',');
+    });
+    var csv = [headers.join(','), rows.join('\n')].join('\n');
+    var a = document.createElement('a');
+    a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent('\uFEFF' + csv);
+    a.download = 'teachers_' + new Date().toISOString().slice(0, 10) + '.csv';
+    a.click();
+  });
+
+  switchView(getInitialTeacherView());
+
+  loadTeacherAcademicData();
+  loadTeachersFromApi(function() {
+    refreshList();
+    fillDocTeacherSelect();
+  });
+})();
+  </script>
+  <script src="../assets/js/admin-badge.js"></script>
+  <script src="../assets/js/dashboard-sidebar.js" defer></script>
+</body>
+</html>

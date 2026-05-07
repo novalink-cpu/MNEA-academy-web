@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="my">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="../assets/js/desktop-layout-viewport.js"></script>
+  <title>Teacher Dashboard | Myanmar New Era Academy</title>
+  <link rel="stylesheet" href="../assets/css/main.css">
+  <link rel="stylesheet" href="../assets/css/dashboard.css">
+  <link rel="stylesheet" href="../assets/css/teacher-portal.css">
+</head>
+<body class="admin-dashboard-glass" data-toolbar="teacher" data-notif-admin-base="../admin/">
+  <div class="dashboard-wrap glass-dashboard">
+    <aside class="dashboard-sidebar">
+      <a href="../public-page/index.html" class="logo-link"><span class="logo-brand-row"><img src="../photo/logo.png" alt="" class="logo-mark-img" width="72" decoding="async" /><span class="logo-headlines"><span class="logo-title-line">MYANMAR</span><span class="logo-title-line">NEW ERA</span></span></span></a>
+      <nav>
+        <a href="dashboard.html" class="active">Dashboard</a>
+        <a href="students.html">My Students</a>
+        <a href="attendance.html">Take Attendance</a>
+        <a href="attendance-records.html">My Records</a>
+        <a href="marks.html">Marks Entry</a>
+        <a href="materials.html">Lesson Materials</a>
+        <a href="account-settings.html">Teacher profile</a>
+      </nav>
+    </aside>
+    <main class="dashboard-main">
+      <div class="dashboard-header glass-toolbar">
+        <div>
+          <p class="dashboard-toolbar-title" data-lang-en="Teacher Dashboard" data-lang-my="Teacher Dashboard">Teacher Dashboard</p>
+          <p class="teacher-toolbar-sub">Myanmar New Era International Education Centre · <span id="teacherToolbarRole">Teacher</span> · <strong id="userName">—</strong></p>
+        </div>
+        <div class="auth-info">
+          <div class="notification-wrap">
+            <button type="button" class="btn-notification" id="btnNotification" aria-haspopup="true" aria-expanded="false">
+              &#x1F514; <span id="notificationLabel">Notifications</span> (<span id="notificationCount" class="notification-count-num">0</span>)
+              <span class="notification-badge" id="notificationBadge" style="display:none;">0</span>
+            </button>
+            <div class="notification-dropdown" id="notificationDropdown" role="menu">
+              <h3>Notifications</h3>
+              <ul id="notificationList">
+                <li><a href="../admin/inquiries.html">Loading…</a></li>
+              </ul>
+            </div>
+          </div>
+          <div class="profile-wrap">
+            <button type="button" class="btn-profile" id="btnProfile" aria-haspopup="true" aria-expanded="false">&#x1F464; <span id="profileName">Teacher</span> &#x25BC;</button>
+            <div class="profile-dropdown" id="profileDropdown" role="menu">
+              <span class="profile-dropdown-label" style="display:block;padding:0.5rem 1rem;font-size:0.78rem;color:var(--text-muted);font-weight:700;text-transform:uppercase;">Teacher menu</span>
+              <a href="account-settings.html">Profile</a>
+              <a href="account-settings.html#password">Change password</a>
+              <a href="materials.html">Lesson materials</a>
+              <div class="divider"></div>
+              <button type="button" id="btnAdminToolbarLogout">Logout</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="teacher-context-card">
+        <div class="row">
+          <span style="font-weight:700;font-size:0.88rem;">School username</span>
+          <span class="text-muted" style="font-size:0.82rem;">Must match Academic → Batches → Teacher login</span>
+        </div>
+        <div class="row" style="margin-top:0.65rem;">
+          <input type="text" id="tsUser" placeholder="e.g. TCH_1426" autocomplete="username" aria-label="School username">
+          <button type="button" class="btn-primary" id="tsSaveUser">Save</button>
+          <span class="text-muted" style="font-size:0.85rem;">Saved: <strong id="dashSavedUser">—</strong></span>
+        </div>
+      </div>
+
+      <div class="teacher-action-grid">
+        <a href="students.html" class="teacher-action-tile">
+          <div class="tile-ico" aria-hidden="true">&#x1F465;</div>
+          <div class="tile-label">My Students</div>
+          <div class="tile-val" id="studentCount">—</div>
+        </a>
+        <a href="attendance.html" class="teacher-action-tile">
+          <div class="tile-ico" aria-hidden="true">&#x2705;</div>
+          <div class="tile-label">Take Attendance</div>
+          <div class="tile-hint">Open daily sheet</div>
+        </a>
+        <a href="attendance-records.html" class="teacher-action-tile">
+          <div class="tile-ico" aria-hidden="true">&#x1F4CA;</div>
+          <div class="tile-label">My Records</div>
+          <div class="tile-hint">History &amp; export</div>
+        </a>
+        <a href="marks.html" class="teacher-action-tile">
+          <div class="tile-ico" aria-hidden="true">&#x1F4DD;</div>
+          <div class="tile-label">Marks Entry</div>
+          <div class="tile-hint">Skills &amp; grades</div>
+        </a>
+      </div>
+
+      <p id="dashContextHint" class="text-muted" style="display:none;font-size:0.9rem;padding:0.75rem 1rem;border-radius:10px;border:1px solid var(--border);margin-bottom:1rem;line-height:1.55;"></p>
+
+      <div class="teacher-analytics-grid">
+        <div class="card teacher-analytics-card">
+          <h3>Attendance overview (your students)</h3>
+          <div id="teacherAnalyticsBars">
+            <p class="text-muted" style="margin:0;font-size:0.88rem;">Load students to see approximate rates.</p>
+          </div>
+        </div>
+        <div class="card teacher-analytics-card">
+          <h3>Today’s classes</h3>
+          <p class="text-muted" style="margin:0 0 0.5rem;font-size:0.85rem;">Timetable rows for today</p>
+          <div class="value" style="font-size:2rem;font-weight:800;color:var(--primary);" id="todayClassCount">—</div>
+        </div>
+      </div>
+
+      <div class="card mb-2 td-schedule-card">
+        <h3 style="margin-bottom:0.75rem;">
+          Today’s schedule
+          <span class="subdate" id="todayScheduleTitle"></span>
+        </h3>
+        <p class="text-muted mb-2" style="font-size:0.88rem;">From Academic → batch timetables (Mon, Tue, Wed…).</p>
+        <div class="table-wrap">
+          <table class="dashboard-table" style="width:100%;">
+            <thead>
+              <tr><th>Time</th><th>Batch</th><th>Subject</th></tr>
+            </thead>
+            <tbody id="todayScheduleBody">
+              <tr><td colspan="3" class="text-muted">Save your username and refresh.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+  <script src="../assets/js/firebase-config.js"></script>
+  <script src="../assets/js/auth.js"></script>
+  <script src="../assets/js/school-api.js"></script>
+  <script src="../assets/js/content-firebase.js"></script>
+  <script src="../assets/js/admin-top-toolbar.js"></script>
+  <script src="../assets/js/teacher-school.js"></script>
+  <script src="../assets/js/lang-switcher.js"></script>
+  <script>
+    (function() {
+      var user = window.AcademyAuth && AcademyAuth.currentUser();
+      if (!user) {
+        window.location.href = '../public-page/login.html?redirect=teacher/dashboard.html';
+        return;
+      }
+      AcademyAuth.getUserProfile(user.uid, function(profile) {
+        var role = (profile && profile.role) || 'student';
+        if (role !== 'teacher' && role !== 'admin') {
+          window.location.href = '../student/dashboard.html';
+          return;
+        }
+        var name = (profile && profile.displayName) || user.email || 'Teacher';
+        document.getElementById('userName').textContent = name;
+      });
+      if (window.AdminTopToolbar) AdminTopToolbar.init();
+
+      var tsUser = document.getElementById('tsUser');
+      function syncUserDisp() {
+        var u = window.TeacherSchool ? TeacherSchool.getUsername() : '';
+        document.getElementById('dashSavedUser').textContent = u || '—';
+        if (tsUser) tsUser.value = u;
+      }
+      syncUserDisp();
+      document.getElementById('tsSaveUser').addEventListener('click', function() {
+        if (window.TeacherSchool) TeacherSchool.setUsername(tsUser ? tsUser.value : '');
+        syncUserDisp();
+        refreshStats();
+      });
+
+      function renderAnalyticsBars(batches) {
+        var el = document.getElementById('teacherAnalyticsBars');
+        if (!el) return;
+        if (!batches || !batches.length) {
+          el.innerHTML = '<p class="text-muted" style="margin:0;font-size:0.88rem;">No batch data.</p>';
+          return;
+        }
+        var max = 100;
+        el.innerHTML = batches.slice(0, 6).map(function(b) {
+          var rate = b.avg_rate != null ? Math.min(100, Math.max(0, b.avg_rate)) : 0;
+          var w = Math.round((rate / max) * 100);
+          var title = (b.batch_title || b.batch_name || 'Batch').replace(/</g, '&lt;');
+          return '<div class="t-bar-row"><span>' + title.slice(0, 14) + (title.length > 14 ? '…' : '') + '</span><div class="t-bar-track"><div class="t-bar-fill" style="width:' + w + '%;"></div></div><span class="t-bar-val">' + Math.round(rate) + '%</span></div>';
+        }).join('');
+      }
+
+      function refreshStats() {
+        document.getElementById('studentCount').textContent = '…';
+        var tbody = document.getElementById('todayScheduleBody');
+        var titleEl = document.getElementById('todayScheduleTitle');
+        var hintEl = document.getElementById('dashContextHint');
+        var now = new Date();
+        titleEl.textContent = '(' + now.toLocaleDateString('en-GB', { weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric' }) + ')';
+        function setHint(html) {
+          if (!hintEl) return;
+          if (html) {
+            hintEl.innerHTML = html;
+            hintEl.style.display = 'block';
+          } else {
+            hintEl.textContent = '';
+            hintEl.style.display = 'none';
+          }
+        }
+        setHint('');
+        if (!window.TeacherSchool) {
+          document.getElementById('studentCount').textContent = '—';
+          return;
+        }
+        var days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+        var todayDay = days[new Date().getDay()];
+        var u = TeacherSchool.getUsername();
+        Promise.all([
+          TeacherSchool.loadMyStudents(),
+          TeacherSchool.loadBatches(),
+          u && window.SchoolAPI && SchoolAPI.getTeacherStudentsAttendanceSummary
+            ? SchoolAPI.getTeacherStudentsAttendanceSummary(u)
+            : Promise.resolve(null)
+        ]).then(function(triple) {
+          var ms = triple[0];
+          var r = triple[1];
+          var att = triple[2];
+          var sn = ms && ms.ok && ms.students ? ms.students.length : 0;
+          document.getElementById('studentCount').textContent = ms && ms.ok ? String(sn) : '—';
+
+          if (att && att.ok && att.batches) {
+            var bars = att.batches.map(function(b) {
+              var studs = b.students || [];
+              var sum = 0, n = 0;
+              studs.forEach(function(s) {
+                if (s.attendance_rate != null) {
+                  sum += Number(s.attendance_rate);
+                  n++;
+                }
+              });
+              return {
+                batch_title: b.batch_title || b.batch_name,
+                avg_rate: n ? sum / n : 0
+              };
+            });
+            renderAnalyticsBars(bars);
+          } else {
+            renderAnalyticsBars([]);
+          }
+
+          if (!r || !r.ok) {
+            tbody.innerHTML = '<tr><td colspan="3" class="text-muted">Could not load batches (check API).</td></tr>';
+            document.getElementById('todayClassCount').textContent = '—';
+            if (u) setHint('<strong>Tip:</strong> Run <code>python app.py</code> and open this site from the school port.');
+            return;
+          }
+          var batchMap = {};
+          (r.batches || []).forEach(function(b) {
+            batchMap[Number(b.id)] = {
+              name: b.name || b.id,
+              schedule: (b.schedule || '').trim()
+            };
+          });
+          var nBatch = (r.batches || []).length;
+          document.getElementById('todayClassCount').textContent = '…';
+          if (!u) {
+            tbody.innerHTML = '<tr><td colspan="3" class="text-muted">Enter school username above and click Save.</td></tr>';
+            document.getElementById('todayClassCount').textContent = '—';
+            return;
+          }
+          if (nBatch === 0) {
+            tbody.innerHTML = '<tr><td colspan="3" class="text-muted">No batches for this username.</td></tr>';
+            document.getElementById('todayClassCount').textContent = '0';
+            setHint('<strong>Setup:</strong> Admin → Academic → Batches → set <em>Teacher login</em> to <code>' + String(u).replace(/</g, '&lt;') + '</code>.');
+            return;
+          }
+          if (!window.SchoolAPI || !SchoolAPI.getBatchTimetables) {
+            tbody.innerHTML = '<tr><td colspan="3" class="text-muted">API unavailable.</td></tr>';
+            return;
+          }
+          return SchoolAPI.getBatchTimetables().then(function(tr) {
+            var rows = tr && tr.ok && tr.timetables ? tr.timetables : [];
+            var mine = rows.filter(function(x) {
+              return batchMap[Number(x.batch_id)] && String(x.day || '') === todayDay;
+            });
+            mine.sort(function(a, b) { return String(a.time).localeCompare(String(b.time)); });
+            document.getElementById('todayClassCount').textContent = String(mine.length);
+            if (!mine.length) {
+              tbody.innerHTML = '<tr><td colspan="3" class="text-muted">No timetable rows for <strong>' + todayDay + '</strong>.</td></tr>';
+              var parts = [];
+              if (sn === 0) parts.push('<strong>No students:</strong> assign students to your batches in Admin → Student Management.');
+              parts.push('<strong>No schedule:</strong> add timetable rows for today’s weekday in Admin → Academic.');
+              setHint(parts.join('<br><br>'));
+              return;
+            }
+            function esc(s) {
+              if (s == null) return '';
+              return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+            }
+            tbody.innerHTML = mine.map(function(row) {
+              var binfo = batchMap[row.batch_id] || {};
+              var bname = esc(row.batch_name || binfo.name);
+              var schedSub = binfo.schedule ? '<span style="font-size:0.82rem;color:var(--text-muted);display:block;margin-top:0.2rem;">(' + esc(binfo.schedule) + ')</span>' : '';
+              var course = (row.course_name || '').trim();
+              var subj = (row.subject || '').trim();
+              var subjCell = course && subj ? esc(course + ' - ' + subj) : esc(subj || course || '—');
+              return '<tr><td>' + esc(row.time) + '</td><td>' + bname + schedSub + '</td><td>' + subjCell + '</td></tr>';
+            }).join('');
+            if (sn === 0) setHint('<strong>No students:</strong> check batch assignments in Admin → Students.');
+          });
+        }).catch(function() {
+          document.getElementById('studentCount').textContent = '—';
+        });
+      }
+      refreshStats();
+    })();
+  </script>
+  <script src="../assets/js/dashboard-sidebar.js" defer></script>
+</body>
+</html>

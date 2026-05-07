@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="my">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="../assets/js/desktop-layout-viewport.js"></script>
+  <title>Marks Entry | Teacher | Myanmar New Era Academy</title>
+  <link rel="stylesheet" href="../assets/css/main.css">
+  <link rel="stylesheet" href="../assets/css/dashboard.css">
+  <link rel="stylesheet" href="../assets/css/teacher-portal.css">
+  <style>
+    .marks-table { width: 100%; border-collapse: collapse; background: var(--surface); border-radius: var(--radius); overflow: hidden; box-shadow: var(--shadow); }
+    .marks-table th, .marks-table td { padding: 0.6rem 0.75rem; border-bottom: 1px solid var(--border); }
+    .marks-table thead th { text-align: center; }
+    .marks-table td { text-align: left; }
+    .marks-table th { background: var(--table-header-bg); color: var(--table-header-text); font-weight: 700; }
+    .marks-table input { width: 4rem; padding: 0.35rem; border: 1px solid var(--border); border-radius: 4px; text-align: center; }
+    .marks-table .total, .marks-table .average, .marks-table .grade { font-weight: 700; color: var(--primary); }
+    .marks-meta { margin-bottom: 1rem; display: flex; flex-wrap: wrap; gap: 1rem; align-items: flex-end; }
+    .marks-meta label { font-weight: 600; display: block; margin-bottom: 0.25rem; font-size: 0.85rem; }
+    .marks-meta input, .marks-meta select { padding: 0.5rem; border-radius: var(--radius-sm); border: 1px solid var(--border); min-width: 8rem; }
+    .td-brand { text-align: center; font-size: 0.72rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-muted); font-weight: 700; margin-bottom: 0.35rem; }
+    .td-page-title { text-align: center; font-size: 1.05rem; font-weight: 800; margin: 0 0 0.35rem; }
+    .td-teacher-tag { text-align: center; font-size: 0.92rem; color: var(--text-muted); margin: 0 0 1rem; }
+    .marks-hint { font-size: 0.88rem; line-height: 1.55; color: var(--text-muted); margin-bottom: 1rem; }
+    .marks-footer { margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border); font-size: 0.88rem; color: var(--text-muted); line-height: 1.6; }
+  </style>
+</head>
+<body class="admin-dashboard-glass" data-toolbar="teacher" data-notif-admin-base="../admin/">
+  <div class="dashboard-wrap glass-dashboard">
+    <aside class="dashboard-sidebar">
+      <a href="../public-page/index.html" class="logo-link"><span class="logo-brand-row"><img src="../photo/logo.png" alt="" class="logo-mark-img" width="72" decoding="async" /><span class="logo-headlines"><span class="logo-title-line">MYANMAR</span><span class="logo-title-line">NEW ERA</span></span></span></a>
+      <nav>
+        <a href="dashboard.html">Dashboard</a>
+        <a href="students.html">My Students</a>
+        <a href="attendance.html">Take Attendance</a>
+        <a href="attendance-records.html">My Records</a>
+        <a href="marks.html" class="active">Marks Entry</a>
+        <a href="materials.html">Lesson Materials</a>
+        <a href="account-settings.html">Teacher profile</a>
+      </nav>
+    </aside>
+    <main class="dashboard-main">
+      <div class="dashboard-header glass-toolbar">
+        <div>
+          <p class="dashboard-toolbar-title">Marks Entry</p>
+          <p class="teacher-toolbar-sub">Skill-based marks · <span id="teacherToolbarRole">Teacher</span></p>
+        </div>
+        <div class="auth-info">
+          <div class="notification-wrap">
+            <button type="button" class="btn-notification" id="btnNotification" aria-haspopup="true" aria-expanded="false">
+              &#x1F514; <span id="notificationLabel">Notifications</span> (<span id="notificationCount" class="notification-count-num">0</span>)
+              <span class="notification-badge" id="notificationBadge" style="display:none;">0</span>
+            </button>
+            <div class="notification-dropdown" id="notificationDropdown" role="menu">
+              <h3>Notifications</h3>
+              <ul id="notificationList"><li class="notif-empty">…</li></ul>
+            </div>
+          </div>
+          <div class="profile-wrap">
+            <button type="button" class="btn-profile" id="btnProfile" aria-haspopup="true" aria-expanded="false">&#x1F464; <span id="profileName">Teacher</span> &#x25BC;</button>
+            <div class="profile-dropdown" id="profileDropdown" role="menu">
+              <a href="account-settings.html">Profile</a>
+              <a href="account-settings.html#password">Change password</a>
+              <div class="divider"></div>
+              <button type="button" id="btnAdminToolbarLogout">Logout</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card mb-2" id="marksPrintArea">
+        <p class="marks-hint">📌 Class / Batch  (Dashboard  username ) Academic  batch   class key  <strong>batch name</strong> </p>
+        <div class="marks-meta">
+          <div>
+            <label data-lang-en="Class / Batch" data-lang-my="Class / Batch">Class / Batch</label>
+            <select id="marksClass">
+              <option value="">Loading…</option>
+            </select>
+          </div>
+          <div>
+            <label data-lang-en="Exam" data-lang-my="Exam">Exam</label>
+            <select id="marksExam">
+              <option>Mid-Term</option>
+              <option>Final</option>
+              <option>Quiz 1</option>
+              <option>Quiz 2</option>
+            </select>
+          </div>
+          <button type="button" class="btn-primary" id="btnLoad" data-lang-en="Load" data-lang-my="Load">Load</button>
+          <button type="button" class="btn-primary" style="background: var(--success);" id="btnSave" data-lang-en="Save" data-lang-my="Save">Save to server</button>
+          <button type="button" class="btn-primary" id="btnMarksCsv" style="background:#fff;color:#0f172a;border:1px solid var(--border);">Export CSV</button>
+          <button type="button" class="btn-primary" id="btnMarksPdf" style="background:#fff;color:#0f172a;border:1px solid var(--border);">Print / PDF</button>
+        </div>
+        <div class="table-wrap overflow-x">
+          <table class="marks-table" id="marksTable">
+            <thead>
+              <tr>
+                <th style="width:2.5rem;">#</th>
+                <th data-lang-en="Student" data-lang-my="Student">Student</th>
+                <th data-lang-en="Myanmar" data-lang-my="Myanmar">Myanmar</th>
+                <th data-lang-en="English" data-lang-my="English">English</th>
+                <th data-lang-en="Math" data-lang-my="Math">Math</th>
+                <th data-lang-en="Science" data-lang-my="Science">Science</th>
+                <th data-lang-en="Total" data-lang-my="Total">Total</th>
+                <th data-lang-en="Average" data-lang-my="Average">Average</th>
+                <th data-lang-en="Grade" data-lang-my="Grade">Grade</th>
+                <th data-lang-en="Rank" data-lang-my="Rank">Rank</th>
+              </tr>
+            </thead>
+            <tbody id="marksBody"></tbody>
+          </table>
+        </div>
+        <div class="marks-footer">
+          <p style="margin:0 0 0.5rem;"><strong>📊 Grade Scale:</strong> 90+ A+ │ 80+ A │ 70+ B │ 60+ C │ 50+ D │ &lt;50 F</p>
+          <p style="margin:0;"><strong>💾 Auto-calculates:</strong> Total, Average, Grade, Rank</p>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+  <script src="../assets/js/firebase-config.js"></script>
+  <script src="../assets/js/auth.js"></script>
+  <script src="../assets/js/school-api.js"></script>
+  <script src="../assets/js/teacher-school.js"></script>
+  <script src="../assets/js/content-firebase.js"></script>
+  <script src="../assets/js/admin-top-toolbar.js"></script>
+  <script src="../assets/js/teacher-exports.js"></script>
+  <script src="../assets/js/lang-switcher.js"></script>
+  <script>
+    (function() {
+      var user = window.AcademyAuth && AcademyAuth.currentUser();
+      if (!user) { window.location.href = '../public-page/login.html?redirect=teacher/marks.html'; return; }
+      AcademyAuth.getUserProfile(user.uid, function(profile) {
+        var role = (profile && profile.role) || 'student';
+        if (role !== 'teacher' && role !== 'admin') {
+          window.location.href = '../student/dashboard.html';
+          return;
+        }
+        var name = (profile && profile.displayName) || user.email || 'Teacher';
+        var el = document.getElementById('profileName');
+        if (el) el.textContent = name;
+      });
+      if (window.AdminTopToolbar) AdminTopToolbar.init();
+
+      function esc(s) {
+        if (s == null) return '';
+        return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+      }
+
+      var SUBJECTS = ['myanmar', 'english', 'math', 'science'];
+      var DEMO_STUDENTS = [
+        { studentId: 'STD_susu', name: 'Su Su', myanmar: 85, english: 88, math: 92, science: 90 },
+        { studentId: 'STD_mgmg', name: 'Mg Mg', myanmar: 80, english: 75, math: 90, science: 85 },
+        { studentId: 'STD_ayeaye', name: 'Aye Aye', myanmar: 70, english: 82, math: 78, science: 80 },
+        { studentId: 'STD_koko', name: 'Ko Ko', myanmar: 65, english: 70, math: 68, science: 72 }
+      ];
+
+      function toGrade(average) {
+        if (average == null || isNaN(average)) return '—';
+        if (average >= 90) return 'A+';
+        if (average >= 80) return 'A';
+        if (average >= 70) return 'B';
+        if (average >= 60) return 'C';
+        if (average >= 50) return 'D';
+        return 'F';
+      }
+
+      function loadRows(callback) {
+        var classId = document.getElementById('marksClass').value;
+        var examKey = (document.getElementById('marksExam').value || 'Mid-Term').replace(/\s+/g, '_');
+        var fallback = DEMO_STUDENTS.map(function(s) { return Object.assign({}, s); });
+        if (window.SchoolAPI && SchoolAPI.getMarks) {
+          SchoolAPI.getMarks(classId, examKey).then(function(rows) {
+            callback(rows && rows.length ? rows : fallback);
+          }).catch(function() {
+            if (window.AcademyFirebase && AcademyFirebase.getMarks) {
+              AcademyFirebase.getMarks(classId, examKey, function(r) { callback(r && r.length ? r : fallback); });
+            } else callback(fallback);
+          });
+        } else if (window.AcademyFirebase && AcademyFirebase.getMarks) {
+          AcademyFirebase.getMarks(classId, examKey, function(rows) {
+            callback(rows && rows.length ? rows : fallback);
+          });
+        } else callback(fallback);
+      }
+
+      function saveRows(rows, callback) {
+        var classId = document.getElementById('marksClass').value;
+        var examKey = (document.getElementById('marksExam').value || 'Mid-Term').replace(/\s+/g, '_');
+        if (window.SchoolAPI && SchoolAPI.saveMarks) {
+          SchoolAPI.saveMarks(classId, examKey, rows).then(function(r) {
+            if (callback) callback(r && r.ok);
+          }).catch(function() {
+            if (window.AcademyFirebase && AcademyFirebase.saveMarks) {
+              AcademyFirebase.saveMarks(classId, examKey, rows, callback || function() {});
+            } else if (callback) callback(true);
+          });
+        } else if (window.AcademyFirebase && AcademyFirebase.saveMarks) {
+          AcademyFirebase.saveMarks(classId, examKey, rows, callback || function() {});
+        } else if (callback) callback(true);
+      }
+
+      function computeTotals(rows) {
+        return rows.map(function(r) {
+          var m = Number(r.myanmar) || 0, e = Number(r.english) || 0, ma = Number(r.math) || 0, s = Number(r.science) || 0;
+          r.total = m + e + ma + s;
+          r.average = r.total / 4;
+          r.grade = toGrade(r.average);
+          return r;
+        });
+      }
+
+      function assignRanks(rows) {
+        rows.sort(function(a, b) { return (b.average != null ? b.average : b.total || 0) - (a.average != null ? a.average : a.total || 0); });
+        rows.forEach(function(r, i) { r.rank = i + 1; });
+        return rows;
+      }
+
+      function render() {
+        loadRows(function(rows) {
+          rows = computeTotals(rows);
+          rows = assignRanks(rows);
+          var tbody = document.getElementById('marksBody');
+          tbody.innerHTML = rows.map(function(r) {
+            var id = r.studentId || r.name;
+            var total = r.total != null ? r.total : '—';
+            var avg = r.average != null ? (Math.round(r.average * 10) / 10) : '—';
+            return '<tr data-id="' + esc(id) + '">' +
+              '<td class="rank-num">' + (r.rank != null ? r.rank : '') + '</td>' +
+              '<td>' + esc(r.name || id) + '</td>' +
+              '<td><input type="number" min="0" max="100" data-subj="myanmar" value="' + (r.myanmar ?? '') + '"></td>' +
+              '<td><input type="number" min="0" max="100" data-subj="english" value="' + (r.english ?? '') + '"></td>' +
+              '<td><input type="number" min="0" max="100" data-subj="math" value="' + (r.math ?? '') + '"></td>' +
+              '<td><input type="number" min="0" max="100" data-subj="science" value="' + (r.science ?? '') + '"></td>' +
+              '<td class="total">' + total + '</td>' +
+              '<td class="average">' + avg + '</td>' +
+              '<td class="grade">' + (r.grade || '—') + '</td>' +
+              '<td class="rank">' + (r.rank != null ? r.rank : '—') + '</td></tr>';
+          }).join('');
+          tbody.querySelectorAll('input').forEach(function(inp) {
+            inp.addEventListener('input', function() {
+              var row = this.closest('tr');
+              var my = parseInt(row.querySelector('[data-subj="myanmar"]').value, 10) || 0;
+              var en = parseInt(row.querySelector('[data-subj="english"]').value, 10) || 0;
+              var ma = parseInt(row.querySelector('[data-subj="math"]').value, 10) || 0;
+              var sc = parseInt(row.querySelector('[data-subj="science"]').value, 10) || 0;
+              var total = my + en + ma + sc;
+              var avg = total / 4;
+              row.querySelector('.total').textContent = total;
+              row.querySelector('.average').textContent = Math.round(avg * 10) / 10;
+              row.querySelector('.grade').textContent = toGrade(avg);
+              var rows = getRowsFromTable();
+              assignRanks(rows);
+              tbody.querySelectorAll('tr').forEach(function(tr) {
+                var id = tr.getAttribute('data-id');
+                var match = rows.find(function(x) { return String(x.studentId) === String(id); });
+                var rankCell = tr.querySelector('.rank');
+                var numCell = tr.querySelector('.rank-num');
+                if (rankCell) rankCell.textContent = match ? match.rank : '—';
+                if (numCell) numCell.textContent = match ? String(match.rank) : '';
+              });
+            });
+          });
+        });
+      }
+
+      function getRowsFromTable() {
+        var tbody = document.getElementById('marksBody');
+        var rows = [];
+        tbody.querySelectorAll('tr').forEach(function(tr) {
+          var id = tr.getAttribute('data-id');
+          var my = parseInt(tr.querySelector('[data-subj="myanmar"]').value, 10) || 0;
+          var en = parseInt(tr.querySelector('[data-subj="english"]').value, 10) || 0;
+          var ma = parseInt(tr.querySelector('[data-subj="math"]').value, 10) || 0;
+          var sc = parseInt(tr.querySelector('[data-subj="science"]').value, 10) || 0;
+          var total = my + en + ma + sc;
+          var average = total / 4;
+          var tds = tr.querySelectorAll('td');
+          var nameText = tds[1] ? tds[1].textContent.trim() : '';
+          rows.push({
+            studentId: id,
+            name: nameText || id,
+            myanmar: my, english: en, math: ma, science: sc,
+            total: total, average: average, grade: toGrade(average)
+          });
+        });
+        return assignRanks(rows);
+      }
+
+      function fillBatchOptions(done) {
+        var sel = document.getElementById('marksClass');
+        if (!window.TeacherSchool) {
+          sel.innerHTML = '<option value="5A">Grade 5A (demo)</option><option value="5B">Grade 5B (demo)</option>';
+          if (done) done();
+          return;
+        }
+        TeacherSchool.loadBatches().then(function(r) {
+          if (!r || !r.ok || !r.batches || !r.batches.length) {
+            sel.innerHTML =
+              '<option value="">' + esc('Set username on Dashboard') + '</option>' +
+              '<option value="5A">Grade 5A (demo)</option><option value="5B">Grade 5B (demo)</option>';
+          } else {
+            sel.innerHTML = r.batches
+              .map(function(b) {
+                var v = (b.name || '').trim() || 'batch_' + b.id;
+                return '<option value="' + esc(v) + '">' + esc(v) + '</option>';
+              })
+              .join('');
+          }
+          if (done) done();
+        });
+      }
+
+      document.getElementById('btnLoad').addEventListener('click', render);
+      document.getElementById('btnSave').addEventListener('click', function() {
+        var rows = getRowsFromTable();
+        saveRows(rows, function() { alert('Saved and submitted to school records.'); });
+      });
+      document.getElementById('btnMarksCsv').addEventListener('click', function() {
+        var t = document.getElementById('marksTable');
+        if (!t || !window.TeacherExport) return;
+        var csv = TeacherExport.tableToCsv(t);
+        if (!csv || csv.split('\n').length < 2) {
+          alert('Load students first.');
+          return;
+        }
+        TeacherExport.downloadCsv('marks_export.csv', csv);
+      });
+      document.getElementById('btnMarksPdf').addEventListener('click', function() {
+        if (window.TeacherExport) TeacherExport.printElement(document.getElementById('marksPrintArea'));
+        else window.print();
+      });
+      fillBatchOptions(function() { render(); });
+    })();
+  </script>
+  <script src="../assets/js/dashboard-sidebar.js" defer></script>
+</body>
+</html>
+

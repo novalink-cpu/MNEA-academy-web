@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="../assets/js/desktop-layout-viewport.js"></script>
+  <title>My Attendance Records | Teacher | Myanmar New Era Academy</title>
+  <link rel="stylesheet" href="../assets/css/main.css">
+  <link rel="stylesheet" href="../assets/css/dashboard.css">
+  <link rel="stylesheet" href="../assets/css/teacher-portal.css">
+  <style>
+    .td-brand { text-align: center; font-size: 0.72rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-muted); font-weight: 700; margin-bottom: 0.35rem; }
+    .td-teacher-tag { text-align: center; font-size: 0.95rem; color: var(--text-muted); margin: 0.35rem 0 0; }
+    .att-toolbar { display: flex; flex-wrap: wrap; gap: 0.75rem 1rem; align-items: flex-end; margin-bottom: 1rem; }
+    .att-toolbar label { display: block; font-weight: 600; font-size: 0.85rem; margin-bottom: 0.25rem; }
+    .att-toolbar input, .att-toolbar select { padding: 0.5rem; border: 1px solid var(--border); border-radius: 8px; min-width: 10rem; }
+    .att-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+    .att-table th, .att-table td { padding: 0.55rem 0.65rem; border-bottom: 1px solid var(--border); }
+    .att-table thead th { text-align: center; }
+    .att-table td { text-align: left; }
+    .att-table th { background: var(--table-header-bg); color: var(--table-header-text); font-weight: 700; }
+    .rate-cell { font-weight: 600; }
+    .rec-section-title { font-size: 1.05rem; font-weight: 700; margin: 0 0 0.65rem; color: var(--text); }
+    .overall-bar { margin-top: 1rem; padding: 1rem 1.15rem; background: var(--surface-hover); border-radius: 10px; border: 1px solid var(--border); font-weight: 600; display: flex; align-items: center; flex-wrap: wrap; }
+    .overall-bar .trend { font-size: 1.15rem; letter-spacing: 0.08em; margin-left: 0.35rem; }
+    .hint-readonly { font-size: 0.88rem; color: var(--text-muted); margin-top: 1rem; }
+    .rec-hide-batch .rec-col-batch { display: none; }
+  </style>
+</head>
+<body class="admin-dashboard-glass" data-toolbar="teacher" data-notif-admin-base="../admin/">
+  <div class="dashboard-wrap glass-dashboard">
+    <aside class="dashboard-sidebar">
+      <a href="../public-page/index.html" class="logo-link"><span class="logo-brand-row"><img src="../photo/logo.png" alt="" class="logo-mark-img" width="72" decoding="async" /><span class="logo-headlines"><span class="logo-title-line">MYANMAR</span><span class="logo-title-line">NEW ERA</span></span></span></a>
+      <nav>
+        <a href="dashboard.html">Dashboard</a>
+        <a href="students.html">My Students</a>
+        <a href="attendance.html">Take Attendance</a>
+        <a href="attendance-records.html" class="active">My Records</a>
+        <a href="marks.html">Marks Entry</a>
+        <a href="materials.html">Lesson Materials</a>
+        <a href="account-settings.html">Teacher profile</a>
+      </nav>
+    </aside>
+    <main class="dashboard-main">
+      <div class="dashboard-header glass-toolbar">
+        <div>
+          <p class="dashboard-toolbar-title">My Records</p>
+          <p class="teacher-toolbar-sub">Attendance history · <span id="teacherToolbarRole">Teacher</span></p>
+        </div>
+        <div class="auth-info">
+          <div class="notification-wrap">
+            <button type="button" class="btn-notification" id="btnNotification" aria-haspopup="true" aria-expanded="false">
+              &#x1F514; <span id="notificationLabel">Notifications</span> (<span id="notificationCount" class="notification-count-num">0</span>)
+              <span class="notification-badge" id="notificationBadge" style="display:none;">0</span>
+            </button>
+            <div class="notification-dropdown" id="notificationDropdown" role="menu">
+              <h3>Notifications</h3>
+              <ul id="notificationList"><li class="notif-empty">…</li></ul>
+            </div>
+          </div>
+          <div class="profile-wrap">
+            <button type="button" class="btn-profile" id="btnProfile" aria-haspopup="true" aria-expanded="false">&#x1F464; <span id="profileName">Teacher</span> &#x25BC;</button>
+            <div class="profile-dropdown" id="profileDropdown" role="menu">
+              <a href="account-settings.html">Profile</a>
+              <a href="account-settings.html#password">Change password</a>
+              <div class="divider"></div>
+              <button type="button" id="btnAdminToolbarLogout">Logout</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card mb-2">
+        <p class="text-muted" style="margin-bottom:1rem;line-height:1.55;">📌 Read-only summaries (same batches as Academic Management). Subject comes from the batch timetable for that weekday.</p>
+        <div class="att-toolbar">
+          <div>
+            <label for="recBatch">Batch</label>
+            <select id="recBatch"><option value="">All my batches</option></select>
+          </div>
+          <div>
+            <label for="recFrom">From</label>
+            <input type="date" id="recFrom" lang="en-GB" placeholder="dd/mm/yyyy">
+          </div>
+          <div>
+            <label for="recTo">To</label>
+            <input type="date" id="recTo" lang="en-GB" placeholder="dd/mm/yyyy">
+          </div>
+          <button type="button" class="btn-primary" id="btnLoad">Load</button>
+          <button type="button" class="btn-primary" id="btnExportRec" style="background:#fff;color:#0f172a;border:1px solid var(--border);">Export CSV</button>
+        </div>
+        <h2 class="rec-section-title" id="recSectionTitle" style="display:none;"></h2>
+        <div class="table-wrap" id="recPrintArea">
+          <table class="att-table" id="recTable">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th class="rec-col-batch">Batch</th>
+                <th>Subject</th>
+                <th>🟢</th>
+                <th>🔴</th>
+                <th>🟡</th>
+                <th>Rate</th>
+              </tr>
+            </thead>
+            <tbody id="recBody"></tbody>
+          </table>
+        </div>
+        <p class="text-muted" id="recHint">Pick a range and load.</p>
+        <div class="overall-bar" id="overallBar" style="display:none;flex-wrap:wrap;gap:0.35rem;">
+          📊 Overall Rate: <span id="overallPct">0</span>%
+          <span style="margin:0 0.5rem;">|</span>
+          🟢 Present: <span id="overallPres">0</span>
+          <span style="margin:0 0.5rem;">|</span>
+          🔴 Absent: <span id="overallAbs">0</span>
+          <span style="margin:0 0.5rem;">|</span>
+          🟡 Late: <span id="overallLate">0</span>
+          <span class="trend" id="overallTrend" aria-hidden="true" style="margin-left:0.5rem;"></span>
+        </div>
+        <p class="hint-readonly">⚠️ Read-only: records cannot be edited here. Ask an admin to unlock a day if you need a correction, then use Take Attendance.</p>
+      </div>
+    </main>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+  <script src="../assets/js/firebase-config.js"></script>
+  <script src="../assets/js/auth.js"></script>
+  <script src="../assets/js/school-api.js"></script>
+  <script src="../assets/js/content-firebase.js"></script>
+  <script src="../assets/js/admin-top-toolbar.js"></script>
+  <script src="../assets/js/teacher-school.js"></script>
+  <script src="../assets/js/teacher-exports.js"></script>
+  <script>
+    (function() {
+      var user = window.AcademyAuth && AcademyAuth.currentUser();
+      if (!user) { window.location.href = '../public-page/login.html?redirect=teacher/attendance-records.html'; return; }
+      AcademyAuth.getUserProfile(user.uid, function(profile) {
+        var role = (profile && profile.role) || 'student';
+        if (role !== 'teacher' && role !== 'admin') {
+          window.location.href = '../student/dashboard.html';
+          return;
+        }
+        var name = (profile && profile.displayName) || user.email || 'Teacher';
+        var el = document.getElementById('profileName');
+        if (el) el.textContent = name;
+      });
+      if (window.AdminTopToolbar) AdminTopToolbar.init();
+
+      var recBatch = document.getElementById('recBatch');
+      var recFrom = document.getElementById('recFrom');
+      var recTo = document.getElementById('recTo');
+      var recTable = document.getElementById('recTable');
+      var end = new Date();
+      var start = new Date();
+      start.setMonth(start.getMonth() - 1);
+      recTo.value = end.toISOString().slice(0, 10);
+      recFrom.value = start.toISOString().slice(0, 10);
+
+      function esc(s) {
+        if (s == null) return '';
+        return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+      }
+
+      function fmtUsDate(iso) {
+        if (!iso) return '—';
+        var d = new Date(iso.slice(0, 10) + 'T12:00:00');
+        if (isNaN(d.getTime())) return iso;
+        return d.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' });
+      }
+
+      function sectionTitle(from, batchLabel) {
+        var d = from ? new Date(from.slice(0, 10) + 'T12:00:00') : new Date();
+        if (isNaN(d.getTime())) d = new Date();
+        var mo = d.toLocaleString('en-GB', { month: '2-digit', year: 'numeric' });
+        return '📅 ' + mo + ' — ' + (batchLabel || 'All my batches');
+      }
+
+      function trendFromDays(days) {
+        var sorted = days.slice().sort(function(a, b) { return String(a.date).localeCompare(String(b.date)); });
+        var last = sorted.slice(-6);
+        return last.map(function(d) {
+          var t = d.total || 0;
+          if (!t) return '⬜';
+          var r = ((d.present || 0) + (d.late || 0)) / t;
+          if (r >= 0.85) return '🟢';
+          if (r >= 0.55) return '🟡';
+          return '🔴';
+        }).join('');
+      }
+
+      function teacherU() {
+        return window.TeacherSchool ? TeacherSchool.getUsername() : '';
+      }
+
+      function fillBatches() {
+        var u = teacherU();
+        recBatch.innerHTML = '<option value="">All my batches</option>';
+        if (!u) return;
+        TeacherSchool.loadBatches().then(function(r) {
+          if (!r || !r.ok || !r.batches) return;
+          r.batches.forEach(function(b) {
+            var o = document.createElement('option');
+            o.value = String(b.id);
+            var lab = (b.name || b.id) + (b.schedule ? ' — ' + b.schedule : '') + (b.course_name ? ' · ' + b.course_name : '');
+            o.textContent = lab;
+            recBatch.appendChild(o);
+          });
+        });
+      }
+
+      document.getElementById('btnLoad').addEventListener('click', function() {
+        var u = teacherU();
+        if (!u) {
+          document.getElementById('recHint').textContent = 'Set your school username on the dashboard first.';
+          return;
+        }
+        var bid = recBatch.value;
+        var f = recFrom.value;
+        var t = recTo.value;
+        document.getElementById('recHint').textContent = 'Loading…';
+        var batchLabel = '';
+        if (bid) {
+          var opt = recBatch.options[recBatch.selectedIndex];
+          batchLabel = opt ? opt.textContent : '';
+        }
+        recTable.className = 'att-table' + (bid ? ' rec-hide-batch' : '');
+        document.getElementById('recSectionTitle').textContent = sectionTitle(f || t, batchLabel);
+        document.getElementById('recSectionTitle').style.display = 'block';
+        SchoolAPI.getAttendanceRecords(bid || null, f || null, t || null, { assignedTeacher: u }).then(function(r) {
+          if (!r || !r.ok) {
+            document.getElementById('recHint').textContent = (r && r.error) || 'Failed.';
+            document.getElementById('recBody').innerHTML = '';
+            document.getElementById('overallBar').style.display = 'none';
+            return;
+          }
+          var days = r.days || [];
+          if (!days.length) {
+            document.getElementById('recHint').textContent = 'No rows in this range.';
+            document.getElementById('recBody').innerHTML = '';
+            document.getElementById('overallBar').style.display = 'none';
+            return;
+          }
+          document.getElementById('recHint').textContent = '';
+          var tp = 0, ta = 0, tl = 0;
+          document.getElementById('recBody').innerHTML = days.map(function(row) {
+            tp += row.present || 0; ta += row.absent || 0; tl += row.late || 0;
+            var subj = row.subject ? esc(row.subject) : '—';
+            var batchCell = '<td class="rec-col-batch">' + (bid ? '' : esc(row.batch_name || '')) + '</td>';
+            return '<tr><td>' + esc(fmtUsDate(row.date)) + '</td>' + batchCell +
+              '<td>' + subj + '</td><td>' + row.present + '</td><td>' + row.absent + '</td><td>' + row.late + '</td><td class="rate-cell">' + (row.rate != null ? row.rate : '—') + '%</td></tr>';
+          }).join('');
+          var totMark = tp + ta + tl;
+          var pct = totMark ? Math.round((tp + tl) * 1000 / totMark) / 10 : 0;
+          document.getElementById('overallPct').textContent = String(pct);
+          document.getElementById('overallPres').textContent = String(tp);
+          document.getElementById('overallAbs').textContent = String(ta);
+          document.getElementById('overallLate').textContent = String(tl);
+          document.getElementById('overallTrend').textContent = trendFromDays(days);
+          document.getElementById('overallBar').style.display = 'block';
+        });
+      });
+
+      document.getElementById('btnExportRec').addEventListener('click', function() {
+        var t = document.getElementById('recTable');
+        if (!t || !window.TeacherExport) return;
+        var csv = TeacherExport.tableToCsv(t);
+        if (!csv || csv.split('\n').length < 2) {
+          alert('Load data first, then export.');
+          return;
+        }
+        TeacherExport.downloadCsv('attendance_records.csv', csv);
+      });
+
+      fillBatches();
+    })();
+  </script>
+  <script src="../assets/js/dashboard-sidebar.js" defer></script>
+</body>
+</html>

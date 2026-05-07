@@ -1,0 +1,1471 @@
+(function() {
+  'use strict';
+
+  var LISTENING_COUNT = 20;
+  var TOTAL_COUNT = 80;
+  var PASSING_SCORE = 50;
+  /** Raw online total (0–80) on Test 1A; at or above → continue with Test 2A before certificate. */
+  var ADAPTIVE_THRESHOLD_TO_TEST2A = 75;
+  var TEST_DURATION_SECONDS = 60 * 60;
+  var currentStep = 1;
+  var currentIndex = 0;
+  var answers = [];
+  var timeLeft = TEST_DURATION_SECONDS;
+  var timerId = null;
+  var playCount = 0;
+  var listenLimit = 2;
+  var selectedForm = 'test1a';
+  var lastCertPayload = null;
+  /** After 75+/80 on Test 1, full certificate payload for General Test 1 (Form A); cleared on new attempt. */
+  var lastRound1CertPayload = null;
+  /** Persists Test 1 answers/scores locally until Test 2 is submitted, then merged into payload as test1_snapshot. */
+  var TEST1_SNAPSHOT_LS_KEY = 'placement_test_bre_test1_snapshot';
+
+  var ONLINE_POINTS_MAX = 80;
+
+  function schoolContactDefaults() {
+    var addrEl = document.querySelector('[data-content-id="contact_address"]');
+    var addr = addrEl && addrEl.textContent ? String(addrEl.textContent).trim() : '';
+    if (!addr) addr = 'No.5311, Myat Lay Street, and Sagaing St, Ottarathiri 15015, Naypyitaw';
+    return {
+      schoolName: 'Myanmar New Era International Education Centre',
+      address: addr,
+      phone: '+95 9 885 511664, +95 9 885 511665',
+      email: 'office@mmnea.com',
+      officeHours: 'Monday–Friday, 9:00 AM – 5:00 PM'
+    };
+  }
+
+  function pad2(n) {
+    var x = Math.max(0, parseInt(n, 10) || 0);
+    return (x < 10 ? '0' : '') + x;
+  }
+
+  function totalOnlinePointsFromPayload(payload) {
+    var t = parseInt(payload.total_online_points, 10);
+    if (!isNaN(t) && t >= 0) return Math.min(ONLINE_POINTS_MAX, t);
+    var sum =
+      (parseInt(payload.listening_score, 10) || 0) +
+      (parseInt(payload.grammar_score, 10) || 0) +
+      (parseInt(payload.vocabulary_score, 10) || 0) +
+      (parseInt(payload.reading_score, 10) || 0);
+    return Math.min(ONLINE_POINTS_MAX, Math.max(0, sum));
+  }
+
+  function formatTotalOutOf80(raw) {
+    var x = Math.min(ONLINE_POINTS_MAX, Math.max(0, Math.round(parseFloat(raw) || 0)));
+    if (x >= ONLINE_POINTS_MAX) return String(ONLINE_POINTS_MAX);
+    return pad2(x);
+  }
+
+  function formatAwardDate(isoText) {
+    var d = new Date(isoText || '');
+    if (isNaN(d.getTime())) return String(isoText || '').slice(0, 10);
+    var months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+    return d.getDate() + ' ' + months[d.getMonth()] + ' ' + d.getFullYear();
+  }
+
+  /** Raw online total (0–80) → band column index */
+  function bandIndexFromRaw80(raw80, form) {
+    var r = Math.max(0, Math.min(80, parseInt(raw80, 10) || 0));
+    if (form === 'test1a') {
+      if (r >= 76) return 5;
+      if (r >= 69) return 4;
+      if (r >= 57) return 3;
+      if (r >= 36) return 2;
+      if (r >= 5) return 1;
+      return 0;
+    }
+    if (form === 'test2a') {
+      if (r >= 69) return 4;
+      if (r >= 56) return 3;
+      if (r >= 41) return 2;
+      if (r >= 27) return 1;
+      return 0;
+    }
+    return bandIndexFromRaw80(r, 'test2a');
+  }
+
+  var CERT_BANDS_TEST1A = {
+    ranges: ['0–4', '5–35', '36–56', '57–68', '69–75', '76–80'],
+    cefr: ['below A1', 'A1', 'A2', 'A2+', 'B1', 'B1+ or higher'],
+    gse: ['>22', '22–29', '30–35', '36–42', '43–50', '<50']
+  };
+
+  var CERT_BANDS_TEST2A = {
+    ranges: ['0–26', '27–40', '41–55', '56–68', '69–80'],
+    cefr: ['Below B1', 'B1', 'B1+', 'B2', 'B2+ or higher'],
+    cefrBand: [
+      'Below B1. Suggest taking General Test 1 for more accurate placement.',
+      'B1',
+      'B1+',
+      'B2',
+      'B2+ or higher'
+    ],
+    gse: ['< 43', '43–50', '51–58', '59–66', '> 66']
+  };
+
+  function getCertBandDefinitions(form) {
+    if (form === 'test1a') return CERT_BANDS_TEST1A;
+    if (form === 'test2a') return CERT_BANDS_TEST2A;
+    return CERT_BANDS_TEST2A;
+  }
+
+  function cefrFromRaw80(raw80, form) {
+    var def = getCertBandDefinitions(form);
+    var idx = bandIndexFromRaw80(raw80, form);
+    idx = Math.max(0, Math.min(def.cefr.length - 1, idx));
+    return def.cefr[idx];
+  }
+
+  function bandSummaryFromPayload(payload) {
+    var raw80 = totalOnlinePointsFromPayload(payload);
+    var form = payload.test_form || selectedForm;
+    var def = getCertBandDefinitions(form);
+    var idx = bandIndexFromRaw80(raw80, form);
+    idx = Math.max(0, Math.min(def.ranges.length - 1, idx));
+    return {
+      range: def.ranges[idx],
+      label: def.cefr[idx],
+      line: def.ranges[idx] + ' (out of 80) → ' + def.cefr[idx]
+    };
+  }
+
+  function buildCertExplainer(form) {
+    if (form === 'test1a') {
+      return (
+        '<span class="pt-cert-explainer-row">The <strong>score out of 80</strong> above is your <strong>raw</strong> total (Listening · Grammar · Vocabulary · Reading; max <strong>80</strong>).</span>' +
+        '<span class="pt-cert-explainer-row"><strong>General Test 1</strong>: three rows — bands, <strong>GSE</strong>, <strong>CEFR</strong>; your highlighted column is your band.</span>' +
+        '<span class="pt-cert-explainer-row"><strong>Writing</strong> and <strong>Speaking</strong> are assessed separately at the <strong>centre</strong>.</span>'
+      );
+    }
+    if (form === 'test2a') {
+      return (
+        '<span class="pt-cert-explainer-row">The <strong>score out of 80</strong> above is your <strong>raw</strong> total (Listening · Grammar · Vocabulary · Reading; max <strong>80</strong>).</span>' +
+        '<span class="pt-cert-explainer-row"><strong>General Test 2</strong>: three rows (score, GSE, CEFR). <strong>41–55</strong> → <strong>General Test 1</strong> for placement.</span>' +
+        '<span class="pt-cert-explainer-row"><strong>Writing</strong> and <strong>Speaking</strong> are assessed separately at the <strong>centre</strong>.</span>'
+      );
+    }
+    return (
+      '<span class="pt-cert-explainer-row">The <strong>score out of 80</strong> above is your <strong>raw</strong> total (Listening · Grammar · Vocabulary · Reading; max <strong>80</strong>).</span>' +
+      '<span class="pt-cert-explainer-row">Three rows: <strong>score bands</strong>, <strong>GSE</strong>, <strong>CEFR</strong> for your test form; your column is highlighted.</span>' +
+      '<span class="pt-cert-explainer-row"><strong>Writing</strong> and <strong>Speaking</strong> are assessed separately at the <strong>centre</strong>.</span>'
+    );
+  }
+
+  function certBandMatrixLinesForPdf(form) {
+    var def = getCertBandDefinitions(form);
+    var join = '  |  ';
+    var gseVals = [];
+    var i;
+    for (i = 0; i < def.ranges.length; i++) {
+      gseVals.push(def.gse && def.gse[i] != null ? String(def.gse[i]) : '—');
+    }
+    var cefrVals = [];
+    for (i = 0; i < def.ranges.length; i++) {
+      cefrVals.push(def.cefrBand && def.cefrBand[i] != null ? String(def.cefrBand[i]) : String(def.cefr[i]));
+    }
+    return [
+      'General test total score — ' + def.ranges.join(join),
+      'GSE level — ' + gseVals.join(join),
+      'CEFR level — ' + cefrVals.join(join)
+    ];
+  }
+
+  function sectionLevelFromRaw(raw, max, form) {
+    var m = Math.max(1, parseInt(max, 10) || 1);
+    var r = Math.max(0, parseInt(raw, 10) || 0);
+    var equiv80 = Math.round((r / m) * 80);
+    return cefrFromRaw80(equiv80, form || selectedForm);
+  }
+
+  function skillCheckSvg() {
+    return '<svg class="pt-cert-skill-svg" viewBox="0 0 48 48" aria-hidden="true" width="22" height="22" focusable="false"><circle cx="24" cy="24" r="22" fill="currentColor"/><path fill="#ffffff" d="M20.5 32.2 14 25.7l2.1-2.1 4.3 4.3L31.9 12l2.5 2-13.9 18.2z"/></svg>';
+  }
+
+  function buildCertRangeGrids(activeIdx, form) {
+    var def = getCertBandDefinitions(form);
+    var n = def.ranges.length;
+    function rowCells(getter, rowClass) {
+      var html = '';
+      var i;
+      var rc;
+      for (i = 0; i < n; i++) {
+        rc = i === activeIdx ? ' pt-cert-band-cell--active' : '';
+        html +=
+          '<div class="pt-cert-band-cell' +
+          rc +
+          '"><span class="pt-cert-band-cell-text">' +
+          esc(getter(i)) +
+          '</span></div>';
+      }
+      return '<div class="pt-cert-band-cells" style="--band-cols:' + n + '">' + html + '</div>';
+    }
+    return (
+      '<div class="pt-cert-band-matrix" aria-label="Understanding the results: score bands, GSE, and CEFR">' +
+      '<div class="pt-cert-band-row">' +
+      '<div class="pt-cert-band-label">General test total score</div>' +
+      rowCells(function(i) {
+        return def.ranges[i];
+      }) +
+      '</div>' +
+      '<div class="pt-cert-band-row pt-cert-band-row--dense">' +
+      '<div class="pt-cert-band-label">GSE level</div>' +
+      rowCells(function(i) {
+        return def.gse && def.gse[i] != null ? def.gse[i] : '—';
+      }) +
+      '</div>' +
+      '<div class="pt-cert-band-row pt-cert-band-row--cefr">' +
+      '<div class="pt-cert-band-label">CEFR level</div>' +
+      rowCells(function(i) {
+        return def.cefrBand && def.cefrBand[i] != null ? def.cefrBand[i] : def.cefr[i];
+      }) +
+      '</div>' +
+      '</div>'
+    );
+  }
+
+  function buildSkillColumnsHtml(payload) {
+    var form = payload.test_form || selectedForm;
+    var L = payload.listening_score;
+    var G = payload.grammar_score;
+    var V = payload.vocabulary_score;
+    var R = payload.reading_score;
+    var cols = [
+      { num: pad2(L), label: 'Listening Score', level: sectionLevelFromRaw(L, 20, form), max: '20', mod: 'pt-cert-skill-col--a' },
+      { num: pad2(G), label: 'Grammar Score', level: sectionLevelFromRaw(G, 30, form), max: '30', mod: 'pt-cert-skill-col--b' },
+      { num: pad2(V), label: 'Vocabulary Score', level: sectionLevelFromRaw(V, 20, form), max: '20', mod: 'pt-cert-skill-col--c' },
+      { num: pad2(R), label: 'Reading Score', level: sectionLevelFromRaw(R, 10, form), max: '10', mod: 'pt-cert-skill-col--d' }
+    ];
+    return cols.map(function(c) {
+      return (
+        '<div class="pt-cert-skill-col ' + c.mod + '">' +
+        '<div class="pt-cert-skill-num">' + esc(c.num) + '</div>' +
+        '<div class="pt-cert-skill-label">' + esc(c.label) + '</div>' +
+        '<div class="pt-cert-skill-level">' + esc(c.level) + '</div>' +
+        '<div class="pt-cert-skill-max">out of ' + c.max + '</div>' +
+        '</div>'
+      );
+    }).join('');
+  }
+
+  var TEST_BANKS = {
+    test1a: buildTest1A(),
+    test2a: buildTest2A()
+  };
+
+  function esc(v) { return String(v || '').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+  function byId(id) { return document.getElementById(id); }
+  function mmss(s) {
+    var n = Math.max(0, parseInt(s, 10) || 0);
+    var m = Math.floor(n / 60), r = n % 60;
+    return (m < 10 ? '0' : '') + m + ':' + (r < 10 ? '0' : '') + r;
+  }
+  function makeId() { return 'pt_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8); }
+
+  function normalizePhoneInput(raw) {
+    return String(raw || '')
+      .replace(/[^\d+\s()\-]/g, '')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .slice(0, 30);
+  }
+  function isValidPhoneNumber(value) {
+    var s = String(value || '').trim();
+    if (s.length < 7 || s.length > 30) return false;
+    var digits = s.replace(/\D/g, '');
+    if (digits.length < 7 || digits.length > 15) return false;
+    return /^[+\d()\-.\s]+$/.test(s);
+  }
+  function applyCountryPrefixIfNeeded() {
+    var phoneEl = byId('pPhone');
+    var countryEl = byId('pPhoneCountry');
+    if (!phoneEl || !countryEl) return;
+    var prefix = String(countryEl.value || '').trim();
+    if (!prefix) return;
+    var current = normalizePhoneInput(phoneEl.value);
+    if (!current) {
+      phoneEl.value = prefix;
+      return;
+    }
+    if (current.charAt(0) === '+') {
+      var restAfterIntl = current.replace(/^\+\d{1,4}\s*/, '');
+      phoneEl.value = prefix + (restAfterIntl ? (' ' + restAfterIntl) : '');
+      return;
+    }
+    if (/^0\d+/.test(current)) {
+      phoneEl.value = prefix + ' ' + current.replace(/^0+/, '');
+      return;
+    }
+    phoneEl.value = prefix + ' ' + current;
+  }
+
+  function updatePhoneFlagDisplay() {
+    var countryEl = byId('pPhoneCountry');
+    var flagImgEl = byId('pPhoneFlagImg');
+    if (!countryEl || !flagImgEl) return;
+    var opt = countryEl.options[countryEl.selectedIndex];
+    var code = opt ? String(opt.getAttribute('data-flag-code') || '').toLowerCase() : '';
+    flagImgEl.src = code ? ('https://flagcdn.com/24x18/' + code + '.png') : 'https://flagcdn.com/24x18/un.png';
+  }
+  function isValidEnglishStudentName(name) {
+    var s = String(name || '').trim();
+    if (!s || s.length > 200) return false;
+    return /^[A-Za-z]+(?:[ '.-][A-Za-z]+)*$/.test(s);
+  }
+
+  function q(no, section, prompt, A, B, C, D, correct, passageId) {
+    return { no: no, section: section, prompt: prompt, options: [{ key: 'A', text: A }, { key: 'B', text: B }, { key: 'C', text: C }, { key: 'D', text: D }], correct: correct, passageId: passageId || '' };
+  }
+
+  function parseBank(title, audioUrl, passages, rows) {
+    var lines = rows.trim().split('\n');
+    var questions = lines.map(function(line) {
+      var p = line.split('|');
+      return q(parseInt(p[0], 10), p[1], p[2], p[3], p[4], p[5], p[6], p[7], p[8] || '');
+    });
+    return { title: title, audioUrl: audioUrl, passages: passages, questions: questions };
+  }
+
+  function buildTest2A() {
+    var passages = {
+      t2r1: 'Starting next week, a new bike share programme will be available in the city centre. Passes are £365 for the year, £15 for a week, and £5 for a day. Weekly and daily passes can be purchased online or at bike stations. There is a one-hour time limit and extra charge after one hour. Bikes can be returned to any station with available docking space. Safety discounts are offered at partner bike shops.',
+      t2r2: 'Two Essex Flats reviews mention several problems: noisy floors/walls, kitchen size, car park issues, and windows not closing fully. One reviewer says location and flat size are good, but noise is constant.',
+      t2r3: 'Tadao Ando is a self-taught Japanese architect known for minimal design, use of concrete, and spiritual connection in architecture. He won the Pritzker Prize and designed famous works including the Church of Light.'
+    };
+    var rows =
+`1|Listening|What is the woman looking for?|A tie|A gift|A sale|A sweater|B|
+2|Listening|What does the word "quality" mean?|How good something is|What colour something is|What something looks like|How expensive something is|A|
+3|Listening|Why does the woman choose the sweater?|It's on sale.|There are no ties.|She likes the colour.|She doesn't like the shirt.|C|
+4|Listening|What will happen next?|The man looks for a shirt.|The woman pays for the gift.|The man gives the woman a discount.|The woman gives the gift to her brother.|B|
+5|Listening|What can be recycled?|Clean food containers|Hot coffee cups|Plastic straws|Plastic bags|A|
+6|Listening|What does the woman say about the recycling bin?|Everyone uses the bin.|All paper cups should go in the bin.|People know what to put in the bin.|Some things in the bin are recycled.|D|
+7|Listening|What does "habit" mean?|Something you do often|Something you hate to do|Something you learn to do|Something you do very well|A|
+8|Listening|What will the man do to help improve the problem?|Use paper straws.|Stop buying coffee.|Stop using food containers.|Learn about recycling rules.|A|
+9|Listening|What does the woman like about her job?|Her co-workers|The location|The projects|Her boss|A|
+10|Listening|What does the woman say about travelling for work?|She enjoys the experience.|She wants to do more of it.|It's too hard on her schedule.|She can do less of it next year.|D|
+11|Listening|How does the man feel about being a dad?|Scared|Excited|Grateful|Worried|B|
+12|Listening|Why did the man move out of the city?|To get more space|To make his wife happy|To be closer to his office|To be closer to his parents|A|
+13|Listening|What does the woman say about cooking and working out?|She's too busy to do them.|She can only do one of them.|She doesn't enjoy doing them.|She doesn't know how to do them.|A|
+14|Listening|What does the man say about lunch?|Prepare it in advance.|He doesn't have a plan.|There is no time to cook.|Buy healthier lunches at work.|A|
+15|Listening|What is one way the man wants to create a healthy lifestyle?|Eat out only on weekends.|Cook dinner together every night.|Take classes at the gym.|Work out at the gym.|C|
+16|Listening|How does the man feel about achieving a healthy lifestyle?|It is very expensive.|Busy schedule makes it difficult.|Planning ahead will make it possible.|Share responsibilities is impossible.|C|
+17|Listening|What is the speaker's point of view on life?|Make time to chase dreams.|Life is too short for plans.|Decisions are always difficult.|Planning is more important than action.|A|
+18|Listening|How did the speaker feel about preparing for this year-long trip?|Determined to succeed|Excited to travel the world|Fearful about the unknown|Worried about finances|A|
+19|Listening|What was the speaker's goal in travelling?|Share experiences online|Make deep connections to places|Have a rich tourist experience|Visit many famous places|B|
+20|Listening|According to the speaker, what is the most effective way to achieve a long-term goal?|Start a podcast channel.|Create detailed budget plans.|Break it down into smaller parts.|Ask community members for help.|C|
+21|Grammar|They ____ a lot of time together recently.|had spent|will spend|were spending|have been spending|D|
+22|Grammar|You ____ have seen Brian yesterday.|could|couldn't|should|shouldn't|B|
+23|Grammar|When I lived in London, I ____ pick up coffee every morning.|would|should|must|might|A|
+24|Grammar|They haven't been to the market, ____?|have they|haven't they|did they|didn't they|A|
+25|Grammar|The plane ____ for takeoff yet.|has cleared|hasn't cleared|has to be cleared|hasn't been cleared|D|
+26|Grammar|That was ____ sandwich.|so big|very big|such big|such a big|D|
+27|Grammar|I ____ have waited so long to start this project.|can't|couldn't|wouldn't|shouldn't|D|
+28|Grammar|He ____ hungry. He ate the entire pizza.|may be|must be|could have|must have been|D|
+29|Grammar|The information is not only incomplete ____ inaccurate.|also|but also|moreover|in addition|B|
+30|Grammar|Everyone ____ the party by the time Rebecca showed up.|left|has left|had left|had been left|C|
+31|Grammar|____ home at 5 pm today, so I can call you then.|I walk|I have walked|I'll be walking|I've been walking|C|
+32|Grammar|You can't wear shoes in the house. Please ____.|take off them|take them off|them off take|them take off|B|
+33|Grammar|Sushi Lounge is closer. ____, Haru has better food.|However|As a result|In addition|Therefore|A|
+34|Grammar|If you ____ more, your vocabulary would be better.|will read|had read|have read|are reading|B|
+35|Grammar|Please don't touch the plates. They are ____.|hotter|the hottest|extremely hot|extreme heat|C|
+36|Grammar|The Jazz Fest is a festival ____ every year.|happens|to happen|it happens|that happens|D|
+37|Grammar|We have ____ money left, so we're going to shop more.|few|a few|little|a little|D|
+38|Grammar|By the time we stopped for petrol, we ____ driving for four hours.|were|will be|had been|have been|C|
+39|Grammar|He was late, ____ was unusual.|why|when|which|where|C|
+40|Grammar|By this time tomorrow, I ____ in Paris.|will be arrived|will have arrived|will be arriving|have been arriving|B|
+41|Grammar|If we ____ earlier, we wouldn't have missed the plane.|left|leave|had left|were leaving|C|
+42|Grammar|I wish ____ harder when I was at university.|I study|I'll study|I'd studied|I'm studying|C|
+43|Grammar|The package will ____ by the time you get home.|deliver|be delivered|be delivering|have been delivered|D|
+44|Grammar|The picture ____ by a famous artist.|painted|was painted|was painting|has painted|B|
+45|Grammar|Sara told me she ____ feeling well.|isn't|wasn't|hasn't|hadn't|B|
+46|Grammar|We've ____ milk.|run off|run out|run in to|run out of|D|
+47|Grammar|I ____ in Rome when I met Maurizio.|live|lived|was living|am living|C|
+48|Grammar|My dream is ____ in London one day.|live|to live|like to live|have to live|B|
+49|Grammar|This is the watch ____ on my twentieth birthday.|my grandfather gives me|my grandfather gave me|when my grandfather gave me|how my grandfather gives me|B|
+50|Grammar|Anthony ____ to be a doctor, but studied business instead.|plans|will plan|was planning|has planned|C|
+51|Vocabulary|I've never seen a painting like this. It's very ____.|usual|unique|regular|appropriate|B|
+52|Vocabulary|The Jazz festival is a(n) ____ event.|current|standard|temporary|annual|D|
+53|Vocabulary|I feel ____ I got the job.|patient|excited|confident|uncomfortable|C|
+54|Vocabulary|Let me show you ____.|up|off|around|out|C|
+55|Vocabulary|Paul is rich, so he can ____ to buy nice things.|afford|earn|spend|invest|A|
+56|Vocabulary|My visa was ____, and passport is ready.|approved|enabled|offered|advised|A|
+57|Vocabulary|This place looks ____.|domestic|familiar|common|urban|B|
+58|Vocabulary|Could you ____ me your car?|lend|owe|borrow|permit|A|
+59|Vocabulary|I'm sure he'll be here ____.|eventually|occasionally|immediately|frequently|A|
+60|Vocabulary|I'm so tired. I ____ slept last night.|actually|hardly|carefully|practically|B|
+61|Vocabulary|Kim is making great ____ to keep healthy lifestyle.|stress|purpose|effort|performance|C|
+62|Vocabulary|Scientists spoke at the international ____.|business|announcement|conference|report|C|
+63|Vocabulary|____ enjoy big end-of-season sales.|Applicants|Consumers|Researchers|Representatives|B|
+64|Vocabulary|It is my ____ to take care of my parents.|trust|promise|obligation|guarantee|C|
+65|Vocabulary|Don't forget to ____ the light.|turn up|turn in|turn off|turn over|C|
+66|Vocabulary|The accident wasn't my ____.|fault|charge|complaint|disadvantage|A|
+67|Vocabulary|The white sneakers started a social media ____.|law|habit|trend|tradition|C|
+68|Vocabulary|I pay a monthly ____ to watch movies.|fee|price|pound|money|A|
+69|Vocabulary|This golf bag is an ____ gift.|ideal|ordinary|typical|original|A|
+70|Vocabulary|Sophia is a very ____ coach.|polite|capable|generous|practical|B|
+71|Reading|Which statement is true?|Bike passes cost £2 per hour.|Key cards are available upon request.|Discounts are available for daily passes.|Bike passes can be purchased at bike stations.|D|t2r1
+72|Reading|What is one rule for bike sharing?|You must wear a helmet.|Bikes must be returned every hour.|You must download app to pay.|Bikes must be returned to same station.|B|t2r1
+73|Reading|What is the community attitude towards bike share programme?|Programme is expensive.|Not enough participants.|Community does not support it.|Bike safety is important to community.|D|t2r1
+74|Reading|What is a common problem at Essex Flats?|The neighbours|The size|The floors|The location|C|t2r2
+75|Reading|Why does J. Miller mention windows?|To talk about design|To describe special feature|To illustrate a problem|To explain how to keep warm|C|t2r2
+76|Reading|Which statement is most likely true?|B. Thomas enjoys location.|B. Thomas doesn't mind parking.|J. Smith enjoys kitchen.|J. Smith is more positive.|A|t2r2
+77|Reading|What is a distinguishing feature of Ando's work?|Complex design|Use of concrete|Physical beauty|Relation to Japan|B|t2r3
+78|Reading|What is significant about Ando receiving Pritzker Prize?|No formal architecture education|He dislikes prizes|Highest award in architecture|Given to only few architects|A|t2r3
+79|Reading|What is one of Ando's best-known works?|Imperial Hotel|Church of Light|Praemium Imperiale|RIBA Gold Medal|B|t2r3
+80|Reading|What is main influence in Ando's work?|Famous architects|Interior design training|Former boxing career|Spiritual beliefs|D|t2r3`;
+    return parseBank('British English Adult - Test 2 Form A', '../BRE_course_placement_test2_00.mp3', passages, rows);
+  }
+
+  function buildTest1A() {
+    var passages = {
+      t1r1: 'Office parking notice: the office car park closes for two weeks for repairs and new lines. Staff can park at High and 1st Street near Crowne Plaza and show company ID for free parking. High Street parking is allowed 9am-5pm, but no parking on 1st Street.',
+      t1r2: 'Cornwall website page shares local information: museums, hotels, private house rentals, beach rules, parking, food, and activities. Some beaches are dangerous, so visitors should read rules carefully.',
+      t1r3: 'Wilbur and Orville Wright were inspired by a toy aeroplane, later studied mechanics, bicycle work, and birds wing movement, then achieved first powered flight in 1903 and moved to Europe to sell planes.'
+    };
+    var rows =
+`1|Listening|Which subject does the woman like?|Math|Science|History|English|C|
+2|Listening|What will the woman help the man do?|Write a paper.|Do homework.|Take notes.|Find a book.|B|
+3|Listening|What does the woman do every Thursday?|Go to the library.|Have class.|Go to work.|Meet her teacher.|C|
+4|Listening|What does the woman tell the man to do?|Come to her English class.|Meet her at work.|Work until five o'clock.|Bring his book to the library.|D|
+5|Listening|What are the man and woman doing?|Listening to music|Watching videos|Talking on the phone|Shopping for a gift|D|
+6|Listening|What does the man say about the phone?|The color is great.|The color is too bright.|The screen size is just right.|The screen size is too small.|B|
+7|Listening|Why does the woman think John needs a bag?|He likes bags.|His bag is too small.|He needs a bag for work.|He doesn't have a bag.|C|
+8|Listening|What will the man do next?|Call John on the phone.|Buy the headphones.|Look for a different bag.|Help woman find a new phone.|B|
+9|Listening|Who is Julie going to dinner with?|Her husband|Her friend|Her kids|Her team|B|
+10|Listening|Has Julie been to restaurant before?|No, never been.|No, doesn't like Italian.|Yes, many times.|Yes, with team last week.|C|
+11|Listening|What does Mark ask Julie to do at restaurant?|Talk to Antonio.|Meet his wife and kids.|Ask about lunch menu.|Make a reservation.|D|
+12|Listening|What is Julie and Mark's relationship?|Co-workers|Neighbours|Married|Friends|A|
+13|Listening|Why is the woman late?|Missed her train.|Train was late.|There was a train accident.|She was hurt in accident.|C|
+14|Listening|Why was the woman lost?|Wrong street.|Didn't know area well.|No one helped.|Took wrong bus.|B|
+15|Listening|What was wrong with woman's phone?|She lost it.|No internet.|Couldn't text.|Left it at work.|B|
+16|Listening|Why did she walk from Canal Street?|Couldn't find bus.|Thought walking was faster.|She wanted to walk.|People told her to walk.|B|
+17|Listening|What is this talk about?|How to enjoy writing|How to start writing|How to get writing jobs|How to become better writer|C|
+18|Listening|Why does speaker talk about writing presentations?|Important writing skill|Type of writing job|Way to practice writing|Way to share writing|B|
+19|Listening|Best topic to write about?|Technology topics|Topics online|Topics you like|Popular topics|C|
+20|Listening|Why should you make your own website?|Write topics you enjoy|People can find your writing online|Many writers have websites|Meet other writers online|B|
+21|Grammar|____ me at the restaurant after work.|Meet|Meeting|Will meet|To meet|A|
+22|Grammar|A: ____ you live? B: I live in Jamestown.|Where|Where is|Where do|Where does|C|
+23|Grammar|I need to buy ____ bread.|any|some|many|much|B|
+24|Grammar|The view is beautiful ____ the evening.|on|at|in|to|C|
+25|Grammar|We enjoy ____ family dinner on Sundays.|have|had|to have|having|D|
+26|Grammar|I ____ TV when you called.|watch|watched|am watching|was watching|D|
+27|Grammar|I spoke to ____ hotel manager.|the|a|some|any|A|
+28|Grammar|____ two libraries in the city.|They are|There is|It is|There are|D|
+29|Grammar|I'd ____ a cup of tea please.|like|can like|could like|would like|D|
+30|Grammar|I ____ early tomorrow morning.|am going to wake up|wake up|woke up|was waking up|A|
+31|Grammar|____ the rain, they moved concert inside.|Despite|Because of|However|Even though|B|
+32|Grammar|The cinema is ____ Hudson Street.|on|in|between|under|B|
+33|Grammar|I ____ John at the party yesterday.|see|saw|was seeing|have seen|B|
+34|Grammar|This test is ____ than the last test.|easy|easier|easiest|the easiest|B|
+35|Grammar|Ben ____ right now. He is at library.|doesn't work|didn't work|isn't working|wasn't working|C|
+36|Grammar|I don't know anyone ____ lives here.|who|when|where|which|A|
+37|Grammar|Can you bring me ____ jeans behind you?|that|this|those|these|C|
+38|Grammar|Did you ____ to football match last night?|go|went|have gone|were going|A|
+39|Grammar|All the ____ offices are on second floor.|teacher|teachers|teacher's|teachers'|D|
+40|Grammar|A: ____ you go to London? B: Last year.|Why did|When did|When were|Where were|B|
+41|Grammar|You've met Jonas before, ____?|have you|haven't you|did you|didn't you|B|
+42|Grammar|I have many meetings, so let's meet ____ lunch.|on|in|after|before|C|
+43|Grammar|We have ____ food for party, need more drinks.|too|too much|too many|enough|D|
+44|Grammar|John ____ gets his coffee here.|always|never|rarely|sometimes|A|
+45|Grammar|She ____ more than twenty countries.|visits|visited|has visited|is visiting|C|
+46|Grammar|I ____ drive you to airport.|may|must|could|would|C|
+47|Grammar|I want to visit ____.|South Pole|a South Pole|the South Pole|this South Pole|C|
+48|Grammar|He speaks Italian very ____.|good|well|better|best|B|
+49|Grammar|Yes! I ____ move there next month.|can|will|would|might|B|
+50|Grammar|Chinese ____ in many communities in London.|speaks|spoke|is spoken|has spoken|C|
+51|Vocabulary|I spent too much ____ at the library.|time|minute|clock|watch|A|
+52|Vocabulary|I like taking black and white ____.|notes|breaks|calls|photographs|D|
+53|Vocabulary|Cathy ____ to take the job.|thought|decided|began|completed|B|
+54|Vocabulary|There are a lot of cars and ____ is really bad.|weather|traffic|tourist|health|B|
+55|Vocabulary|Let's go home this ____.|day|hour|tomorrow|weekend|D|
+56|Vocabulary|Food and art are part of people's ____.|culture|religion|laws|ideas|A|
+57|Vocabulary|I didn't know word meaning, so I ____.|told|wrote|moved|guessed|D|
+58|Vocabulary|I'd like to ____ you to my friend.|meet|invite|introduce|remember|C|
+59|Vocabulary|Don't walk at night in ____ areas.|unusual|familiar|exciting|dangerous|D|
+60|Vocabulary|____, website doesn't accept credit cards.|Likely|Rarely|Suddenly|Unfortunately|D|
+61|Vocabulary|It's ____ he missed his train.|early|possible|difficult|sure|B|
+62|Vocabulary|This report is full of ____.|plans|mistakes|accidents|appointments|B|
+63|Vocabulary|He wants to study ____ to work with computers.|politics|science|history|technology|D|
+64|Vocabulary|John ____ lost his job.|usually|recently|immediately|regularly|B|
+65|Vocabulary|Sue lives on the ____ end.|opposite|correct|wrong|front|A|
+66|Vocabulary|It's not ____ to bring money.|fair|normal|necessary|appropriate|C|
+67|Vocabulary|Are you ____ to go?|easy|angry|ready|busy|C|
+68|Vocabulary|I don't like driving. I ____ the train.|need|prefer|suggest|schedule|B|
+69|Vocabulary|It's so hot today! What's the ____?|season|noise|environment|temperature|D|
+70|Vocabulary|He tried to ____ five million dollars.|steal|protect|return|earn|A|
+71|Reading|What is this message about?|A new car park|Street parking rules|Car park changes|New parking prices|C|t1r1
+72|Reading|Where can people park for next two weeks?|New office car park|High and 1st Street car park|Crowne Plaza hotel car park|High Street after 5 pm|B|t1r1
+73|Reading|How can people park for free?|Show company ID card|Park on 1st Street|Call parking office|Use Crowne Plaza car park|A|t1r1
+74|Reading|Why did writer make this website?|To help Cornwall visitors|To talk rules|To rent house|To talk personal life|A|t1r2
+75|Reading|What information can you find on website?|Art|Boats|Hotels|Weather|C|t1r2
+76|Reading|What does writer say about beaches?|Read the rules.|Some are closed.|No parking.|No swimming.|A|t1r2
+77|Reading|What made Wright brothers interested in flying?|Birds|A toy|A bicycle|Machines|B|t1r3
+78|Reading|What was one job brothers had?|Inventing technology|Working for father|Making bicycle designs|Writing about flying|C|t1r3
+79|Reading|How did brothers invent first plane?|Studied birds' wings|Used bicycle designs|Copied popular technology|Used first model plane|A|t1r3
+80|Reading|Why did brothers move to Europe?|Wanted to live there|Wanted global fame|Knew German flyer|Believed they could sell planes there|D|t1r3`;
+    return parseBank('British English Adult - Test 1 Form A', '../BRE_course_placement_test1_00.mp3', passages, rows);
+  }
+
+  function getBank() { return TEST_BANKS[selectedForm] || TEST_BANKS.test1a; }
+
+  function updateAdaptiveRoundBanner() {
+    var el = byId('ptAdaptiveRoundBanner');
+    if (!el) return;
+    if (selectedForm === 'test2a' && currentStep === 2) {
+      el.style.display = '';
+      el.textContent =
+        'Test 2A (B1–B2+): You scored ' +
+        ADAPTIVE_THRESHOLD_TO_TEST2A +
+        '+ out of 80 on Test 1A. Please complete this second paper for your final online band.';
+    } else {
+      el.style.display = 'none';
+      el.textContent = '';
+    }
+  }
+  function getCurrentQuestion() { return getBank().questions[currentIndex] || null; }
+  function isListeningQ(q) { return q && q.no <= LISTENING_COUNT; }
+  function stopListeningAudio() {
+    var audio = byId('listeningAudio');
+    if (!audio) return;
+    try {
+      audio.pause();
+      audio.currentTime = 0;
+    } catch (e) {}
+  }
+  // Keep listening audio lazy so browser does not download mp3 until user presses Play.
+  function deferListeningAudio(url) {
+    var audio = byId('listeningAudio');
+    if (!audio) return;
+    var u = String(url || '').trim();
+    audio.setAttribute('data-src', u);
+    try {
+      audio.removeAttribute('src');
+      audio.load();
+    } catch (e) {}
+  }
+  function ensureListeningAudioSource() {
+    var audio = byId('listeningAudio');
+    if (!audio) return false;
+    if (audio.src) return true;
+    var pending = String(audio.getAttribute('data-src') || '').trim();
+    if (!pending) return false;
+    audio.src = pending;
+    try { audio.load(); } catch (e) {}
+    return true;
+  }
+  function sectionTitleHtml(no) {
+    if (no <= 20) return 'SECTION 1: LISTENING (Questions 1-20)';
+    if (no <= 50) return 'SECTION 2: GRAMMAR (Questions 21-50)';
+    if (no <= 70) return 'SECTION 3: VOCABULARY (Questions 51-70)';
+    return 'SECTION 4: <span class="pt-section-title-skill">READING</span> (Questions 71-80)';
+  }
+
+  function setStep(n) {
+    currentStep = n;
+    var row = document.querySelector('.placement-step1-row');
+    var main = document.querySelector('.placement-main');
+    if (row) row.style.display = n === 1 ? '' : 'none';
+    if (main) main.style.display = n === 1 ? 'none' : '';
+    var s2 = byId('step2'), s6 = byId('step6');
+    if (s2) s2.classList.toggle('active', n === 2);
+    if (s6) s6.classList.toggle('active', n === 3);
+    if (n === 1) updateAdaptiveRoundBanner();
+    if (n === 2) {
+      var intro = byId('step2Intro');
+      var wrap = byId('step2QuestionsWrap');
+      if (intro) intro.style.display = 'none';
+      if (wrap) wrap.style.display = '';
+      updateAdaptiveRoundBanner();
+      renderQuestion();
+      return;
+    }
+  }
+
+  function updateTimer() {
+    var el = byId('ptExamTimerLabel');
+    if (el) el.innerHTML = 'Time Remaining: <span class="content-duration-mins">' + mmss(timeLeft) + '</span>';
+    if (timeLeft <= 0) submitTest();
+  }
+
+  function startTimer() {
+    if (timerId) clearInterval(timerId);
+    timerId = setInterval(function() {
+      timeLeft--;
+      updateTimer();
+      if (timeLeft <= 0) {
+        clearInterval(timerId);
+        timerId = null;
+      }
+    }, 1000);
+  }
+
+  function renderNavigator() {
+    var nav = byId('step2Navigator');
+    if (!nav) return;
+    function sectionClass(no) {
+      if (no <= 20) return ' sec-listening';
+      if (no <= 50) return ' sec-grammar';
+      if (no <= 70) return ' sec-vocabulary';
+      return ' sec-reading';
+    }
+    nav.innerHTML = getBank().questions.map(function(q, i) {
+      var isCurrent = i === currentIndex;
+      var isAnswered = !!answers[i];
+      var cls = 'pt-nav-btn' + sectionClass(q.no) + (isCurrent ? ' current' : '') + (isAnswered ? ' answered' : '');
+      var mark = isCurrent ? '◉' : (isAnswered ? '●' : '○');
+      return '<button type="button" class="' + cls + '" data-qidx="' + i + '">' + q.no + ' ' + mark + '</button>';
+    }).join('');
+  }
+
+  function updateProgress() {
+    var answered = answers.filter(function(v) { return !!v; }).length;
+    var wrap = byId('ptExamProgressLabel');
+    if (wrap) {
+      var a = wrap.querySelector('.pt-progress-answered');
+      var t = wrap.querySelector('.pt-progress-total');
+      if (a && t) {
+        a.textContent = String(answered);
+        t.textContent = String(TOTAL_COUNT);
+      } else {
+        wrap.textContent = answered + '/' + TOTAL_COUNT;
+      }
+    }
+    byId('ptExamProgressBar').style.width = ((answered / TOTAL_COUNT) * 100).toFixed(1) + '%';
+  }
+
+  function renderQuestion() {
+    var q = getCurrentQuestion();
+    if (!q) return;
+    var counter = byId('step2QuestionCounter');
+    var box = byId('step2Questions');
+    var title = document.querySelector('.pt-section-title');
+    var instruction = byId('ptStep2Instruction');
+    var selected = answers[currentIndex] || '';
+    var passageText = q.passageId ? (getBank().passages[q.passageId] || '') : '';
+    if (counter) counter.textContent = 'Question ' + q.no + ' of ' + TOTAL_COUNT;
+    if (title) title.innerHTML = sectionTitleHtml(q.no);
+    if (instruction) {
+      instruction.textContent = isListeningQ(q)
+        ? 'Listen and answer. You can play the full audio one time.'
+        : 'Choose the best answer.';
+    }
+    var passageHtml = passageText ? '<div class="passage-box"><strong>Reading Passage</strong><p style="margin:.45rem 0 0;">' + esc(passageText) + '</p></div>' : '';
+    var opts = q.options.map(function(o) {
+      var checked = selected === o.key ? ' checked' : '';
+      return (
+        '<label class="pt-option-box" data-opt-key="' + esc(o.key) + '">' +
+          '<input type="radio" name="exam_current" value="' + esc(o.key) + '"' + checked + '>' +
+          '<span class="pt-opt-pill" aria-hidden="true">' + esc(o.key) + '</span>' +
+          '<span class="opt-text">' + esc(o.text) + '</span>' +
+        '</label>'
+      );
+    }).join('');
+    box.innerHTML = passageHtml + '<p class="pt-question-text">' + esc(q.prompt) + '</p><div class="pt-options">' + opts + '</div>';
+
+    var audioRow = document.querySelector('.step2-audio-row');
+    var listening = isListeningQ(q);
+    var nextBtn = byId('step2NextBtn');
+    if (!listening) stopListeningAudio();
+    if (audioRow) audioRow.style.display = listening ? '' : 'none';
+    byId('step2PrevBtn').disabled = currentIndex === 0;
+    if (nextBtn) nextBtn.textContent = (currentIndex === TOTAL_COUNT - 1) ? 'SUBMIT' : ('NEXT ' + '\u25B6');
+    renderNavigator();
+    updateProgress();
+    updateAdaptiveRoundBanner();
+  }
+
+  function calculateScores() {
+    var qs = getBank().questions;
+    var raw = { listening: 0, grammar: 0, vocabulary: 0, reading: 0 };
+    for (var i = 0; i < qs.length; i++) {
+      if (answers[i] !== qs[i].correct) continue;
+      if (qs[i].no <= 20) raw.listening++;
+      else if (qs[i].no <= 50) raw.grammar++;
+      else if (qs[i].no <= 70) raw.vocabulary++;
+      else raw.reading++;
+    }
+    var listening_score = raw.listening;
+    var grammar_score = raw.grammar;
+    var vocabulary_score = raw.vocabulary;
+    var reading_score = raw.reading;
+    var totalOnline = listening_score + grammar_score + vocabulary_score + reading_score;
+    var total_scaled = Math.round((totalOnline / ONLINE_POINTS_MAX) * 100);
+    if (total_scaled > 100) total_scaled = 100;
+    return {
+      listening_raw: raw.listening,
+      grammar_raw: raw.grammar,
+      vocabulary_raw: raw.vocabulary,
+      reading_raw: raw.reading,
+      listening_score: listening_score,
+      grammar_score: grammar_score,
+      vocabulary_score: vocabulary_score,
+      reading_score: reading_score,
+      total_online_points: totalOnline,
+      total_score: total_scaled
+    };
+  }
+
+  function buildTest1SnapshotForStorage(scoresPre) {
+    var scores = scoresPre || calculateScores();
+    var i;
+    var la = [];
+    var ra = [];
+    for (i = 0; i < 20; i++) la.push(answers[i] != null ? answers[i] : '');
+    for (i = 20; i < TOTAL_COUNT; i++) ra.push(answers[i] != null ? answers[i] : '');
+    return {
+      test_form: 'test1a',
+      listening_answers: la,
+      reading_answers: ra,
+      listening_score: scores.listening_score,
+      grammar_score: scores.grammar_score,
+      vocabulary_score: scores.vocabulary_score,
+      reading_score: scores.reading_score,
+      total_online_points: scores.total_online_points
+    };
+  }
+
+  function attachTest1SnapshotToPayload(payload) {
+    if (selectedForm !== 'test2a') {
+      try {
+        localStorage.removeItem(TEST1_SNAPSHOT_LS_KEY);
+      } catch (e) {}
+      return;
+    }
+    try {
+      var raw = localStorage.getItem(TEST1_SNAPSHOT_LS_KEY);
+      if (raw) {
+        var snap = JSON.parse(raw);
+        if (snap && typeof snap === 'object' && String(snap.test_form || '').toLowerCase() === 'test1a') {
+          payload.test1_snapshot = snap;
+        }
+      }
+    } catch (e1) {}
+    try {
+      localStorage.removeItem(TEST1_SNAPSHOT_LS_KEY);
+    } catch (e2) {}
+  }
+
+  function buildPayload(scoresPre) {
+    var scores = scoresPre || calculateScores();
+    var result_status = scores.total_score >= PASSING_SCORE ? 'PASS' : 'FAIL';
+    var payload = {
+      client_submission_id: makeId(),
+      name: byId('pName').value || '',
+      student_name: byId('pName').value || '',
+      phone: normalizePhoneInput(byId('pPhone').value),
+      email: byId('pEmail').value || '',
+      date_of_birth: getDobValue(),
+      education: byId('pEducation').value || '',
+      parent_name: byId('pParentName').value || '',
+      test_form: selectedForm,
+      grammar_score: scores.grammar_score,
+      vocabulary_score: scores.vocabulary_score,
+      listening_score: scores.listening_score,
+      reading_score: scores.reading_score,
+      total_online_points: scores.total_online_points,
+      total_score: scores.total_score,
+      suggested_level: cefrFromRaw80(scores.total_online_points, selectedForm),
+      result_status: result_status,
+      listening_answers: answers.slice(0, 20),
+      reading_answers: answers.slice(20),
+      submittedAt: new Date().toISOString()
+    };
+    attachTest1SnapshotToPayload(payload);
+    return payload;
+  }
+
+  function buildCertificationHtml(payload, contact) {
+    var form = payload.test_form || selectedForm;
+    var raw80 = totalOnlinePointsFromPayload(payload);
+    var name = esc((payload.student_name || payload.name || '').trim() || 'Student');
+    var totalRawDisp = formatTotalOutOf80(raw80);
+    var level = esc(payload.suggested_level || cefrFromRaw80(raw80, form));
+    var band = bandSummaryFromPayload(payload);
+    var awarded = esc(formatAwardDate(payload.submittedAt));
+    var bIdx = bandIndexFromRaw80(raw80, form);
+    var paperNamePlain = form === 'test1a' ? 'General Test 1' : 'General Test 2';
+    var skillsRow =
+      '<div class="pt-cert-skills-icons">' +
+      '<div class="pt-cert-skill-icon-item">' + skillCheckSvg() + '<span>Listening</span></div>' +
+      '<div class="pt-cert-skill-icon-item">' + skillCheckSvg() + '<span>Grammar</span></div>' +
+      '<div class="pt-cert-skill-icon-item">' + skillCheckSvg() + '<span>Vocabulary</span></div>' +
+      '<div class="pt-cert-skill-icon-item">' + skillCheckSvg() + '<span>Reading</span></div>' +
+      '</div>';
+    return (
+      '<div class="pt-cert-document" data-cert-form="' + esc(form) + '">' +
+      '<div class="pt-cert-stage pt-cert-stage--hero">' +
+      '<div class="pt-cert-top">' +
+      '<p class="pt-cert-title-line">' + esc(contact.schoolName) + '</p>' +
+      '<p class="pt-cert-subtitle-hero">English Certification</p>' +
+      '<p class="pt-cert-paper-line">' +
+      '<span class="pt-cert-paper-name">' +
+      esc(paperNamePlain) +
+      '</span>' +
+      '<span class="pt-cert-paper-rest"> — Form A (online MCQ)</span>' +
+      '</p>' +
+      '</div>' +
+      '<h1 class="pt-cert-student pt-cert-student--hero">' + name + '</h1>' +
+      '<p class="pt-cert-lead pt-cert-lead--hero">has partially completed the Certificate and has earned the following online level (Listening · Grammar · Vocabulary · Reading):</p>' +
+      '<div class="pt-cert-diamond-stage">' +
+      '<div class="pt-cert-diamond">' +
+      '<div class="pt-cert-diamond-petals" aria-hidden="true"></div>' +
+      '<div class="pt-cert-diamond-logo-stack" aria-hidden="true">' +
+      '<img class="pt-cert-diamond-logo" src="../photo/logo.png" alt="" />' +
+      '</div>' +
+      '<div class="pt-cert-diamond-core">' +
+      '<span class="pt-cert-diamond-score">' +
+      esc(totalRawDisp) +
+      '<span class="pt-cert-diamond-max">/80</span></span>' +
+      '<span class="pt-cert-diamond-level">' +
+      level +
+      '</span>' +
+      '</div>' +
+      '</div>' +
+      '</div>' +
+      skillsRow +
+      '<p class="pt-cert-awarded pt-cert-awarded--center"><strong>Awarded on:</strong> ' + awarded + '</p>' +
+      '<h2 class="pt-cert-h2">Understanding the results</h2>' +
+      buildCertRangeGrids(bIdx, form) +
+      '<p class="pt-cert-explainer">' +
+      buildCertExplainer(form) +
+      '</p>' +
+      '</div>' +
+      '<div class="pt-cert-stage pt-cert-stage--deck">' +
+      '<div class="pt-cert-skill-deck">' +
+      '<div class="pt-cert-skill-deck-inner">' + buildSkillColumnsHtml(payload) + '</div>' +
+      '</div>' +
+      '<div class="pt-cert-post-deck">' +
+      '<div class="pt-cert-notice" role="region" aria-label="Important notice">' +
+      '<h3 class="pt-cert-h3 pt-cert-h3--notice">Important notice</h3>' +
+      '<ul class="pt-cert-notice-list">' +
+      '<li>Writing &amp; Speaking NOT included online.</li>' +
+      '<li>Come to the centre to complete them for your final level.</li>' +
+      '</ul>' +
+      '<div class="pt-cert-level-summary">' +
+      '<div class="pt-cert-level-row">' +
+      '<span class="pt-cert-level-k">Your online level</span>' +
+      '<span class="pt-cert-level-v">' + level + ' (' + esc(band.range) + '/80)</span>' +
+      '</div>' +
+      '<div class="pt-cert-level-row">' +
+      '<span class="pt-cert-level-k">Final level</span>' +
+      '<span class="pt-cert-level-v pt-cert-level-v--pending">NOT YET DETERMINED</span>' +
+      '</div>' +
+      '</div>' +
+      '</div>' +
+      '<section class="pt-cert-follow">' +
+      '<h3 class="pt-cert-h3 pt-cert-h3--section">Next step</h3>' +
+      '<p class="pt-cert-para pt-cert-para--tight">Please call or visit the centre to schedule your <strong>Writing</strong> &amp; <strong>Speaking</strong> test appointment.</p>' +
+      '<h3 class="pt-cert-h3 pt-cert-h3--section">Contact information</h3>' +
+      '<dl class="pt-cert-contact-list">' +
+      '<div class="pt-cert-contact-item"><dt>Centre Address</dt><dd>' + esc(contact.address) + '</dd></div>' +
+      '<div class="pt-cert-contact-item"><dt>Phone Number</dt><dd>' + esc(contact.phone) + '</dd></div>' +
+      '<div class="pt-cert-contact-item"><dt>Email</dt><dd>' + esc(contact.email) + '</dd></div>' +
+      '<div class="pt-cert-contact-item"><dt>Office Hours</dt><dd>' + esc(contact.officeHours) + '</dd></div>' +
+      '</dl>' +
+      '</section></div></div></div>'
+    );
+  }
+
+  function addCertCanvasToPdf(doc, canvas) {
+    var margin = 8;
+    var pageW = doc.internal.pageSize.getWidth();
+    var pageH = doc.internal.pageSize.getHeight();
+    var pdfW = pageW - margin * 2;
+    var pdfInnerH = pageH - margin * 2;
+    var cw = canvas.width;
+    var ch = canvas.height;
+    if (cw < 1 || ch < 1) return;
+    var scale = pdfW / cw;
+    var totalH = ch * scale;
+    var offset = 0;
+    var page = 0;
+    while (offset < totalH - 0.5) {
+      if (page > 0) doc.addPage();
+      var slicePdfH = Math.min(pdfInnerH, totalH - offset);
+      var srcY = offset / scale;
+      var srcHpx = Math.min(slicePdfH / scale, ch - srcY);
+      if (srcHpx < 1) break;
+      var displayH = srcHpx * scale;
+      var sc = document.createElement('canvas');
+      sc.width = cw;
+      sc.height = Math.max(1, Math.ceil(srcHpx));
+      var cx = sc.getContext('2d');
+      cx.fillStyle = '#ffffff';
+      cx.fillRect(0, 0, sc.width, sc.height);
+      cx.drawImage(canvas, 0, srcY, cw, srcHpx, 0, 0, cw, srcHpx);
+      doc.addImage(sc.toDataURL('image/jpeg', 0.9), 'JPEG', margin, margin, pdfW, displayH);
+      offset += displayH;
+      page++;
+    }
+  }
+
+  function certificatePdfFilename(payload, studentName) {
+    var base = (String(studentName).replace(/[^a-zA-Z0-9_\-]+/g, '_') || 'student');
+    var f = String((payload && payload.test_form) || '').toLowerCase();
+    if (f === 'test1a') return base + '_General_Test1_FormA_english_certification.pdf';
+    if (f === 'test2a') return base + '_General_Test2_FormA_english_certification.pdf';
+    return base + '_english_certification.pdf';
+  }
+
+  /**
+   * @param {object} [optionalPayload] If set (e.g. General Test 1 after adaptive path), generate PDF for that payload (text layout). If omitted, uses on-screen certificate (html2canvas when available).
+   * @param {HTMLElement} [triggerBtn] Button to disable/restore during generation.
+   */
+  function downloadCertificatePdfBre(optionalPayload, triggerBtn) {
+    var explicitPayload = arguments.length >= 1 && optionalPayload !== undefined;
+    var payload = explicitPayload ? optionalPayload : lastCertPayload;
+    if (!payload) {
+      alert('Result not found.');
+      return;
+    }
+    if (!window.jspdf || !window.jspdf.jsPDF) {
+      alert('PDF library not available.');
+      return;
+    }
+    var contact = schoolContactDefaults();
+    var name = String(payload.student_name || payload.name || 'Student');
+    var btn = triggerBtn || byId('ptDownloadCertificateBtn');
+    var prevText = btn ? btn.textContent : '';
+    function restoreBtn() {
+      if (btn) {
+        btn.disabled = false;
+        btn.textContent = prevText || 'Download Certificate (PDF)';
+      }
+    }
+
+    function runBreCertificatePdfFallback() {
+      try {
+      var jsPDF = window.jspdf.jsPDF;
+      var doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+      var margin = 14;
+      var pageW = doc.internal.pageSize.getWidth();
+      var pageH = doc.internal.pageSize.getHeight();
+      var maxW = pageW - margin * 2;
+      var y;
+      var cx = pageW / 2;
+
+      y = margin;
+      doc.setTextColor(26, 26, 26);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(13);
+      doc.text(contact.schoolName, cx, y + 4, { align: 'center' });
+      doc.setFont('helvetica', 'italic');
+      doc.setTextColor(26, 26, 26);
+      doc.setFontSize(11);
+      doc.text('English Certification', cx, y + 11, { align: 'center' });
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(45, 45, 45);
+      y += 16;
+      doc.setDrawColor(214, 40, 40);
+      doc.setLineWidth(0.4);
+      doc.line(margin, y, pageW - margin, y);
+      y += 6;
+
+      function ensureSpace(h) {
+        if (y + h > pageH - margin) {
+          doc.addPage();
+          y = margin;
+        }
+      }
+      function addLines(lines, fontSize, fontStyle) {
+        var fs = fontSize || 10;
+        doc.setFont('helvetica', fontStyle || 'normal');
+        doc.setFontSize(fs);
+        doc.setTextColor(40, 40, 40);
+        var arr = Array.isArray(lines) ? lines : [lines];
+        for (var i = 0; i < arr.length; i++) {
+          var rawLine = String(arr[i] == null ? '' : arr[i]);
+          if (rawLine === '') {
+            y += fs * 0.35;
+            continue;
+          }
+          var split = doc.splitTextToSize(rawLine, maxW);
+          for (var j = 0; j < split.length; j++) {
+            ensureSpace(fs * 0.55);
+            doc.text(split[j], margin, y);
+            y += fs * 0.52;
+          }
+        }
+        y += 2;
+      }
+      function addLinesCenter(text, fontSize, fontStyle, colorRgb) {
+        var fs = fontSize || 10;
+        doc.setFont('helvetica', fontStyle || 'normal');
+        doc.setFontSize(fs);
+        if (colorRgb) doc.setTextColor(colorRgb[0], colorRgb[1], colorRgb[2]);
+        else doc.setTextColor(40, 40, 40);
+        var split = doc.splitTextToSize(String(text), maxW);
+        for (var j = 0; j < split.length; j++) {
+          ensureSpace(fs * 0.55);
+          doc.text(split[j], cx, y, { align: 'center' });
+          y += fs * 0.52;
+        }
+        y += 2;
+      }
+
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(13);
+      doc.setTextColor(214, 40, 40);
+      addLinesCenter(name, 13, 'bold', [214, 40, 40]);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(10);
+      addLinesCenter(
+        'has partially completed the Certificate and has earned the following online level (Listening · Grammar · Vocabulary · Reading):',
+        10,
+        'normal',
+        [40, 40, 40]
+      );
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(158, 24, 24);
+      doc.setFontSize(17);
+      ensureSpace(10);
+      doc.text(formatTotalOutOf80(totalOnlinePointsFromPayload(payload)) + '/80', cx, y, { align: 'center' });
+      y += 8;
+      doc.setFontSize(11);
+      doc.text(String(payload.suggested_level || ''), cx, y, { align: 'center' });
+      y += 9;
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(40, 40, 40);
+      doc.setFontSize(10);
+      addLines([
+        'Online paper     : ' +
+          (String(payload.test_form || '').toLowerCase() === 'test1a'
+            ? 'General Test 1 — Form A'
+            : 'General Test 2 — Form A'),
+        '',
+        'Listening        : ' + pad2(payload.listening_score) + '/20',
+        'Grammar          : ' + pad2(payload.grammar_score) + '/30',
+        'Vocabulary       : ' + pad2(payload.vocabulary_score) + '/20',
+        'Reading          : ' + pad2(payload.reading_score) + '/10',
+        '',
+        'Awarded on: ' + formatAwardDate(payload.submittedAt),
+        '',
+        '------------------------------------------------------------------------------'
+      ]);
+      doc.setFont('helvetica', 'bold');
+      addLinesCenter('Understanding the results', 10, 'bold', [26, 26, 26]);
+      doc.setFont('helvetica', 'normal');
+      addLines(certBandMatrixLinesForPdf(payload.test_form || selectedForm));
+      var band = bandSummaryFromPayload(payload);
+      doc.setTextColor(158, 24, 24);
+      doc.setFont('helvetica', 'bold');
+      addLines('Important notice', 10, 'bold');
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(40, 40, 40);
+      addLines([
+        '• Writing & Speaking NOT included online.',
+        '• Come to the centre to complete them for your final level.',
+        '',
+        'Your online level : ' +
+          String(payload.suggested_level || '') +
+          ' (' +
+          band.range +
+          '/80)',
+        'Final level       : NOT YET DETERMINED',
+        ''
+      ]);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(158, 24, 24);
+      addLines('Next step', 10, 'bold');
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(40, 40, 40);
+      addLines('Please call or visit the centre to schedule your Writing & Speaking test appointment.');
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(158, 24, 24);
+      addLines('Contact information', 10, 'bold');
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(40, 40, 40);
+      addLines([
+        'Centre Address : ' + contact.address,
+        'Phone Number : ' + contact.phone,
+        'Email : ' + contact.email,
+        'Office Hours : ' + contact.officeHours,
+        '',
+        'Thank you.',
+        contact.schoolName
+      ]);
+      var filename = certificatePdfFilename(payload, name);
+      doc.save(filename);
+      } finally {
+        restoreBtn();
+      }
+    }
+
+    var certEl = document.querySelector('#ptStep6Message .pt-cert-document');
+    var useDomCanvas =
+      !explicitPayload &&
+      window.html2canvas &&
+      certEl &&
+      certEl.getBoundingClientRect().height > 2;
+    if (useDomCanvas) {
+      if (btn) {
+        btn.disabled = true;
+        btn.textContent = 'Preparing PDF…';
+      }
+      window
+        .html2canvas(certEl, {
+          scale: 2,
+          useCORS: true,
+          allowTaint: false,
+          backgroundColor: '#ffffff',
+          logging: false,
+          scrollX: 0,
+          scrollY: -window.scrollY,
+          onclone: function(clonedDoc) {
+            var st = clonedDoc.createElement('style');
+            st.textContent = '.pt-cert-document::before{display:none!important;}';
+            clonedDoc.head.appendChild(st);
+          }
+        })
+        .then(function(canvas) {
+          try {
+            var jsPDF = window.jspdf.jsPDF;
+            var doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+            addCertCanvasToPdf(doc, canvas);
+            var filename = certificatePdfFilename(payload, name);
+            doc.save(filename);
+          } finally {
+            restoreBtn();
+          }
+        })
+        .catch(function(err) {
+          console.warn('html2canvas PDF failed', err);
+          runBreCertificatePdfFallback();
+        });
+      return;
+    }
+    if (explicitPayload && btn) {
+      btn.disabled = true;
+      btn.textContent = 'Preparing PDF…';
+    }
+    runBreCertificatePdfFallback();
+  }
+
+  function placementRecordTimeMs(s) {
+    if (!s || typeof s !== 'object') return 0;
+    var candidates = [s.updatedAt, s.updated_at, s.submittedAt, s.test_date, s.applied_date];
+    var best = 0;
+    for (var i = 0; i < candidates.length; i++) {
+      var v = candidates[i];
+      if (v == null || v === '') continue;
+      var ms = new Date(v).getTime();
+      if (!isNaN(ms) && ms > best) best = ms;
+    }
+    return best;
+  }
+
+  function mergePlacementPairBre(prev, record) {
+    var tp = placementRecordTimeMs(prev);
+    var tr = placementRecordTimeMs(record);
+    var older = tr >= tp ? prev : record;
+    var newer = tr >= tp ? record : prev;
+    var merged = Object.assign({}, older, newer);
+    if ((merged.writing == null || merged.writing === '') && (prev.writing || record.writing)) {
+      merged.writing = (newer.writing != null && newer.writing !== '') ? newer.writing : (older.writing || merged.writing || '');
+    }
+    return merged;
+  }
+
+  function dedupePlacementListBre(list) {
+    var byKey = {};
+    var order = [];
+    (list || []).forEach(function(raw) {
+      var it = raw || {};
+      var key;
+      if (it.client_submission_id) key = 'cid:' + it.client_submission_id;
+      else if (it._id) key = 'id:' + it._id;
+      else key = 'legacy:' + [it.name || it.student_name || '', it.phone || '', it.submittedAt || ''].join('|');
+      if (!byKey[key]) {
+        byKey[key] = it;
+        order.push(key);
+      } else {
+        byKey[key] = mergePlacementPairBre(byKey[key], it);
+      }
+    });
+    return order.map(function(k) { return byKey[k]; });
+  }
+
+  function persistResult(payload) {
+    try { localStorage.setItem('placement_test_submission', JSON.stringify(payload)); } catch (e) {}
+    var apiPromise = Promise.resolve(false);
+    if (window.SchoolAPI && SchoolAPI.getWebExtra && SchoolAPI.saveWebExtra) {
+      apiPromise = SchoolAPI.getWebExtra('placement_test_results').then(function(r) {
+        var list = (r && r.ok && Array.isArray(r.data)) ? r.data.slice() : [];
+        var idx = -1;
+        for (var i = 0; i < list.length; i++) {
+          var it = list[i] || {};
+          if (it.client_submission_id && payload.client_submission_id && it.client_submission_id === payload.client_submission_id) {
+            idx = i; break;
+          }
+          var sameName = String(it.name || it.student_name || '') === String(payload.name || payload.student_name || '');
+          var samePhone = String(it.phone || '') === String(payload.phone || '');
+          var sameTime = String(it.submittedAt || '') === String(payload.submittedAt || '');
+          if (sameName && samePhone && sameTime) { idx = i; break; }
+        }
+        if (idx >= 0) list[idx] = mergePlacementPairBre(list[idx], payload);
+        else list.push(payload);
+        list = dedupePlacementListBre(list);
+        return SchoolAPI.saveWebExtra('placement_test_results', list).then(function(s) { return !!(s && s.ok); });
+      }).catch(function() { return false; });
+    }
+    var firebasePromise = Promise.resolve(false);
+    if (window.AcademyFirebase && AcademyFirebase.saveSubmission) {
+      firebasePromise = new Promise(function(resolve) {
+        AcademyFirebase.saveSubmission(payload, function(id) { resolve(!!id); });
+      });
+    }
+    return Promise.all([apiPromise, firebasePromise]).then(function(results) {
+      return !!(results[0] || results[1]);
+    }).catch(function() { return false; });
+  }
+
+  function beginTest2ARound(scores) {
+    lastRound1CertPayload = buildPayload(scores);
+    try {
+      localStorage.setItem(TEST1_SNAPSHOT_LS_KEY, JSON.stringify(buildTest1SnapshotForStorage(scores)));
+    } catch (e) {}
+    selectedForm = 'test2a';
+    timeLeft = TEST_DURATION_SECONDS;
+    updateTimer();
+    startTimer();
+    answers = new Array(TOTAL_COUNT).fill('');
+    currentIndex = 0;
+    playCount = 0;
+    var playBtn = byId('step2PlayBtn');
+    if (playBtn) playBtn.disabled = false;
+    var pcl = byId('playCountLabel');
+    if (pcl) pcl.textContent = 'Plays left: ' + listenLimit;
+    var bank = getBank();
+    deferListeningAudio(bank.audioUrl);
+    updateAdaptiveRoundBanner();
+    renderQuestion();
+    updateProgress();
+    var t1pts =
+      scores && scores.total_online_points != null
+        ? scores.total_online_points
+        : ADAPTIVE_THRESHOLD_TO_TEST2A;
+    alert(
+      'You scored ' +
+        t1pts +
+        '/80 on Test 1A. You will now continue with Test 2A.\n\nWhen you finish Test 2, this page will show certificates for both papers: you can download your General Test 1 online result as well as your General Test 2 result (the usual certificate band chart matches Test 2).'
+    );
+  }
+
+  function confirmSubmitMcqRound() {
+    byId('ptSubmitModalOverlay').style.display = 'none';
+    submitTest();
+  }
+
+  function submitTest() {
+    try {
+      localStorage.removeItem('placement_test_draft');
+    } catch (e) {}
+    stopListeningAudio();
+    var scores = calculateScores();
+    if (selectedForm === 'test1a' && scores.total_online_points >= ADAPTIVE_THRESHOLD_TO_TEST2A) {
+      beginTest2ARound(scores);
+      return;
+    }
+    if (timerId) {
+      clearInterval(timerId);
+      timerId = null;
+    }
+    var payload = buildPayload(scores);
+    lastCertPayload = payload;
+    var contact = schoolContactDefaults();
+    byId('ptStep6Message').innerHTML = buildCertificationHtml(payload, contact);
+    byId('ptStep6ThankYou').textContent = 'Thank you.';
+    var orgLine = byId('ptStep6OrgLine');
+    if (orgLine) orgLine.textContent = contact.schoolName;
+    var pdfBtn = byId('ptDownloadCertificateBtn');
+    if (pdfBtn) {
+      pdfBtn.style.display = '';
+      pdfBtn.textContent = lastRound1CertPayload
+        ? 'Download General Test 2 Certificate (PDF)'
+        : 'Download Certificate (PDF)';
+    }
+    var pdfT1Btn = byId('ptDownloadCertificateTest1Btn');
+    var dualNote = byId('ptStep6DualCertNote');
+    if (lastRound1CertPayload) {
+      if (pdfT1Btn) pdfT1Btn.style.display = '';
+      if (dualNote) dualNote.style.display = 'block';
+    } else {
+      if (pdfT1Btn) pdfT1Btn.style.display = 'none';
+      if (dualNote) dualNote.style.display = 'none';
+    }
+    persistResult(payload);
+    setStep(3);
+  }
+
+  function getDobValue() {
+    var d = byId('pDobDay'), m = byId('pDobMonth'), y = byId('pDobYear');
+    if (!d || !m || !y || !d.value || !m.value || !y.value) return '';
+    return y.value + '-' + m.value + '-' + d.value;
+  }
+
+  function fillDobDropdowns() {
+    var day = byId('pDobDay'), month = byId('pDobMonth'), year = byId('pDobYear');
+    if (!day || !month || !year || day.options.length > 1) return;
+    var i;
+    for (i = 1; i <= 31; i++) day.appendChild(new Option(i < 10 ? '0' + i : '' + i, i < 10 ? '0' + i : '' + i));
+    var months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+    for (i = 0; i < 12; i++) month.appendChild(new Option(months[i], (i + 1 < 10 ? '0' : '') + (i + 1)));
+    var y = new Date().getFullYear();
+    for (i = y; i >= y - 80; i--) year.appendChild(new Option(String(i), String(i)));
+  }
+
+  function bindEvents() {
+    var nameEl = byId('pName');
+    var phoneEl = byId('pPhone');
+    var phoneCountryEl = byId('pPhoneCountry');
+    if (nameEl) {
+      nameEl.addEventListener('input', function() {
+        var v = nameEl.value.replace(/[^A-Za-z\s.'-]/g, '');
+        if (v !== nameEl.value) nameEl.value = v;
+      });
+    }
+    if (phoneEl) {
+      phoneEl.addEventListener('input', function() {
+        var v = normalizePhoneInput(phoneEl.value);
+        if (v !== phoneEl.value) phoneEl.value = v;
+      });
+    }
+    if (phoneCountryEl) {
+      phoneCountryEl.addEventListener('change', applyCountryPrefixIfNeeded);
+      phoneCountryEl.addEventListener('change', updatePhoneFlagDisplay);
+      updatePhoneFlagDisplay();
+    }
+
+    function openSubmitModal() {
+      var answered = answers.filter(function(v) { return !!v; }).length;
+      var unanswered = TOTAL_COUNT - answered;
+      var extra =
+        selectedForm === 'test1a'
+          ? ' If your score on this paper is ' +
+            ADAPTIVE_THRESHOLD_TO_TEST2A +
+            '/80 or higher, you will continue with Test 2 before receiving your certificate.'
+          : '';
+      byId('ptSubmitModalMessage').textContent =
+        'You have answered ' +
+        answered +
+        ' out of ' +
+        TOTAL_COUNT +
+        ' questions. Unanswered: ' +
+        unanswered +
+        '. Are you sure you want to submit?' +
+        extra;
+      byId('ptSubmitModalOverlay').style.display = 'flex';
+    }
+
+    byId('step2Questions').addEventListener('change', function(e) {
+      var t = e.target;
+      if (!t || t.name !== 'exam_current') return;
+      answers[currentIndex] = t.value;
+      renderNavigator();
+      updateProgress();
+    });
+    byId('step2PrevBtn').addEventListener('click', function() {
+      if (currentIndex > 0) currentIndex--;
+      renderQuestion();
+    });
+    byId('step2NextBtn').addEventListener('click', function() {
+      if (currentIndex < TOTAL_COUNT - 1) {
+        currentIndex++;
+        renderQuestion();
+      } else {
+        openSubmitModal();
+      }
+    });
+    byId('step2Navigator').addEventListener('click', function(e) {
+      var btn = e.target && e.target.closest ? e.target.closest('button[data-qidx]') : null;
+      if (!btn) return;
+      var idx = parseInt(btn.getAttribute('data-qidx'), 10);
+      if (!isNaN(idx)) {
+        currentIndex = idx;
+        renderQuestion();
+      }
+    });
+    byId('ptSubmitTestBtn').addEventListener('click', function() {
+      openSubmitModal();
+    });
+    byId('ptSubmitModalCancel').addEventListener('click', function() { byId('ptSubmitModalOverlay').style.display = 'none'; });
+    byId('ptSubmitModalClose').addEventListener('click', function() { byId('ptSubmitModalOverlay').style.display = 'none'; });
+    byId('ptSubmitModalConfirm').addEventListener('click', confirmSubmitMcqRound);
+    var certPdfBtn = byId('ptDownloadCertificateBtn');
+    if (certPdfBtn) certPdfBtn.addEventListener('click', function() { downloadCertificatePdfBre(); });
+    var certPdfBtnT1 = byId('ptDownloadCertificateTest1Btn');
+    if (certPdfBtnT1) {
+      certPdfBtnT1.addEventListener('click', function() {
+        downloadCertificatePdfBre(lastRound1CertPayload, certPdfBtnT1);
+      });
+    }
+
+    var audio = byId('listeningAudio');
+    var playBtn = byId('step2PlayBtn');
+    playBtn.addEventListener('click', function() {
+      if (playCount >= listenLimit) return;
+      if (!ensureListeningAudioSource()) return;
+      audio.play();
+    });
+    audio.addEventListener('play', function() {
+      playCount++;
+      byId('playCountLabel').textContent = 'Plays left: ' + Math.max(0, listenLimit - playCount);
+      if (playCount >= listenLimit) playBtn.disabled = true;
+    });
+    audio.addEventListener('timeupdate', function() {
+      var t = audio.currentTime || 0, d = audio.duration || 0;
+      byId('step2TimeDisplay').textContent = mmss(Math.floor(t)) + ' / ' + mmss(Math.floor(d));
+    });
+    audio.addEventListener('ended', function() {
+      if (playCount >= listenLimit) playBtn.disabled = true;
+    });
+
+    byId('nextTo2').addEventListener('click', function() {
+      var name = (byId('pName').value || '').trim();
+      var phone = normalizePhoneInput(byId('pPhone').value);
+      var parentName = (byId('pParentName') && byId('pParentName').value || '').trim();
+      var dob = getDobValue();
+      if (!name || !phone || !parentName) { alert('Please fill Student Name, Phone Number, and Parent Name.'); return; }
+      if (!isValidEnglishStudentName(name)) {
+        alert(
+          'Student name must be in English only (letters A–Z). Spaces, hyphens (-), and apostrophes (\') between name parts are allowed.'
+        );
+        return;
+      }
+      if (!isValidPhoneNumber(phone)) {
+        alert(
+          'Please enter a valid phone number. International formats are accepted (e.g. +959..., +44..., 09...).'
+        );
+        return;
+      }
+      if (!dob) { alert('Please select Date of Birth.'); return; }
+      applyCountryPrefixIfNeeded();
+      lastRound1CertPayload = null;
+      selectedForm = 'test1a';
+      updateAdaptiveRoundBanner();
+      var bank = getBank();
+      answers = new Array(TOTAL_COUNT).fill('');
+      currentIndex = 0;
+      timeLeft = TEST_DURATION_SECONDS;
+      playCount = 0;
+      byId('playCountLabel').textContent = 'Plays left: ' + listenLimit;
+      playBtn.disabled = false;
+      deferListeningAudio(bank.audioUrl);
+      setStep(2);
+      renderQuestion();
+      updateTimer();
+      startTimer();
+    });
+  }
+
+  function init() {
+    fillDobDropdowns();
+    setStep(1);
+    bindEvents();
+  }
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+  else init();
+})();
+
