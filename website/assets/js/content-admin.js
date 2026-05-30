@@ -653,7 +653,7 @@ AcademyContent.youtubeEmbedFromUrl = function(raw) {
   var u = String(raw || '').trim();
   if (!u) return null;
   var m = u.match(/(?:youtube\.com\/watch\?v=|youtube\.com\/shorts\/|youtu\.be\/|youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})/);
-  if (m) return 'https://www.youtube.com/embed/' + m[1] + '?rel=0';
+  if (m) return 'https://www.youtube.com/embed/' + m[1] + '?playsinline=1&rel=0&modestbranding=1';
   return null;
 };
 
@@ -684,6 +684,7 @@ AcademyContent.applyActivityVideos = function(content, uploads) {
     }
     function showYt(src) {
       if (iframe) {
+        iframe.setAttribute('loading', 'eager');
         iframe.setAttribute('src', src);
         iframe.style.display = 'block';
       }
