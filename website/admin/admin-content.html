@@ -405,10 +405,6 @@
         <div id="aboutFacilitiesList"></div>
         <button type="button" class="btn-add" id="btnAddAboutFacility">➕ Facility </button>
 
-        <div class="section-divider"><span class="sd-icon">🖼️</span><span class="sd-title">Photo Gallery</span><span class="sd-sub">— Resources → Gallery  (sidebar + )</span></div>
-        <p class="form-hint" style="margin:0 0 0.75rem; font-size:0.9rem; color:var(--text-muted,#666);">Album       slot    ➕ Add photo slot   ( ) About Facilities  </p>
-        <div id="galleryAlbumsAdmin"></div>
-
         <div class="section-divider"><span class="sd-icon">✨</span><span class="sd-title">Join Myanmar New Era (CTA)</span><span class="sd-sub">— </span></div>
         <div class="card">
           <div class="form-group edit-zone"><label></label><input type="text" id="about_join_title" placeholder="Join Myanmar New Era"></div>
@@ -490,7 +486,7 @@
       ══════════════════════════════════════════════════════ -->
       <div class="tab-panel" id="tab-news">
 
-        <div class="section-divider"><span class="sd-icon">💡</span><span class="sd-title">English Learning Tips</span><span class="sd-sub">—  </span></div>
+        <div class="section-divider" data-section-key="blog-tips"><span class="sd-icon">💡</span><span class="sd-title">English Learning Tips</span><span class="sd-sub">— Blog tips shown on Resources page</span></div>
         <div class="content-card">
           <div class="content-card-header"><span class="content-card-icon">📖</span><span class="content-card-live" id="lbl_tip1"> </span></div>
           <div class="form-group"><label></label><input type="text" id="blog_tip1_title"></div>
@@ -507,7 +503,7 @@
           <div class="form-group"><label></label><textarea id="blog_tip3_text" rows="2"></textarea></div>
         </div>
 
-        <div class="section-divider"><span class="sd-icon">📣</span><span class="sd-title">Academy Announcements</span><span class="sd-sub">— add / edit / delete posts</span></div>
+        <div class="section-divider" data-section-key="blog-posts"><span class="sd-icon">📣</span><span class="sd-title">Academy Announcements</span><span class="sd-sub">— add / edit / delete posts</span></div>
         <div id="blogPostsList"></div>
         <div class="card" style="margin-top:0.5rem;">
           <h3 style="margin-bottom:0.75rem; color:var(--primary);">➕ Add New Post</h3>
@@ -534,6 +530,10 @@
           <div class="upload-preview" id="newPost_image_preview"></div>
           <button type="button" class="btn-add post-edit-save" id="btnAddPost">➕ Add Post</button>
         </div>
+
+        <div class="section-divider" data-section-key="gallery"><span class="sd-icon">🖼️</span><span class="sd-title">Photo Gallery</span><span class="sd-sub">— Resources → Gallery (sidebar albums + photos)</span></div>
+        <p class="form-hint" style="margin:0 0 0.75rem; font-size:0.9rem; color:var(--text-muted,#666);">Upload photos for each album category. Use ➕ Add photo slot for more images per album. Save All when finished.</p>
+        <div id="galleryAlbumsAdmin"></div>
       </div>
 
       <!-- ══════════════════════════════════════════════════════
@@ -712,6 +712,60 @@
       }
     }
 
+    function getSectionParam() {
+      try {
+        return (new URLSearchParams(window.location.search || '')).get('section') || '';
+      } catch (e) {
+        return '';
+      }
+    }
+
+    function openMultipleSections(panel, indices) {
+      if (!panel || !panel.__sectionGroups) return;
+      var openSet = {};
+      (indices || []).forEach(function(i) { openSet[i] = true; });
+      panel.__sectionGroups.forEach(function(g, i) {
+        var isOpen = !!openSet[i];
+        g.divider.classList.toggle('section-open', isOpen);
+        g.body.forEach(function(node) {
+          node.style.display = isOpen ? '' : 'none';
+        });
+      });
+      panel.__openSectionIndex = indices && indices.length ? indices[0] : -1;
+    }
+
+    function applySectionParam(panel) {
+      if (!panel || !panel.__sectionGroups || !panel.__sectionGroups.length) return;
+      var section = getSectionParam().toLowerCase();
+      if (!section) {
+        setSectionOpen(panel, -1, false);
+        return;
+      }
+      if (section === 'blog') {
+        var blogIdx = [];
+        panel.__sectionGroups.forEach(function(g, i) {
+          var key = (g.divider.getAttribute('data-section-key') || '').toLowerCase();
+          if (key === 'blog-tips' || key === 'blog-posts') blogIdx.push(i);
+        });
+        if (blogIdx.length) {
+          openMultipleSections(panel, blogIdx);
+          return;
+        }
+      }
+      if (section === 'gallery') {
+        for (var gi = 0; gi < panel.__sectionGroups.length; gi++) {
+          if ((panel.__sectionGroups[gi].divider.getAttribute('data-section-key') || '').toLowerCase() === 'gallery') {
+            setSectionOpen(panel, gi, true);
+            try {
+              panel.__sectionGroups[gi].divider.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            } catch (e) {}
+            return;
+          }
+        }
+      }
+      setSectionOpen(panel, -1, false);
+    }
+
     /* ── Tab switching ── */
     function initSectionAccordions(panel) {
       if (!panel || panel.__sectionInitDone) return;
@@ -745,7 +799,7 @@
         });
       });
       panel.__sectionInitDone = true;
-      setSectionOpen(panel, -1, false);
+      applySectionParam(panel);
     }
 
     function setSectionOpen(panel, idx, open) {
@@ -2530,7 +2584,7 @@
       home: ['hero_title','hero_subtitle','hero_check1','hero_check2','hero_check3','hero_btn1','hero_btn2','home_activity_video_1','home_activity_video_2','home_activities_carousel_interval_sec','why_title','why_lead','about1_title','about1_text','about2_title','about2_text','about3_title','about3_text','about4_title','about4_text','pt_cta_title','pt_cta_subtitle','pt_cta_check1','pt_cta_check2','pt_cta_btn','learning_method_section_title','learning_method_section_lead','facilities_section_title','facilities_section_lead','teachers_section_title','teachers_section_subtitle','testimonials_title','testimonials_subtitle','faq_section_title'],
       about: ['about_page_title','about_mv_section_title','about_mission_label','about_mission_text','about_vision_label','about_vision_text','about_core_values_label','about_core_values_text','about_instructors_section_title','about_facilities_section_title','about_join_title','about_join_lead','about_join_text'],
       course: ['courses_title','course_page_title','course_page_subtitle','course_our_title','course_features_title','course_feature1_title','course_feature1_text','course_feature2_title','course_feature2_text','course_feature3_title','course_feature3_text','course_feature4_title','course_feature4_text','course_feature5_title','course_feature5_text','course_join_title','course_join1','course_join2','course_join3','course_join4','course_outcomes_title','course_outcomes_intro','course_outcome1','course_outcome2','course_outcome3','course_outcome4','course_cta_title','course_cta_subtitle','course_cta_check1','course_cta_check2','course_cta_btn'],
-      news: ['blog_tip1_title','blog_tip1_text','blog_tip2_title','blog_tip2_text','blog_tip3_title','blog_tip3_text'],
+      news: ['blog_tip1_title','blog_tip1_text','blog_tip2_title','blog_tip2_text','blog_tip3_title','blog_tip3_text','gallery_album_titles','gallery_album_slot_counts'],
       admissions: ['pay_kpay','pay_wave','pay_bank'],
       contact: ['contact_address','contact_phone','contact_email','contact_email_2','contact_facebook','contact_fb_url','contact_map']
     };
