@@ -16,6 +16,33 @@
     return firebase.database();
   }
 
+  function getAuth() {
+    if (typeof firebase === 'undefined' || !firebase.auth) return null;
+    getDb();
+    return firebase.auth();
+  }
+
+  /** siteContent write requires auth != null in database.rules.json */
+  function ensureAuthForWrite(callback) {
+    var auth = getAuth();
+    if (!auth) {
+      if (callback) callback(false);
+      return;
+    }
+    if (auth.currentUser) {
+      if (callback) callback(true);
+      return;
+    }
+    auth.signInAnonymously().then(function() {
+      if (callback) callback(true);
+    }).catch(function(err) {
+      if (typeof console !== 'undefined' && console.warn) {
+        console.warn('[AcademyFirebase] Anonymous sign-in failed:', err && err.message);
+      }
+      if (callback) callback(false);
+    });
+  }
+
   window.AcademyFirebase = window.AcademyFirebase || {};
 
   AcademyFirebase.get = function(callback) {
@@ -38,10 +65,19 @@
       if (callback) callback(false);
       return;
     }
-    db.ref(DB_PATH).set(data).then(function() {
-      if (callback) callback(true);
-    }).catch(function() {
-      if (callback) callback(false);
+    ensureAuthForWrite(function(authed) {
+      if (!authed) {
+        if (callback) callback(false);
+        return;
+      }
+      db.ref(DB_PATH).set(data).then(function() {
+        if (callback) callback(true);
+      }).catch(function(err) {
+        if (typeof console !== 'undefined' && console.warn) {
+          console.warn('[AcademyFirebase] siteContent save failed:', err && err.message);
+        }
+        if (callback) callback(false);
+      });
     });
   };
 

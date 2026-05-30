@@ -254,19 +254,21 @@ AcademyContent.saveAll = function(payload, callback) {
   };
   if (window.AcademyFirebase && AcademyFirebase.set) {
     var done = false;
+    var firebaseOk = false;
     function finish() {
       if (done) return;
       done = true;
-      if (callback) callback(true);
+      if (callback) callback({ local: true, firebase: firebaseOk });
     }
-    var t = setTimeout(finish, 8000);
-    AcademyFirebase.set(sync, function() {
+    var t = setTimeout(function() { finish(); }, 12000);
+    AcademyFirebase.set(sync, function(ok) {
+      firebaseOk = !!ok;
       clearTimeout(t);
       finish();
     });
     return;
   }
-  if (callback) callback(true);
+  if (callback) callback({ local: true, firebase: false });
 };
 
 /**

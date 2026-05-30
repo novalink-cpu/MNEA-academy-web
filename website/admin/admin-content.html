@@ -669,6 +669,7 @@
   </div>
 
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
   <script src="../assets/js/firebase-config.js"></script>
   <script src="../assets/js/content-firebase.js"></script>
@@ -2800,14 +2801,18 @@
       })();
       var placementTest = (singlePage === 'placement') ? buildPlacementTest() : AcademyContent.loadPlacementTest();
       var postsToSave = (singlePage === 'news') ? blogPosts : (AcademyContent.loadBlogPosts() || []);
-      AcademyContent.saveAll({ content: content, uploads: uploads, placementTest: placementTest, blogPosts: postsToSave }, function() {
+      AcademyContent.saveAll({ content: content, uploads: uploads, placementTest: placementTest, blogPosts: postsToSave }, function(result) {
         var st = document.getElementById('saveStatus');
         if (st) {
-          st.textContent = 'Changes saved successfully';
+          var synced = result && result.firebase;
+          st.textContent = synced
+            ? 'Saved — live site updated (phone can see changes)'
+            : 'Saved on this browser only — Firebase sync failed. Enable Anonymous Auth in Firebase Console, then Save again.';
+          st.style.color = synced ? '#16a34a' : '#dc2626';
           st.style.display = 'inline';
           st.style.visibility = 'visible';
           st.style.opacity = '1';
-          setTimeout(function() { st.style.display = 'none'; }, 3500);
+          setTimeout(function() { st.style.display = 'none'; }, synced ? 3500 : 8000);
         }
       });
     });
