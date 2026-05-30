@@ -728,6 +728,12 @@ AcademyContent.DEFAULT_HOME_ACTIVITIES_SLIDES = [
   { caption_en: 'ACTIVITY 2', caption_my: ' ', image_key: 'home_activity_slide_1' }
 ];
 
+/** Fallback file paths when Admin/Firebase has no upload for a slide (served from website/photo/). */
+AcademyContent.DEFAULT_HOME_ACTIVITY_IMAGE_PATHS = {
+  home_activity_slide_0: '../photo/activity1.jpg',
+  home_activity_slide_1: '../photo/activity1.jpg'
+};
+
 /**  upload /   classroom   placeholder  ( ➕ ) */
 AcademyContent.ACTIVITY_SLIDE_PLACEHOLDER_SVG = 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(
   '<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="675" viewBox="0 0 1200 675"><rect fill="#e8edf3" width="1200" height="675"/><text x="600" y="310" text-anchor="middle" fill="#475569" font-family="system-ui,-apple-system,sans-serif" font-size="26">    </text><text x="600" y="360" text-anchor="middle" fill="#64748b" font-family="system-ui,-apple-system,sans-serif" font-size="18">Upload image or set file path in Admin</text></svg>'
@@ -787,7 +793,9 @@ AcademyContent.renderHomeActivitiesCarousel = function(content, uploads) {
   track.style.width = (n * 100) + '%';
   track.innerHTML = slides.map(function(item, i) {
     var key = item.image_key || ('home_activity_slide_' + i);
-    var src = uploads[key] ? uploads[key] : AcademyContent.ACTIVITY_SLIDE_PLACEHOLDER_SVG;
+    var src = uploads[key]
+      || (AcademyContent.DEFAULT_HOME_ACTIVITY_IMAGE_PATHS && AcademyContent.DEFAULT_HOME_ACTIVITY_IMAGE_PATHS[key])
+      || AcademyContent.ACTIVITY_SLIDE_PLACEHOLDER_SVG;
     var cen = item.caption_en != null ? String(item.caption_en) : '';
     var cmy = item.caption_my != null ? String(item.caption_my) : '';
     var captionShown;
