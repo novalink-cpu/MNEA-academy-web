@@ -227,18 +227,18 @@
     var el = $('genBackupMsg');
     if (!restoreFile) return;
     var n = restoreFile.name.toLowerCase();
-    if (n.indexOf('.db') < 0 && n.indexOf('.sqlite') < 0) {
-      showGenMsg(el, 'Choose a .db or .sqlite backup file.', false);
+    if (n.indexOf('.json') < 0) {
+      showGenMsg(el, 'Choose a .json backup file from Create backup.', false);
       return;
     }
-    if (!window.confirm('Replace the LIVE database with this file? All users should stop using the system first.'))
+    if (!window.confirm('Replace LIVE MySQL data with this backup? All users should stop using the system first.'))
       return;
     if (!window.confirm('This cannot be undone without another backup. Press OK only if you are sure.')) return;
     showGenMsg(el, 'Uploading…', true);
     SchoolAPI.restoreDatabase(restoreFile)
       .then(function (res) {
         if (res && res.ok) {
-          showGenMsg(el, 'Database replaced. Reloading…', true);
+          showGenMsg(el, 'Data restored from backup. Reloading…', true);
           window.setTimeout(function () {
             window.location.reload();
           }, 900);

@@ -3,6 +3,8 @@ __pycache__/
 *.pyc
 .venv/
 venv/
+*.db
 *.db-journal
+Database/*.db
 .DS_Store
 Thumbs.db

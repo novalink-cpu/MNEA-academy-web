@@ -1,9 +1,9 @@
 """
 MySQL + bcrypt login helper for app.py /api/login.
 
-- If MYSQL_DATABASE is not set → returns skip (SQLite login in app.py).
-- If username is not in MySQL → returns skip.
-- If username is in MySQL → bcrypt verification only (no SQLite fallback for that user).
+- If MYSQL_DATABASE is not set → app cannot start (MySQL required).
+- If username is not in MySQL auth `users` table → caller continues with `school_users` portal login.
+- If username is in MySQL auth `users` → bcrypt verification only.
 
 Dependencies: mysql-connector-python, bcrypt, python-dotenv (optional).
 """

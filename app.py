@@ -2,7 +2,8 @@
 import os
 import sys
 import json
-import sqlite3
+import mnea_db as sqlite3
+from mnea_db import ensure_schema, table_exists, table_has_column
 import shutil
 import threading
 import webbrowser
@@ -147,6 +148,7 @@ except Exception as _mnea_auth_ex:
 CONFIG_FILE = os.path.join(_BASE_DIR, "egms_config.json")
 BUILD_CONFIG = os.path.join(_BASE_DIR, "school_build_config.json")
 DEFAULT_YEAR = "2026-2027"
+MYSQL_SCHEMA = os.path.join(_BASE_DIR, "Database", "mysql_schema.sql")
 # Public-site branding; used for new DB rows, API fallbacks, and one-time fix of EMS demo name.
 DEFAULT_SCHOOL_DISPLAY_NAME = "Myanmar New Era International Education Centre"
 _LEGACY_TEMPLATE_SCHOOL_NAME = "Myanmar International School"
@@ -187,27 +189,22 @@ def safe_basename(s):
 
 
 def get_db_path(academic_year=None):
-    data_dir = get_data_dir()
-    sid = get_school_id()
+    """Display label for current database (MySQL). Legacy name kept for API compatibility."""
+    db = (os.environ.get("MYSQL_DATABASE") or "").strip() or "MYSQL_DATABASE"
     year = academic_year or DEFAULT_YEAR
-    db_name = safe_basename(sid) + "_" + safe_basename(str(year)) + ".db"
-    db_dir = os.path.join(data_dir, "Database")
-    os.makedirs(db_dir, exist_ok=True)
-    return os.path.join(db_dir, db_name)
+    return f"mysql:{db} (academic_year={year})"
 
 
 def get_app_config_from_default_db():
-    """Read app_config from the default-year DB. Current academic_year selection is stored here; get_conn(None) uses it to open the correct year DB."""
+    """Read app_config from MySQL. Current academic_year selection is stored in app_config."""
     out = {"academic_year": DEFAULT_YEAR, "academic_years": [DEFAULT_YEAR]}
     try:
-        path = get_db_path(DEFAULT_YEAR)
-        conn = sqlite3.connect(path)
+        conn = sqlite3.connect()
         conn.row_factory = sqlite3.Row
         db_init(conn)
-        ensure_school(conn)
         ensure_app_config(conn)
         cur = conn.cursor()
-        cur.execute("SELECT key, value FROM app_config")
+        cur.execute("SELECT `key`, value FROM app_config")
         for row in cur.fetchall():
             k, v = row["key"], row["value"]
             if v is None:
@@ -229,214 +226,51 @@ def get_app_config_from_default_db():
 def ensure_app_config(conn):
     """Insert default academic_year and academic_years into app_config if missing (same defaults as sms.py)."""
     cur = conn.cursor()
-    cur.execute("SELECT value FROM app_config WHERE key = ?", ("academic_year",))
+    cur.execute("SELECT value FROM app_config WHERE `key` = ?", ("academic_year",))
     if cur.fetchone():
         return
-    cur.execute("INSERT OR IGNORE INTO app_config (key, value) VALUES (?, ?)", ("academic_year", DEFAULT_YEAR))
-    cur.execute("INSERT OR IGNORE INTO app_config (key, value) VALUES (?, ?)", ("academic_years", json.dumps([DEFAULT_YEAR])))
-    conn.commit()
-
-
-def _subjects_has_data_key(conn):
-    """Return True if subjects table has data_key column (new schema)."""
-    cur = conn.cursor()
-    cur.execute("PRAGMA table_info(subjects)")
-    cols = [row[1] for row in cur.fetchall()]
-    return "data_key" in cols
-
-
-def _table_has_column(conn, table_name, column_name):
-    cur = conn.cursor()
-    cur.execute(f"PRAGMA table_info({table_name})")
-    cols = [row[1] for row in cur.fetchall()]
-    return column_name in cols
-
-
-def _migrate_subjects_table(conn):
-    """Migrate subjects from (school_id PK, data_json) to (school_id, data_key, data_json) PK(school_id, data_key)."""
-    cur = conn.cursor()
-    cur.execute("SELECT school_id, data_json FROM subjects")
-    rows = cur.fetchall()
-    cur.execute("DROP TABLE IF EXISTS subjects")
-    cur.execute("""
-        CREATE TABLE subjects (
-            school_id TEXT NOT NULL,
-            data_key TEXT NOT NULL DEFAULT 'subjects',
-            data_json TEXT,
-            PRIMARY KEY(school_id, data_key)
-        )
-    """)
-    for r in rows:
-        cur.execute(
-            "INSERT OR REPLACE INTO subjects (school_id, data_key, data_json) VALUES (?, 'subjects', ?)",
-            (r[0], r[1]),
-        )
+    cur.execute("INSERT OR IGNORE INTO app_config (`key`, value) VALUES (?, ?)", ("academic_year", DEFAULT_YEAR))
+    cur.execute("INSERT OR IGNORE INTO app_config (`key`, value) VALUES (?, ?)", ("academic_years", json.dumps([DEFAULT_YEAR])))
     conn.commit()
 
 
 def db_init(conn):
-    conn.executescript("""
-        CREATE TABLE IF NOT EXISTS schools (
-            id TEXT PRIMARY KEY, name TEXT, admin_username TEXT, admin_password TEXT,
-            logo TEXT, primary_color TEXT, bg_color TEXT, sidebar_bg TEXT, bg_image TEXT
-        );
-        CREATE TABLE IF NOT EXISTS app_config (key TEXT PRIMARY KEY, value TEXT);
-        CREATE TABLE IF NOT EXISTS superadmin (password TEXT);
-        CREATE TABLE IF NOT EXISTS students (school_id TEXT, student_id TEXT, data_json TEXT, PRIMARY KEY(school_id, student_id));
-        CREATE TABLE IF NOT EXISTS exams (school_id TEXT, exam_name TEXT, category TEXT, PRIMARY KEY(school_id, exam_name));
-        CREATE TABLE IF NOT EXISTS grades_config (school_id TEXT PRIMARY KEY, data_json TEXT);
-        CREATE TABLE IF NOT EXISTS exams_by_grade (school_id TEXT PRIMARY KEY, data_json TEXT);
-        CREATE TABLE IF NOT EXISTS exam_sections (school_id TEXT PRIMARY KEY, data_json TEXT);
-        CREATE TABLE IF NOT EXISTS users (school_id TEXT, username TEXT, data_json TEXT, PRIMARY KEY(school_id, username));
-        CREATE TABLE IF NOT EXISTS web_extra (school_id TEXT, data_key TEXT, data_json TEXT, PRIMARY KEY(school_id, data_key));
-        CREATE TABLE IF NOT EXISTS courses (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            school_id TEXT NOT NULL,
-            name TEXT NOT NULL,
-            duration TEXT NOT NULL DEFAULT '',
-            fee REAL NOT NULL DEFAULT 0,
-            description TEXT NOT NULL DEFAULT '',
-            start_date TEXT NOT NULL DEFAULT '',
-            end_date TEXT NOT NULL DEFAULT '',
-            capacity INTEGER NOT NULL DEFAULT 0,
-            current_enrollment INTEGER NOT NULL DEFAULT 0,
-            locations TEXT NOT NULL DEFAULT '',
-            age_group TEXT NOT NULL DEFAULT '',
-            schedule TEXT NOT NULL DEFAULT '',
-            instructor TEXT NOT NULL DEFAULT '',
-            status TEXT NOT NULL DEFAULT 'active',
-            created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
-        );
-        CREATE TABLE IF NOT EXISTS levels (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            school_id TEXT NOT NULL,
-            course_id INTEGER,
-            name TEXT NOT NULL,
-            min_score INTEGER NOT NULL,
-            max_score INTEGER NOT NULL,
-            cefr TEXT NOT NULL DEFAULT '',
-            locations TEXT NOT NULL DEFAULT '',
-            description TEXT NOT NULL DEFAULT '',
-            duration TEXT NOT NULL DEFAULT '',
-            FOREIGN KEY(course_id) REFERENCES courses(id) ON DELETE RESTRICT
-        );
-        CREATE TABLE IF NOT EXISTS batches (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            school_id TEXT NOT NULL,
-            name TEXT NOT NULL,
-            course_id INTEGER NOT NULL,
-            level_id INTEGER NOT NULL,
-            teacher_name TEXT NOT NULL DEFAULT '',
-            schedule TEXT NOT NULL DEFAULT '',
-            start_date TEXT NOT NULL DEFAULT '',
-            end_date TEXT NOT NULL DEFAULT '',
-            max_students INTEGER NOT NULL DEFAULT 0,
-            location TEXT NOT NULL DEFAULT '',
-            created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY(course_id) REFERENCES courses(id) ON DELETE RESTRICT,
-            FOREIGN KEY(level_id) REFERENCES levels(id) ON DELETE RESTRICT
-        );
-        CREATE TABLE IF NOT EXISTS batch_timetables (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            school_id TEXT NOT NULL,
-            batch_id INTEGER NOT NULL,
-            day TEXT NOT NULL,
-            time TEXT NOT NULL,
-            subject TEXT NOT NULL,
-            teacher_name TEXT NOT NULL DEFAULT '',
-            room_location TEXT NOT NULL DEFAULT '',
-            created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY(batch_id) REFERENCES batches(id) ON DELETE CASCADE
-        );
-    """)
-    # subjects: allow multiple rows per school (e.g. data_key = 'subjects')
+    ensure_schema(conn, MYSQL_SCHEMA)
     cur = conn.cursor()
-    cur.execute(
-        "SELECT name FROM sqlite_master WHERE type='table' AND name='subjects'"
-    )
-    if cur.fetchone():
-        if not _subjects_has_data_key(conn):
-            _migrate_subjects_table(conn)
-    else:
-        cur.execute("""
-            CREATE TABLE subjects (
-                school_id TEXT NOT NULL,
-                data_key TEXT NOT NULL DEFAULT 'subjects',
-                data_json TEXT,
-                PRIMARY KEY(school_id, data_key)
-            )
-        """)
-        conn.commit()
-    if not _table_has_column(conn, "levels", "course_id"):
-        cur.execute("ALTER TABLE levels ADD COLUMN course_id INTEGER")
     level_extra_columns = [
-        ("cefr", "TEXT NOT NULL DEFAULT ''"),
-        ("locations", "TEXT NOT NULL DEFAULT ''"),
-        ("description", "TEXT NOT NULL DEFAULT ''"),
-        ("duration", "TEXT NOT NULL DEFAULT ''"),
+        ("course_id", "INT NULL"),
+        ("cefr", "VARCHAR(32) NOT NULL DEFAULT ''"),
+        ("locations", "VARCHAR(255) NOT NULL DEFAULT ''"),
+        ("description", "TEXT NOT NULL"),
+        ("duration", "VARCHAR(128) NOT NULL DEFAULT ''"),
     ]
     for col_name, col_sql in level_extra_columns:
-        if not _table_has_column(conn, "levels", col_name):
+        if table_exists(conn, "levels") and not table_has_column(conn, "levels", col_name):
             cur.execute(f"ALTER TABLE levels ADD COLUMN {col_name} {col_sql}")
     course_extra_columns = [
-        ("start_date", "TEXT NOT NULL DEFAULT ''"),
-        ("end_date", "TEXT NOT NULL DEFAULT ''"),
-        ("capacity", "INTEGER NOT NULL DEFAULT 0"),
-        ("current_enrollment", "INTEGER NOT NULL DEFAULT 0"),
-        ("locations", "TEXT NOT NULL DEFAULT ''"),
-        ("age_group", "TEXT NOT NULL DEFAULT ''"),
-        ("schedule", "TEXT NOT NULL DEFAULT ''"),
-        ("instructor", "TEXT NOT NULL DEFAULT ''"),
-        ("status", "TEXT NOT NULL DEFAULT 'active'"),
+        ("start_date", "VARCHAR(32) NOT NULL DEFAULT ''"),
+        ("end_date", "VARCHAR(32) NOT NULL DEFAULT ''"),
+        ("capacity", "INT NOT NULL DEFAULT 0"),
+        ("current_enrollment", "INT NOT NULL DEFAULT 0"),
+        ("locations", "VARCHAR(255) NOT NULL DEFAULT ''"),
+        ("age_group", "VARCHAR(128) NOT NULL DEFAULT ''"),
+        ("schedule", "VARCHAR(255) NOT NULL DEFAULT ''"),
+        ("instructor", "VARCHAR(255) NOT NULL DEFAULT ''"),
+        ("status", "VARCHAR(32) NOT NULL DEFAULT 'active'"),
     ]
     for col_name, col_sql in course_extra_columns:
-        if not _table_has_column(conn, "courses", col_name):
+        if table_exists(conn, "courses") and not table_has_column(conn, "courses", col_name):
             cur.execute(f"ALTER TABLE courses ADD COLUMN {col_name} {col_sql}")
-    cur.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_courses_school_name ON courses(school_id, name)")
-    cur.execute("DROP INDEX IF EXISTS idx_levels_school_name")
-    cur.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_levels_school_course_name ON levels(school_id, course_id, name)")
-    cur.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_batches_school_name ON batches(school_id, name)")
-    cur.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_batch_timetables_slot ON batch_timetables(school_id, batch_id, day, time, subject)")
-    if not _table_has_column(conn, "batch_timetables", "teacher_name"):
-        cur.execute("ALTER TABLE batch_timetables ADD COLUMN teacher_name TEXT NOT NULL DEFAULT ''")
-    if not _table_has_column(conn, "batch_timetables", "room_location"):
-        cur.execute("ALTER TABLE batch_timetables ADD COLUMN room_location TEXT NOT NULL DEFAULT ''")
-    if not _table_has_column(conn, "batches", "teacher_username"):
-        cur.execute("ALTER TABLE batches ADD COLUMN teacher_username TEXT NOT NULL DEFAULT ''")
-    if not _table_has_column(conn, "batches", "location"):
-        cur.execute("ALTER TABLE batches ADD COLUMN location TEXT NOT NULL DEFAULT ''")
-    cur.execute(
-        """
-        CREATE TABLE IF NOT EXISTS attendance (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            school_id TEXT NOT NULL,
-            student_id TEXT NOT NULL,
-            batch_id INTEGER NOT NULL,
-            date TEXT NOT NULL,
-            status TEXT NOT NULL,
-            remark TEXT NOT NULL DEFAULT '',
-            taken_by TEXT NOT NULL DEFAULT '',
-            updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-            UNIQUE (school_id, student_id, batch_id, date),
-            FOREIGN KEY (batch_id) REFERENCES batches (id) ON DELETE CASCADE
-        )
-        """
-    )
-    cur.execute("CREATE INDEX IF NOT EXISTS idx_attendance_school_batch_date ON attendance (school_id, batch_id, date)")
-    cur.execute("CREATE INDEX IF NOT EXISTS idx_attendance_school_student ON attendance (school_id, student_id)")
-    cur.execute(
-        """
-        CREATE TABLE IF NOT EXISTS attendance_session_lock (
-            school_id TEXT NOT NULL,
-            batch_id INTEGER NOT NULL,
-            date TEXT NOT NULL,
-            locked_at TEXT NOT NULL DEFAULT (datetime('now')),
-            taken_by TEXT NOT NULL DEFAULT '',
-            PRIMARY KEY (school_id, batch_id, date),
-            FOREIGN KEY (batch_id) REFERENCES batches (id) ON DELETE CASCADE
-        )
-        """
-    )
+    if table_exists(conn, "batch_timetables"):
+        if not table_has_column(conn, "batch_timetables", "teacher_name"):
+            cur.execute("ALTER TABLE batch_timetables ADD COLUMN teacher_name VARCHAR(255) NOT NULL DEFAULT ''")
+        if not table_has_column(conn, "batch_timetables", "room_location"):
+            cur.execute("ALTER TABLE batch_timetables ADD COLUMN room_location VARCHAR(255) NOT NULL DEFAULT ''")
+    if table_exists(conn, "batches"):
+        if not table_has_column(conn, "batches", "teacher_username"):
+            cur.execute("ALTER TABLE batches ADD COLUMN teacher_username VARCHAR(191) NOT NULL DEFAULT ''")
+        if not table_has_column(conn, "batches", "location"):
+            cur.execute("ALTER TABLE batches ADD COLUMN location VARCHAR(255) NOT NULL DEFAULT ''")
     conn.commit()
 
 
@@ -481,7 +315,7 @@ def _sqlite_user_expected_password(ud, row_username):
 def _sqlite_find_teacher_row(cur, school_id, login_username):
     """Find teacher row when login name is teacher_id but PK username differs, or matches either."""
     login_l = (login_username or "").strip()
-    cur.execute("SELECT username, data_json FROM users WHERE school_id = ?", (school_id,))
+    cur.execute("SELECT username, data_json FROM school_users WHERE school_id = ?", (school_id,))
     for r in cur.fetchall():
         uname = r["username"]
         try:
@@ -537,14 +371,12 @@ def ensure_school(conn):
 
 
 def get_conn(academic_year=None):
-    """Use current academic year from default DB's app_config when academic_year is None (same as sms.py)."""
+    """Open MySQL connection. academic_year is kept for API compatibility (stored in app_config)."""
     if academic_year is None:
         cfg = get_app_config_from_default_db()
         academic_year = (cfg.get("academic_year") or "").strip() or DEFAULT_YEAR
-    path = get_db_path(academic_year)
-    conn = sqlite3.connect(path)
+    conn = sqlite3.connect()
     conn.row_factory = sqlite3.Row
-    conn.execute("PRAGMA foreign_keys = ON")
     db_init(conn)
     ensure_school(conn)
     align_legacy_school_branding(conn)
@@ -589,7 +421,7 @@ def load_school_data(conn, school_id):
     cur.execute("SELECT data_json FROM exam_sections WHERE school_id = ?", (school_id,))
     r = cur.fetchone()
     exam_sections = json.loads(r["data_json"]) if r and r["data_json"] else {}
-    cur.execute("SELECT username, data_json FROM users WHERE school_id = ?", (school_id,))
+    cur.execute("SELECT username, data_json FROM school_users WHERE school_id = ?", (school_id,))
     users = {}
     for row in cur.fetchall():
         try:
@@ -979,7 +811,7 @@ def _teacher_display_name(conn, school_id, username):
     if not username:
         return ""
     cur = conn.cursor()
-    cur.execute("SELECT data_json FROM users WHERE school_id = ? AND username = ?", (school_id, username))
+    cur.execute("SELECT data_json FROM school_users WHERE school_id = ? AND username = ?", (school_id, username))
     row = cur.fetchone()
     if not row:
         return ""
@@ -1193,14 +1025,10 @@ def api_config_set():
     if not new_year:
         return jsonify({"ok": False, "error": "academic_year required"}), 400
     try:
-        path = get_db_path(DEFAULT_YEAR)
-        conn = sqlite3.connect(path)
-        conn.row_factory = sqlite3.Row
-        db_init(conn)
-        ensure_school(conn)
+        conn = get_conn(DEFAULT_YEAR)
         ensure_app_config(conn)
         cur = conn.cursor()
-        cur.execute("SELECT key, value FROM app_config")
+        cur.execute("SELECT `key`, value FROM app_config")
         app_config = {}
         for row in cur.fetchall():
             k, v = row["key"], row["value"]
@@ -1220,7 +1048,7 @@ def api_config_set():
         app_config["academic_year"] = new_year
         cur.execute("DELETE FROM app_config")
         for k, v in app_config.items():
-            cur.execute("INSERT INTO app_config (key, value) VALUES (?, ?)",
+            cur.execute("INSERT INTO app_config (`key`, value) VALUES (?, ?)",
                         (k, v if isinstance(v, str) else json.dumps(v)))
         conn.commit()
         conn.close()
@@ -1296,7 +1124,7 @@ def api_login():
             print("[LOGIN] OK: admin")
             session.clear()
             return jsonify({"ok": True, "role": "admin", "school_id": school_id, "school_name": row["name"], "username": username, "must_change_password": False})
-        cur.execute("SELECT data_json FROM users WHERE school_id = ? AND username = ?", (school_id, username))
+        cur.execute("SELECT data_json FROM school_users WHERE school_id = ? AND username = ?", (school_id, username))
         u = cur.fetchone()
         matched_ud = None
         matched_row_username = username
@@ -1415,7 +1243,7 @@ def api_change_password():
             conn.close()
             return jsonify({"ok": True, "message": "Password updated"})
         # Regular user (users table)
-        cur.execute("SELECT data_json FROM users WHERE school_id = ? AND username = ?", (school_id, username))
+        cur.execute("SELECT data_json FROM school_users WHERE school_id = ? AND username = ?", (school_id, username))
         u = cur.fetchone()
         if not u:
             conn.close()
@@ -1425,7 +1253,7 @@ def api_change_password():
             conn.close()
             return jsonify({"ok": False, "error": "Current password is incorrect"}), 401
         ud["password"] = new_password
-        cur.execute("UPDATE users SET data_json = ? WHERE school_id = ? AND username = ?",
+        cur.execute("UPDATE school_users SET data_json = ? WHERE school_id = ? AND username = ?",
                     (json.dumps(ud, ensure_ascii=False), school_id, username))
         conn.commit()
         conn.close()
@@ -3268,11 +3096,11 @@ def api_teacher_add():
     try:
         conn = get_conn()
         cur = conn.cursor()
-        cur.execute("SELECT 1 FROM users WHERE school_id = ? AND username = ?", (school_id, username))
+        cur.execute("SELECT 1 FROM school_users WHERE school_id = ? AND username = ?", (school_id, username))
         if cur.fetchone():
             conn.close()
             return jsonify({"ok": False, "error": "Username already exists"}), 400
-        cur.execute("INSERT INTO users (school_id, username, data_json) VALUES (?, ?, ?)",
+        cur.execute("INSERT INTO school_users (school_id, username, data_json) VALUES (?, ?, ?)",
                     (school_id, username, json.dumps(data, ensure_ascii=False)))
         conn.commit()
         conn.close()
@@ -3313,7 +3141,7 @@ def api_teacher_update(username):
         if "assigned_classes" in body:
             merged["assigned_classes"] = body["assigned_classes"] if isinstance(body["assigned_classes"], list) else []
         cur = conn.cursor()
-        cur.execute("UPDATE users SET data_json = ? WHERE school_id = ? AND username = ?",
+        cur.execute("UPDATE school_users SET data_json = ? WHERE school_id = ? AND username = ?",
                     (json.dumps(merged, ensure_ascii=False), school_id, username))
         conn.commit()
         conn.close()
@@ -3328,7 +3156,7 @@ def api_teacher_delete(username):
     try:
         conn = get_conn()
         cur = conn.cursor()
-        cur.execute("DELETE FROM users WHERE school_id = ? AND username = ?", (school_id, username))
+        cur.execute("DELETE FROM school_users WHERE school_id = ? AND username = ?", (school_id, username))
         conn.commit()
         conn.close()
         return jsonify({"ok": True})
@@ -3389,19 +3217,37 @@ def api_grades_config_save():
         return jsonify({"ok": False, "error": str(e)}), 500
 
 
+_BACKUP_TABLES = (
+    "schools", "app_config", "students", "exams", "grades_config", "exams_by_grade",
+    "exam_sections", "school_users", "web_extra", "subjects", "courses", "levels",
+    "batches", "batch_timetables", "attendance", "attendance_session_lock",
+)
+
+
 @app.route("/api/backup", methods=["POST"])
 def api_backup():
     try:
         data_dir = get_data_dir()
         backup_dir = os.path.join(data_dir, "backups")
         os.makedirs(backup_dir, exist_ok=True)
-        db_path = get_db_path()
-        if not os.path.isfile(db_path):
-            return jsonify({"ok": False, "error": "No database to backup"}), 400
+        conn = get_conn()
+        cur = conn.cursor()
+        export = {
+            "format": "mnea_mysql_json_v1",
+            "exported_at": datetime.now().isoformat(),
+            "mysql_database": (os.environ.get("MYSQL_DATABASE") or "").strip(),
+            "tables": {},
+        }
+        for table in _BACKUP_TABLES:
+            cur.execute(f"SELECT * FROM {table}")
+            export["tables"][table] = [dict(row) for row in cur.fetchall()]
+        conn.close()
         ts = datetime.now().strftime("%Y%m%d_%H%M%S")
-        dest = os.path.join(backup_dir, f"ems_web_{ts}.db")
-        shutil.copy2(db_path, dest)
-        return jsonify({"ok": True, "path": dest, "filename": f"ems_web_{ts}.db"})
+        filename = f"ems_web_{ts}.json"
+        dest = os.path.join(backup_dir, filename)
+        with open(dest, "w", encoding="utf-8") as f:
+            json.dump(export, f, ensure_ascii=False, indent=2, default=str)
+        return jsonify({"ok": True, "path": dest, "filename": filename})
     except Exception as e:
         return jsonify({"ok": False, "error": str(e)}), 500
 
@@ -3411,11 +3257,33 @@ def api_restore():
     f = request.files.get("file")
     if not f:
         return jsonify({"ok": False, "error": "No file"}), 400
-    if not f.filename or not f.filename.lower().endswith(".db"):
-        return jsonify({"ok": False, "error": "Only .db files"}), 400
+    if not f.filename or not f.filename.lower().endswith(".json"):
+        return jsonify({
+            "ok": False,
+            "error": "Upload a .json backup from /api/backup. SQLite .db restore is no longer supported.",
+        }), 400
     try:
-        db_path = get_db_path()
-        f.save(db_path)
+        payload = json.loads(f.read().decode("utf-8"))
+        if payload.get("format") != "mnea_mysql_json_v1":
+            return jsonify({"ok": False, "error": "Invalid backup format"}), 400
+        conn = get_conn()
+        cur = conn.cursor()
+        for table, rows in (payload.get("tables") or {}).items():
+            if table not in _BACKUP_TABLES or not isinstance(rows, list):
+                continue
+            cur.execute(f"DELETE FROM {table}")
+            if not rows:
+                continue
+            cols = list(rows[0].keys())
+            placeholders = ", ".join(["?"] * len(cols))
+            col_sql = ", ".join(f"`{c}`" if c == "key" else c for c in cols)
+            for row in rows:
+                cur.execute(
+                    f"INSERT INTO {table} ({col_sql}) VALUES ({placeholders})",
+                    tuple(row.get(c) for c in cols),
+                )
+        conn.commit()
+        conn.close()
         return jsonify({"ok": True})
     except Exception as e:
         return jsonify({"ok": False, "error": str(e)}), 500
@@ -3532,7 +3400,7 @@ def api_settings_save():
             elif k == "sidebar_bg":
                 cur.execute("UPDATE schools SET sidebar_bg = ? WHERE id = ?", (v, school_id))
             else:
-                cur.execute("INSERT OR REPLACE INTO app_config (key, value) VALUES (?, ?)", (k, v if isinstance(v, str) else json.dumps(v)))
+                cur.execute("INSERT OR REPLACE INTO app_config (`key`, value) VALUES (?, ?)", (k, v if isinstance(v, str) else json.dumps(v)))
         conn.commit()
         conn.close()
         return jsonify({"ok": True})
@@ -3608,14 +3476,12 @@ def api_web_extra_save(key):
 
 
 def _ensure_db_and_school():
-    """Create DB and default school on startup so first login works."""
+    """Create MySQL schema and default school on startup so first login works."""
     try:
-        db_dir = os.path.join(get_data_dir(), "Database")
-        os.makedirs(db_dir, exist_ok=True)
         conn = get_conn()
         conn.close()
-        db_path = get_db_path()
-        print("[EGMS] Database file:", os.path.abspath(db_path))
+        db_label = get_db_path()
+        print("[EGMS] MySQL database:", db_label)
     except Exception as e:
         import traceback
         print("[_ensure_db_and_school] Error:", e)

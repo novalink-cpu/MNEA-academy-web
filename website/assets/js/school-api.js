@@ -199,12 +199,12 @@
     return request('POST', '/api/config', { academic_year: String(year || '').trim() });
   };
 
-  /** Copy current year DB to data/backups/. POST /api/backup */
+  /** Export MySQL data to data/backups/*.json. POST /api/backup */
   SchoolAPI.backupDatabase = function () {
     return request('POST', '/api/backup', {});
   };
 
-  /** Replace live DB with uploaded .db (dangerous). POST /api/restore multipart */
+  /** Restore from JSON backup (dangerous). POST /api/restore multipart */
   SchoolAPI.restoreDatabase = function (file) {
     if (!file) return Promise.resolve({ ok: false, error: 'No file' });
     var base = getApiBase();

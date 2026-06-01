@@ -472,11 +472,11 @@
 
       <div id="settingsPaneBackup" class="settings-pane card settings-advanced-item">
         <h2>Backup</h2>
-        <p class="settings-hint" style="margin-top:0;">Copies the <strong>current academic year</strong> SQLite web database to the server’s <code>data/backups</code> folder. Restore overwrites the live file for that year. <strong>MySQL-only</strong> deployments do not use this file.</p>
+        <p class="settings-hint" style="margin-top:0;">Exports all school data from <strong>MySQL</strong> to a JSON file in <code>data/backups</code>. Restore replaces tables from a JSON backup created here.</p>
         <div class="settings-gen-actions">
           <button type="button" class="btn btn-primary" id="genBackupBtn">Create backup</button>
-          <input type="file" id="genRestoreFile" accept=".db,.sqlite,.sqlite3,application/octet-stream" style="position:absolute;width:0;height:0;opacity:0;" aria-hidden="true" tabindex="-1">
-          <button type="button" class="btn btn-secondary" id="genRestorePick">Choose .db backup…</button>
+          <input type="file" id="genRestoreFile" accept=".json,application/json" style="position:absolute;width:0;height:0;opacity:0;" aria-hidden="true" tabindex="-1">
+          <button type="button" class="btn btn-secondary" id="genRestorePick">Choose .json backup…</button>
           <button type="button" class="btn btn-danger" id="genRestoreBtn" disabled>Restore (overwrite)</button>
         </div>
         <p id="genRestoreName" class="settings-hint" style="margin-top:0.35rem;">No file selected.</p>
