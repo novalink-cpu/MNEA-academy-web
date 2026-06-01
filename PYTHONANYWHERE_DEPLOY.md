@@ -38,6 +38,13 @@ Bash console:
 
 ```bash
 cd ~/MNEA_pythonanywhere
+bash scripts/pa_deploy.sh
+```
+
+Or manually:
+
+```bash
+cd ~/MNEA_pythonanywhere
 git pull origin main
 pip install --user -r requirements.txt
 python scripts/setup_mysql.py
