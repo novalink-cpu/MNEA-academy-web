@@ -86,7 +86,33 @@ AcademyContent.saveBlogPosts = function(posts) {
   catch (e) { return false; }
 };
 
-/** Get full site content: localStorage + optional Firebase. Merges so admin edits on this device are not wiped by stale remote. */
+var SITE_CONTENT_WEB_EXTRA_KEY = 'site_content_bundle';
+
+function siteContentApiGet(callback) {
+  if (typeof fetch !== 'function') {
+    callback(null);
+    return;
+  }
+  fetch('/api/web_extra/' + encodeURIComponent(SITE_CONTENT_WEB_EXTRA_KEY), { credentials: 'same-origin' })
+    .then(function(res) {
+      var ct = res.headers.get('Content-Type') || '';
+      if (ct.indexOf('application/json') >= 0) return res.json();
+      return null;
+    })
+    .then(function(data) {
+      if (!data || !data.ok || !Array.isArray(data.data) || !data.data.length) {
+        callback(null);
+        return;
+      }
+      var first = data.data[0];
+      callback(first && typeof first === 'object' ? first : null);
+    })
+    .catch(function() {
+      callback(null);
+    });
+}
+
+/** Get full site content from server DB (with local fallback cache). */
 AcademyContent.getSiteContent = function(callback) {
   var localPayload = {
     content: AcademyContent.load(),
@@ -94,59 +120,28 @@ AcademyContent.getSiteContent = function(callback) {
     placementTest: AcademyContent.loadPlacementTest(),
     blogPosts: AcademyContent.loadBlogPosts()
   };
-  if (!window.AcademyFirebase || !AcademyFirebase.get) {
-    callback(localPayload);
-    return;
-  }
-  AcademyFirebase.get(function(remoteData) {
-    if (!remoteData || typeof remoteData !== 'object' || Object.keys(remoteData).length === 0) {
+  siteContentApiGet(function(remoteData) {
+    if (!remoteData || typeof remoteData !== 'object') {
       callback(localPayload);
       return;
     }
-    var rc = remoteData.content;
-    var rh = remoteData.home;
-    var remoteContent = (rc && typeof rc === 'object') ? rc : (rh && typeof rh === 'object') ? rh : {};
     var remotePayload = {
-      content: remoteContent,
+      content: (remoteData.content && typeof remoteData.content === 'object') ? remoteData.content : {},
       uploads: (remoteData.uploads && typeof remoteData.uploads === 'object') ? remoteData.uploads : {},
       placementTest: remoteData.placementTest || null,
       blogPosts: remoteData.blogPosts != null ? remoteData.blogPosts : null
     };
-    var localUpdatedAt = '';
-    var remoteUpdatedAt = '';
-    try { localUpdatedAt = String((localPayload.placementTest && localPayload.placementTest.questionBankUpdatedAt) || ''); } catch (e1) {}
-    try { remoteUpdatedAt = String((remotePayload.placementTest && remotePayload.placementTest.questionBankUpdatedAt) || ''); } catch (e2) {}
-    var chosen = (localUpdatedAt && (!remoteUpdatedAt || localUpdatedAt > remoteUpdatedAt)) ? localPayload : remotePayload;
-
-    var mergedContent = Object.assign({}, remotePayload.content || {}, localPayload.content || {});
-    /* Carousel slides: Firebase    local  localStorage    */
-    var rct = remotePayload.content || {};
-    if (Object.prototype.hasOwnProperty.call(rct, 'home_activities_slides')) {
-      var fromRemote = AcademyContent.coerceHomeActivitiesSlides(rct.home_activities_slides);
-      if (fromRemote !== null) mergedContent.home_activities_slides = fromRemote;
-    }
+    var mergedContent = Object.assign({}, localPayload.content || {}, remotePayload.content || {});
     var slideNorm = AcademyContent.coerceHomeActivitiesSlides(mergedContent.home_activities_slides);
     if (slideNorm != null) mergedContent.home_activities_slides = slideNorm;
-    /* Uploads: remote   local    remote    null/'' =   remote  */
-    var mergedUploads = Object.assign({}, remotePayload.uploads || {});
-    var locUp = localPayload.uploads || {};
-    Object.keys(locUp).forEach(function(k) {
-      var v = locUp[k];
-      if (v === null || v === '') delete mergedUploads[k];
-      else if (!Object.prototype.hasOwnProperty.call(mergedUploads, k)) mergedUploads[k] = v;
-    });
-
-    var mergedPlacement = chosen.placementTest != null ? chosen.placementTest : (localPayload.placementTest || remotePayload.placementTest);
-    var mergedBlog = chosen.blogPosts != null ? chosen.blogPosts : (localPayload.blogPosts != null ? localPayload.blogPosts : remotePayload.blogPosts);
-
+    var mergedUploads = Object.assign({}, localPayload.uploads || {}, remotePayload.uploads || {});
     var out = {
       content: mergedContent,
       uploads: mergedUploads,
-      placementTest: mergedPlacement,
-      blogPosts: mergedBlog
+      placementTest: remotePayload.placementTest != null ? remotePayload.placementTest : localPayload.placementTest,
+      blogPosts: remotePayload.blogPosts != null ? remotePayload.blogPosts : localPayload.blogPosts
     };
-
-    try { AcademyContent.save(out.content || {}); } catch (e3) {}
+    try { AcademyContent.save(out.content || {}); } catch (e1) {}
     try {
       var upClean = {};
       Object.keys(out.uploads || {}).forEach(function(k) {
@@ -154,10 +149,9 @@ AcademyContent.getSiteContent = function(callback) {
         if (v != null && v !== '') upClean[k] = v;
       });
       localStorage.setItem(UPLOAD_STORAGE_KEY, JSON.stringify(upClean));
-    } catch (e4) {}
-    try { if (out.placementTest) AcademyContent.savePlacementTest(out.placementTest); } catch (e5) {}
-    try { if (out.blogPosts) AcademyContent.saveBlogPosts(out.blogPosts); } catch (e6) {}
-
+    } catch (e2) {}
+    try { if (out.placementTest) AcademyContent.savePlacementTest(out.placementTest); } catch (e3) {}
+    try { if (out.blogPosts) AcademyContent.saveBlogPosts(out.blogPosts); } catch (e4) {}
     callback(out);
   });
 };
@@ -230,7 +224,7 @@ AcademyContent.getPlacementTestConfig = function(callback) {
   });
 };
 
-/** Save full site content to localStorage and, when configured, to Firebase so public pages see updates. */
+/** Save full site content to local cache and server DB. */
 AcademyContent.saveAll = function(payload, callback) {
   var content = payload.content || {};
   var uploads = payload.uploads || {};
@@ -245,30 +239,33 @@ AcademyContent.saveAll = function(payload, callback) {
   try { localStorage.setItem(UPLOAD_STORAGE_KEY, JSON.stringify(uploadsClean)); } catch (e) {}
   if (placementTest !== null) AcademyContent.savePlacementTest(placementTest);
   if (blogPosts !== null) AcademyContent.saveBlogPosts(blogPosts);
-  var uploadsForRemote = uploadsClean;
   var sync = {
     content: content,
-    uploads: uploadsForRemote,
+    uploads: uploadsClean,
     placementTest: placementTest,
     blogPosts: blogPosts
   };
-  if (window.AcademyFirebase && AcademyFirebase.set) {
-    var done = false;
-    var firebaseOk = false;
-    function finish() {
-      if (done) return;
-      done = true;
-      if (callback) callback({ local: true, firebase: firebaseOk });
-    }
-    var t = setTimeout(function() { finish(); }, 12000);
-    AcademyFirebase.set(sync, function(ok) {
-      firebaseOk = !!ok;
-      clearTimeout(t);
-      finish();
-    });
+  if (typeof fetch !== 'function') {
+    if (callback) callback({ local: true, firebase: false });
     return;
   }
-  if (callback) callback({ local: true, firebase: false });
+  fetch('/api/web_extra/' + encodeURIComponent(SITE_CONTENT_WEB_EXTRA_KEY), {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'same-origin',
+    body: JSON.stringify({ data: [sync] })
+  })
+    .then(function(res) {
+      var ct = res.headers.get('Content-Type') || '';
+      if (ct.indexOf('application/json') >= 0) return res.json();
+      return { ok: false };
+    })
+    .then(function(r) {
+      if (callback) callback({ local: true, firebase: !!(r && r.ok) });
+    })
+    .catch(function() {
+      if (callback) callback({ local: true, firebase: false });
+    });
 };
 
 /**

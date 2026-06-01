@@ -3556,7 +3556,8 @@ _WEB_EXTRA_KEYS = ("notices", "contact_inquiries", "attendance", "parents", "sta
                    "admission_applications", "placement_test_results", "placement_test_audio", "placement_test_attempts", "placement_question_bank",
                    "level_assignments", "accepted_students", "student_activity_log",
                    "teacher_materials", "teacher_profiles",
-                   "student_assignments", "student_leave_requests", "student_profiles")
+                   "student_assignments", "student_leave_requests", "student_profiles",
+                   "site_content_bundle")
 
 
 @app.route("/api/web_extra/<key>", methods=["GET"])

@@ -2806,8 +2806,8 @@
         if (st) {
           var synced = result && result.firebase;
           st.textContent = synced
-            ? 'Saved — live site updated (phone can see changes)'
-            : 'Saved on this browser only — Firebase sync failed. Enable Anonymous Auth in Firebase Console, then Save again.';
+            ? 'Saved — synced to server database (live site updated).'
+            : 'Saved in this browser only — server sync failed. Check API/DB and Save again.';
           st.style.color = synced ? '#16a34a' : '#dc2626';
           st.style.display = 'inline';
           st.style.visibility = 'visible';
