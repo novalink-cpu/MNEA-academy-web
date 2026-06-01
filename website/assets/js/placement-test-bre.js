@@ -20,8 +20,58 @@
   var lastRound1CertPayload = null;
   /** Persists Test 1 answers/scores locally until Test 2 is submitted, then merged into payload as test1_snapshot. */
   var TEST1_SNAPSHOT_LS_KEY = 'placement_test_bre_test1_snapshot';
+  var PLACEMENT_DEVICE_KEY = 'mnea_placement_device_id';
 
   var ONLINE_POINTS_MAX = 80;
+
+  function getPlacementDeviceId() {
+    try {
+      var id = localStorage.getItem(PLACEMENT_DEVICE_KEY);
+      if (id && String(id).length >= 8) return String(id);
+      id = 'dev-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 12);
+      localStorage.setItem(PLACEMENT_DEVICE_KEY, id);
+      return id;
+    } catch (e) {
+      return 'dev-' + Date.now();
+    }
+  }
+
+  function checkRetakeEligibility(payload) {
+    if (!window.SchoolAPI || !SchoolAPI.getPlacementAttemptStatus) {
+      return Promise.resolve({ ok: true, can_take_test: true });
+    }
+    return SchoolAPI.getPlacementAttemptStatus({
+      name: payload && payload.name ? payload.name : '',
+      email: payload && payload.email ? payload.email : '',
+      phone: payload && payload.phone ? payload.phone : '',
+      date_of_birth: payload && payload.date_of_birth ? payload.date_of_birth : '',
+      parent_name: payload && payload.parent_name ? payload.parent_name : '',
+      device_id: getPlacementDeviceId()
+    }).catch(function() {
+      return { ok: true, can_take_test: true };
+    });
+  }
+
+  function recordAttemptOnSubmit(payload) {
+    if (!window.SchoolAPI || !SchoolAPI.recordPlacementAttempt) return Promise.resolve(false);
+    return SchoolAPI.recordPlacementAttempt({
+      name: payload && (payload.name || payload.student_name) ? (payload.name || payload.student_name) : '',
+      email: payload && payload.email ? payload.email : '',
+      phone: payload && payload.phone ? payload.phone : '',
+      date_of_birth: payload && payload.date_of_birth ? payload.date_of_birth : '',
+      parent_name: payload && payload.parent_name ? payload.parent_name : '',
+      device_id: getPlacementDeviceId(),
+      client_submission_id: payload && payload.client_submission_id ? payload.client_submission_id : '',
+      total_score: payload && payload.total_score != null ? payload.total_score : 0,
+      suggested_level: payload && payload.suggested_level ? payload.suggested_level : '',
+      result_status: payload && payload.result_status ? payload.result_status : '',
+      isPassed: payload && payload.result_status ? payload.result_status === 'PASS' : false
+    }).then(function(res) {
+      return !!(res && res.ok);
+    }).catch(function() {
+      return false;
+    });
+  }
 
   function schoolContactDefaults() {
     var addrEl = document.querySelector('[data-content-id="contact_address"]');
@@ -1295,6 +1345,7 @@
       if (dualNote) dualNote.style.display = 'none';
     }
     persistResult(payload);
+    recordAttemptOnSubmit(payload);
     setStep(3);
   }
 
@@ -1441,6 +1492,33 @@
       }
       if (!dob) { alert('Please select Date of Birth.'); return; }
       applyCountryPrefixIfNeeded();
+      checkRetakeEligibility({
+        name: name,
+        phone: phone,
+        email: (byId('pEmail') && byId('pEmail').value) ? String(byId('pEmail').value).trim() : '',
+        date_of_birth: dob,
+        parent_name: parentName
+      }).then(function(stat) {
+        var canTake = !(stat && stat.ok === false) && !(stat && stat.can_take_test === false);
+        if (!canTake) {
+          var msg = String((stat && stat.message) || '');
+          if (!msg) {
+            if (stat && stat.days_until_next_attempt) {
+              msg = 'You can take this test once per week (same date of birth, parent name, and phone or device). Try again in ' + stat.days_until_next_attempt + ' day(s).';
+            } else {
+              msg = 'You are not allowed to retake this test yet.';
+            }
+          }
+          alert(msg);
+          return;
+        }
+        startPlacementTestRound();
+      }).catch(function() {
+        startPlacementTestRound();
+      });
+    });
+
+    function startPlacementTestRound() {
       lastRound1CertPayload = null;
       selectedForm = 'test1a';
       updateAdaptiveRoundBanner();
@@ -1456,7 +1534,7 @@
       renderQuestion();
       updateTimer();
       startTimer();
-    });
+    }
   }
 
   function init() {

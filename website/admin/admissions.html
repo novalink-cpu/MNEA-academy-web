@@ -4418,7 +4418,10 @@
     SchoolAPI.resetPlacementAttempts({
       name: r.name || r.student_name || '',
       email: r.email || '',
-      phone: r.phone || ''
+      phone: r.phone || '',
+      date_of_birth: r.date_of_birth || r.dob || '',
+      parent_name: r.parent_name || r.parentName || '',
+      device_id: r.device_id || ''
     }).then(function(res) {
       if (res && res.ok) {
         showAdminNotice('✔ Placement attempts reset successfully');

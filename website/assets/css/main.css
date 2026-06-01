@@ -591,7 +591,14 @@ body.page-home .card:hover {
   box-shadow: 0 8px 28px rgba(0, 0, 0, 0.08), 0 4px 12px rgba(0, 0, 0, 0.05);
 }
 
-body.page-home .levels-table th { background: var(--table-header-bg); color: var(--table-header-text); }
+body.page-home .levels-table th {
+  background: var(--primary);
+  color: #fff;
+  border-bottom-color: var(--primary-dark);
+}
+body.page-home .levels-table thead th + th {
+  border-left-color: rgba(255, 255, 255, 0.35);
+}
 body.page-home .levels-table td {
   color: #0a0a0a;
   border-bottom-color: rgba(10, 10, 10, 0.1);

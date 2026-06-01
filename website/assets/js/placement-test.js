@@ -34,6 +34,19 @@
   var speakingEnabled = true;
   var speakingRecordSeconds = 15;
   var speakingInstructionText = '';
+  var PLACEMENT_DEVICE_KEY = 'mnea_placement_device_id';
+
+  function getPlacementDeviceId() {
+    try {
+      var id = localStorage.getItem(PLACEMENT_DEVICE_KEY);
+      if (id && String(id).length >= 8) return String(id);
+      id = 'dev-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 12);
+      localStorage.setItem(PLACEMENT_DEVICE_KEY, id);
+      return id;
+    } catch (e) {
+      return 'dev-' + Date.now();
+    }
+  }
 
   function setText(id, text) {
     var el = document.getElementById(id);
@@ -374,7 +387,8 @@
       email: payload && payload.email ? payload.email : '',
       phone: payload && payload.phone ? payload.phone : '',
       date_of_birth: payload && payload.date_of_birth ? payload.date_of_birth : '',
-      parent_name: payload && payload.parent_name ? payload.parent_name : ''
+      parent_name: payload && payload.parent_name ? payload.parent_name : '',
+      device_id: getPlacementDeviceId()
     }).catch(function() {
       return { ok: true, can_take_test: true };
     });
@@ -388,6 +402,7 @@
       phone: payload && payload.phone ? payload.phone : '',
       date_of_birth: payload && payload.date_of_birth ? payload.date_of_birth : '',
       parent_name: payload && payload.parent_name ? payload.parent_name : '',
+      device_id: getPlacementDeviceId(),
       client_submission_id: payload && payload.client_submission_id ? payload.client_submission_id : '',
       total_score: payload && payload.total_score != null ? payload.total_score : 0,
       suggested_level: payload && payload.suggested_level ? payload.suggested_level : '',
@@ -1311,9 +1326,11 @@
         if (!canTake) {
           var msg = String((stat && stat.message) || '');
           if (!msg) {
-            if (stat && stat.has_passed) msg = 'You already passed this test and cannot retake.';
-            else if (stat && stat.days_until_next_attempt) msg = 'You can take this test again in ' + stat.days_until_next_attempt + ' day(s).';
-            else msg = 'You are not allowed to retake this test.';
+            if (stat && stat.days_until_next_attempt) {
+              msg = 'You can take this test once per week (same date of birth, parent name, and phone or device). Try again in ' + stat.days_until_next_attempt + ' day(s).';
+            } else {
+              msg = 'You are not allowed to retake this test yet.';
+            }
           }
           alert(msg);
           return;

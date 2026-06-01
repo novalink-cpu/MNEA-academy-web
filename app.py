@@ -946,6 +946,16 @@ def index():
     return redirect("/public-page/index.html")
 
 
+@app.route("/robots.txt")
+def serve_robots_txt():
+    return send_from_directory(WEB_ROOT, "robots.txt", mimetype="text/plain; charset=utf-8")
+
+
+@app.route("/sitemap.xml")
+def serve_sitemap_xml():
+    return send_from_directory(WEB_ROOT, "sitemap.xml", mimetype="application/xml; charset=utf-8")
+
+
 @app.route("/school_background.png")
 def login_background():
     """Serve login background image from project root."""
@@ -3575,25 +3585,88 @@ def api_admission_application_add():
 
 
 PLACEMENT_RETAKE_DAYS = 7
+PLACEMENT_IDENTITY_ERROR = (
+    "date_of_birth, parent_name, and phone (or device_id) are required for placement retake rules"
+)
+
+
+def _norm_placement_phone(phone):
+    return "".join(c for c in str(phone or "").strip() if c.isdigit())
+
+
+def _norm_placement_parent(parent):
+    return str(parent or "").strip().lower()
+
+
+def _norm_placement_dob(dob):
+    return str(dob or "").strip()
 
 
 def _placement_identity(body):
+    """
+  Weekly retake: same person if (dob + phone + parent) OR (dob + device_id + parent).
+  Name is stored for display but not used for matching.
+    """
     email = (body.get("email") or "").strip().lower()
-    phone = (body.get("phone") or "").strip()
-    name = (body.get("name") or body.get("student_name") or "").strip().lower()
-    date_of_birth = (body.get("date_of_birth") or "").strip()
-    parent_name = (body.get("parent_name") or "").strip().lower()
-    # Weekly retake identity requires all four fields to match.
-    if name and date_of_birth and phone and parent_name:
-        return (
-            f"student:{name}|dob:{date_of_birth}|phone:{phone}|parent:{parent_name}",
-            email,
-            phone,
-            name,
-            date_of_birth,
-            parent_name,
-        )
-    return "", email, phone, name, date_of_birth, parent_name
+    phone_display = (body.get("phone") or "").strip()
+    phone = _norm_placement_phone(phone_display)
+    name = (body.get("name") or body.get("student_name") or "").strip()
+    date_of_birth = _norm_placement_dob(body.get("date_of_birth"))
+    parent_name = _norm_placement_parent(body.get("parent_name"))
+    device_id = (body.get("device_id") or "").strip()
+    keys = []
+    if date_of_birth and parent_name and phone:
+        keys.append(f"dob:{date_of_birth}|phone:{phone}|parent:{parent_name}")
+    if date_of_birth and parent_name and device_id:
+        keys.append(f"dob:{date_of_birth}|device:{device_id}|parent:{parent_name}")
+    primary_key = keys[0] if keys else ""
+    if keys:
+        phone_keys = [k for k in keys if "|phone:" in k]
+        if phone_keys:
+            primary_key = phone_keys[0]
+    return {
+        "ok": bool(keys),
+        "keys": keys,
+        "primary_key": primary_key,
+        "email": email,
+        "phone": phone_display,
+        "phone_norm": phone,
+        "name": name,
+        "date_of_birth": date_of_birth,
+        "parent_name": parent_name,
+        "device_id": device_id,
+    }
+
+
+def _attempt_components_match(rec, dob, phone_norm, parent_name, device_id):
+    """Match stored attempt by dob+parent and (phone OR device_id)."""
+    if not dob or not parent_name:
+        return False
+    rd = _norm_placement_dob((rec or {}).get("date_of_birth"))
+    rpar = _norm_placement_parent((rec or {}).get("parent_name"))
+    if rd != dob or rpar != parent_name:
+        return False
+    rp = _norm_placement_phone((rec or {}).get("phone"))
+    rdev = str((rec or {}).get("device_id") or "").strip()
+    if phone_norm and rp and phone_norm == rp:
+        return True
+    if device_id and rdev and device_id == rdev:
+        return True
+    return False
+
+
+def _record_identity_keys(rec, keys):
+    merged = set(keys or [])
+    pk = str((rec or {}).get("identity_key") or "")
+    if pk:
+        merged.add(pk)
+    for k in (rec or {}).get("identity_keys") or []:
+        if k:
+            merged.add(str(k))
+    all_keys = sorted(merged)
+    phone_keys = [k for k in all_keys if "|phone:" in k]
+    rec["identity_keys"] = all_keys
+    rec["identity_key"] = phone_keys[0] if phone_keys else (all_keys[0] if all_keys else "")
 
 
 def _parse_iso_datetime(value):
@@ -3635,9 +3708,24 @@ def _save_placement_attempts(cur, school_id, attempts):
     )
 
 
-def _find_attempt_index(attempts, identity_key):
+def _find_attempt_index(attempts, id_info):
+    """Find attempt by identity key(s) or dob+parent+(phone|device)."""
+    keys = set(id_info.get("keys") or [])
+    dob = id_info.get("date_of_birth") or ""
+    phone_norm = id_info.get("phone_norm") or _norm_placement_phone(id_info.get("phone"))
+    parent_name = id_info.get("parent_name") or ""
+    device_id = id_info.get("device_id") or ""
     for i, it in enumerate(attempts or []):
-        if str((it or {}).get("identity_key") or "") == str(identity_key):
+        stored = set()
+        pk = str((it or {}).get("identity_key") or "")
+        if pk:
+            stored.add(pk)
+        for k in (it or {}).get("identity_keys") or []:
+            if k:
+                stored.add(str(k))
+        if keys & stored:
+            return i
+        if _attempt_components_match(it, dob, phone_norm, parent_name, device_id):
             return i
     return -1
 
@@ -3646,32 +3734,38 @@ def _find_attempt_index(attempts, identity_key):
 def api_placement_attempts_check():
     body = request.get_json() or {}
     school_id = body.get("school_id") or get_school_id()
-    identity_key, email, phone, name, date_of_birth, parent_name = _placement_identity(body)
-    if not identity_key:
-        return jsonify({"ok": False, "error": "name, date_of_birth, phone, and parent_name are required"}), 400
+    id_info = _placement_identity(body)
+    if not id_info.get("ok"):
+        return jsonify({"ok": False, "error": PLACEMENT_IDENTITY_ERROR}), 400
     try:
         conn = get_conn()
         cur = conn.cursor()
         attempts = _load_placement_attempts(cur, school_id)
         conn.close()
-        idx = _find_attempt_index(attempts, identity_key)
+        idx = _find_attempt_index(attempts, id_info)
         rec = attempts[idx] if idx >= 0 else {}
         attempt_count = int(rec.get("attempt_count") or 0)
         has_passed = bool(rec.get("has_passed"))
         can_take_by_window, next_allowed_dt, remaining_days = _retake_window_status(rec.get("last_attempt_at"))
         can_take = can_take_by_window
         if not can_take_by_window:
-            message = f"You can take this test once every {PLACEMENT_RETAKE_DAYS} days. Please try again in {remaining_days} day(s)."
+            message = (
+                f"You can take this test once every {PLACEMENT_RETAKE_DAYS} days "
+                f"(same date of birth, parent name, and phone or device). "
+                f"Please try again in {remaining_days} day(s)."
+            )
         else:
             message = "Eligible to take the test."
         return jsonify({
             "ok": True,
-            "identity_key": identity_key,
-            "name": rec.get("name") or name,
-            "email": rec.get("email") or email,
-            "phone": rec.get("phone") or phone,
-            "date_of_birth": rec.get("date_of_birth") or date_of_birth,
-            "parent_name": rec.get("parent_name") or parent_name,
+            "identity_key": id_info.get("primary_key") or "",
+            "identity_keys": id_info.get("keys") or [],
+            "name": rec.get("name") or id_info.get("name"),
+            "email": rec.get("email") or id_info.get("email"),
+            "phone": rec.get("phone") or id_info.get("phone"),
+            "date_of_birth": rec.get("date_of_birth") or id_info.get("date_of_birth"),
+            "parent_name": rec.get("parent_name") or id_info.get("parent_name"),
+            "device_id": rec.get("device_id") or id_info.get("device_id"),
             "attempt_count": attempt_count,
             "has_passed": has_passed,
             "can_take_test": can_take,
@@ -3688,9 +3782,9 @@ def api_placement_attempts_check():
 def api_placement_attempts_submit():
     body = request.get_json() or {}
     school_id = body.get("school_id") or get_school_id()
-    identity_key, email, phone, name, date_of_birth, parent_name = _placement_identity(body)
-    if not identity_key:
-        return jsonify({"ok": False, "error": "name, date_of_birth, phone, and parent_name are required"}), 400
+    id_info = _placement_identity(body)
+    if not id_info.get("ok"):
+        return jsonify({"ok": False, "error": PLACEMENT_IDENTITY_ERROR}), 400
     total_score = int(body.get("total_score") or 0)
     result_status = (body.get("result_status") or "").strip().upper()
     if result_status not in ("PASS", "FAIL"):
@@ -3700,12 +3794,12 @@ def api_placement_attempts_submit():
         conn = get_conn()
         cur = conn.cursor()
         attempts = _load_placement_attempts(cur, school_id)
-        idx = _find_attempt_index(attempts, identity_key)
+        idx = _find_attempt_index(attempts, id_info)
         now_iso = datetime.now().isoformat()
         if idx >= 0:
             rec = attempts[idx] or {}
         else:
-            rec = {"identity_key": identity_key, "attempt_count": 0, "has_passed": False}
+            rec = {"attempt_count": 0, "has_passed": False}
         can_take_by_window, next_allowed_dt, remaining_days = _retake_window_status(rec.get("last_attempt_at"))
         if not can_take_by_window:
             conn.close()
@@ -3715,14 +3809,19 @@ def api_placement_attempts_submit():
                 "retake_days": PLACEMENT_RETAKE_DAYS,
                 "days_until_next_attempt": remaining_days,
                 "next_allowed_at": (next_allowed_dt.isoformat() if next_allowed_dt else ""),
-                "message": f"You can take this test once every {PLACEMENT_RETAKE_DAYS} days. Please try again in {remaining_days} day(s).",
+                "message": (
+                    f"You can take this test once every {PLACEMENT_RETAKE_DAYS} days "
+                    f"(same date of birth, parent name, and phone or device). "
+                    f"Please try again in {remaining_days} day(s)."
+                ),
             }), 429
-        rec["identity_key"] = identity_key
-        rec["name"] = name or rec.get("name") or ""
-        rec["email"] = email or rec.get("email") or ""
-        rec["phone"] = phone or rec.get("phone") or ""
-        rec["date_of_birth"] = date_of_birth or rec.get("date_of_birth") or ""
-        rec["parent_name"] = parent_name or rec.get("parent_name") or ""
+        _record_identity_keys(rec, id_info.get("keys") or [])
+        rec["name"] = id_info.get("name") or rec.get("name") or ""
+        rec["email"] = id_info.get("email") or rec.get("email") or ""
+        rec["phone"] = id_info.get("phone") or rec.get("phone") or ""
+        rec["date_of_birth"] = id_info.get("date_of_birth") or rec.get("date_of_birth") or ""
+        rec["parent_name"] = id_info.get("parent_name") or rec.get("parent_name") or ""
+        rec["device_id"] = id_info.get("device_id") or rec.get("device_id") or ""
         rec["attempt_count"] = int(rec.get("attempt_count") or 0) + 1
         rec["has_passed"] = bool(rec.get("has_passed")) or is_passed
         rec["last_result_status"] = result_status
@@ -3743,6 +3842,7 @@ def api_placement_attempts_submit():
             "has_passed": rec["has_passed"],
             "can_take_test": False,
             "retake_days": PLACEMENT_RETAKE_DAYS,
+            "identity_key": rec.get("identity_key") or "",
         })
     except Exception as e:
         return jsonify({"ok": False, "error": str(e)}), 500
@@ -3752,32 +3852,35 @@ def api_placement_attempts_submit():
 def api_placement_attempts_reset():
     body = request.get_json() or {}
     school_id = body.get("school_id") or get_school_id()
-    identity_key, email, phone, name, date_of_birth, parent_name = _placement_identity(body)
-    if not identity_key:
-        return jsonify({"ok": False, "error": "name, date_of_birth, phone, and parent_name are required"}), 400
+    id_info = _placement_identity(body)
+    if not id_info.get("ok"):
+        return jsonify({"ok": False, "error": PLACEMENT_IDENTITY_ERROR}), 400
     try:
         conn = get_conn()
         cur = conn.cursor()
         attempts = _load_placement_attempts(cur, school_id)
-        idx = _find_attempt_index(attempts, identity_key)
+        idx = _find_attempt_index(attempts, id_info)
         if idx < 0:
             conn.close()
             return jsonify({"ok": True, "message": "No attempt record found", "attempt_count": 0, "has_passed": False})
         rec = attempts[idx] or {}
-        rec["name"] = name or rec.get("name") or ""
-        rec["email"] = email or rec.get("email") or ""
-        rec["phone"] = phone or rec.get("phone") or ""
-        rec["date_of_birth"] = date_of_birth or rec.get("date_of_birth") or ""
-        rec["parent_name"] = parent_name or rec.get("parent_name") or ""
+        _record_identity_keys(rec, id_info.get("keys") or [])
+        rec["name"] = id_info.get("name") or rec.get("name") or ""
+        rec["email"] = id_info.get("email") or rec.get("email") or ""
+        rec["phone"] = id_info.get("phone") or rec.get("phone") or ""
+        rec["date_of_birth"] = id_info.get("date_of_birth") or rec.get("date_of_birth") or ""
+        rec["parent_name"] = id_info.get("parent_name") or rec.get("parent_name") or ""
+        rec["device_id"] = id_info.get("device_id") or rec.get("device_id") or ""
         rec["attempt_count"] = 0
         rec["has_passed"] = False
         rec["last_result_status"] = ""
+        rec["last_attempt_at"] = ""
         rec["reset_at"] = datetime.now().isoformat()
         attempts[idx] = rec
         _save_placement_attempts(cur, school_id, attempts)
         conn.commit()
         conn.close()
-        return jsonify({"ok": True, "attempt_count": 0, "has_passed": False})
+        return jsonify({"ok": True, "attempt_count": 0, "has_passed": False, "can_take_test": True})
     except Exception as e:
         return jsonify({"ok": False, "error": str(e)}), 500
 
