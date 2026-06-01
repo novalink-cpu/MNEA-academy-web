@@ -22,7 +22,7 @@ from dotenv import load_dotenv
 load_dotenv(os.path.join(ROOT, ".env"))
 
 import mnea_db
-from mnea_db import ensure_schema
+from mnea_db import ensure_database, ensure_schema
 
 MYSQL_SCHEMA = os.path.join(ROOT, "Database", "mysql_schema.sql")
 
@@ -42,6 +42,8 @@ def main() -> int:
         return 1
 
     print("Connecting to MySQL:", db_name)
+    ensure_database(db_name)
+    print("Database OK:", db_name)
     conn = mnea_db.connect()
     ensure_schema(conn, MYSQL_SCHEMA)
     conn.close()

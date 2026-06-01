@@ -131,6 +131,32 @@ def connect(database: Optional[str] = None, **kwargs):
     return ConnectionWrapper(raw)
 
 
+def ensure_database(database: Optional[str] = None) -> str:
+    """Create MYSQL_DATABASE if missing (connect without selecting a schema first)."""
+    cfg = _mysql_config()
+    db = (database or cfg.get("database") or "").strip()
+    if not db:
+        raise RuntimeError("MYSQL_DATABASE is not set.")
+    if not re.match(r"^[\w$.-]+$", db):
+        raise ValueError(f"Invalid MYSQL_DATABASE name: {db!r}")
+    conn_cfg = {
+        "host": cfg["host"],
+        "port": cfg["port"],
+        "user": cfg["user"],
+        "password": cfg["password"],
+    }
+    raw = mysql.connector.connect(**conn_cfg)
+    cur = raw.cursor()
+    cur.execute(
+        f"CREATE DATABASE IF NOT EXISTS `{db}` "
+        "CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci"
+    )
+    raw.commit()
+    cur.close()
+    raw.close()
+    return db
+
+
 def ensure_schema(conn: ConnectionWrapper, schema_path: str) -> None:
     """Run mysql_schema.sql once if core tables are missing."""
     cur = conn.cursor()
