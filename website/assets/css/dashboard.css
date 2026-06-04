@@ -1687,8 +1687,8 @@ body.admin-dashboard-glass::before {
   -webkit-backdrop-filter: none;
 }
 .admin-dashboard-glass .admin-wrap .section-divider .sd-title {
-  background: rgba(92, 199, 176, 0.2);
-  border-color: rgba(13, 148, 136, 0.35);
+  background: transparent;
+  border: none;
   color: var(--text);
 }
 .admin-dashboard-glass .admin-wrap .content-card,

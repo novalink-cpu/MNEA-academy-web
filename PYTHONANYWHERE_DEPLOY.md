@@ -6,8 +6,18 @@ GitHub: `https://github.com/novalink-cpu/MNEA-academy-web.git` (branch `main`)
 ## 1. Local — commit & push
 
 ```bash
-git add app.py mnea_db.py Database/mysql_schema.sql scripts/migrate_sqlite_to_mysql.py env.example PYTHONANYWHERE_DEPLOY.md
-git commit -m "Migrate main app from SQLite to MySQL"
+cd MNEA_pythonanywhere
+git add -A
+git status
+git commit -m "Your message here"
+git push origin main
+```
+
+Example (website/CMS only):
+
+```bash
+git add website/
+git commit -m "Update CMS, gallery, programs, and website settings"
 git push origin main
 ```
 
@@ -33,6 +43,21 @@ PUBLIC_BASE_URL=https://yourusername.pythonanywhere.com
 ```
 
 ## 4. Pull code & install packages
+
+### Routine update (HTML/CSS/JS/CMS only)
+
+PythonAnywhere **Bash** console:
+
+```bash
+cd ~/MNEA_pythonanywhere
+git pull origin main
+```
+
+Then **Web** tab → **Reload** your app (green button).
+
+No need to re-run MySQL setup for content-only changes.
+
+### Full deploy (first time or after `requirements.txt` / DB changes)
 
 Bash console:
 

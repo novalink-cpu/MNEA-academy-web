@@ -42,7 +42,7 @@ AcademyContent.stripProgramsSectionHeadingLead = function(val) {
 AcademyContent.normalizeProgramsSectionHeading = function(id, val) {
   var v = AcademyContent.stripProgramsSectionHeadingLead(val);
   if (id === 'course_features_title' && v === 'Course Features') return 'Program Features';
-  if (id === 'course_join_title' && v === 'Who Should Join This Course') return 'Who Should Join This Program';
+  if (id === 'course_join_title' && (v === 'Who Should Join This Course' || v === 'Who Should Join')) return 'Who Should Join This Program';
   return v;
 };
 
@@ -54,16 +54,26 @@ AcademyContent.loadUploads = function() {
 AcademyContent.saveUpload = function(id, dataUrl) {
   var u = AcademyContent.loadUploads();
   u[id] = dataUrl;
-  try { localStorage.setItem(UPLOAD_STORAGE_KEY, JSON.stringify(u)); return true; }
-  catch (e) { return false; }
+  try {
+    localStorage.setItem(UPLOAD_STORAGE_KEY, JSON.stringify(u));
+    if (/^gallery_a\d+_p\d+$/.test(id) && AcademyContent.touchGalleryUploadTime) {
+      AcademyContent.touchGalleryUploadTime(id);
+    }
+    return true;
+  } catch (e) { return false; }
 };
 
 AcademyContent.removeUpload = function(id) {
   var u = AcademyContent.loadUploads();
   /* Tombstone null so merges with Firebase don’t resurrect deleted keys (remote still had the old value). */
   u[id] = null;
-  try { localStorage.setItem(UPLOAD_STORAGE_KEY, JSON.stringify(u)); return true; }
-  catch (e) { return false; }
+  try {
+    localStorage.setItem(UPLOAD_STORAGE_KEY, JSON.stringify(u));
+    if (/^gallery_a\d+_p\d+$/.test(id) && AcademyContent.clearGalleryUploadTime) {
+      AcademyContent.clearGalleryUploadTime(id);
+    }
+    return true;
+  } catch (e) { return false; }
 };
 
 AcademyContent.loadPlacementTest = function() {
@@ -132,9 +142,32 @@ AcademyContent.getSiteContent = function(callback) {
       blogPosts: remoteData.blogPosts != null ? remoteData.blogPosts : null
     };
     var mergedContent = Object.assign({}, localPayload.content || {}, remotePayload.content || {});
+    var localTimes = (localPayload.content && localPayload.content.gallery_upload_times) || {};
+    var remoteTimes = (remotePayload.content && remotePayload.content.gallery_upload_times) || {};
+    var mergedTimes = Object.assign({}, remoteTimes, localTimes);
+    Object.keys(mergedTimes).forEach(function(k) {
+      if (!/^gallery_a\d+_p\d+$/.test(k)) {
+        delete mergedTimes[k];
+        return;
+      }
+      var lt = parseInt(localTimes[k], 10);
+      var rt = parseInt(remoteTimes[k], 10);
+      if (!isNaN(lt) && !isNaN(rt)) mergedTimes[k] = Math.max(lt, rt);
+      else if (!isNaN(lt)) mergedTimes[k] = lt;
+      else if (!isNaN(rt)) mergedTimes[k] = rt;
+    });
+    if (Object.keys(mergedTimes).length) mergedContent.gallery_upload_times = mergedTimes;
+  if (AcademyContent.repairSwappedCourseSlots) AcademyContent.repairSwappedCourseSlots(mergedContent);
     var slideNorm = AcademyContent.coerceHomeActivitiesSlides(mergedContent.home_activities_slides);
     if (slideNorm != null) mergedContent.home_activities_slides = slideNorm;
     var mergedUploads = Object.assign({}, localPayload.uploads || {}, remotePayload.uploads || {});
+    /* Keep local gallery images when server bundle has no image for that slot (avoids empty overwrite). */
+    Object.keys(localPayload.uploads || {}).forEach(function(k) {
+      if (!/^gallery_a\d+_p\d+$/.test(k)) return;
+      var localV = localPayload.uploads[k];
+      var remoteV = remotePayload.uploads[k];
+      if (localV != null && localV !== '' && (remoteV == null || remoteV === '')) mergedUploads[k] = localV;
+    });
     var out = {
       content: mergedContent,
       uploads: mergedUploads,
@@ -160,6 +193,14 @@ AcademyContent.getSiteContent = function(callback) {
 AcademyContent.DEFAULT_PLACEMENT_TEST = {
   pageTitle: '4-Skill Placement Test',
   pageSubtitle: '',
+  intro: {
+    title: 'Test Introduction',
+    durationMinutes: '60',
+    sections: 'Listening, Grammar, Vocabulary, and Reading',
+    flowStep1: 'Step 1: Student Information',
+    flowStep2: 'Step 2: Placement Questions',
+    flowStep3: 'Step 3: Result'
+  },
   stepperLabel: 'Student Info → Listening → Reading → Writing → Speaking → Result',
   step1: { title: 'Step 1:  ', subtitle: '  Email ', labelName: '', labelPhone: '', labelEmail: 'Email', btnNext: '' },
   step2: {
@@ -283,6 +324,41 @@ AcademyContent.PROGRAM_DISPLAY_CATALOG = [
   { slug: 'onlineclass', title: 'Online Class', text: 'Business English - Level 1 (Online Class), 2026 intake: Tue/Wed/Thu at 7:00 pm - 8:30 pm via live Zoom sessions. Practical workplace modules with online registration and payment.', image_key: 'our_course_9_image', legacy_image_key: 'course9_image', thumb_fallback: 'photo/business.jpg' }
 ];
 
+/** general→course1, exam→course2. Legacy save mirrored list index (0→1, 1→2) and swapped IGCSE/Pre-IGCSE. */
+AcademyContent.repairSwappedCourseSlots = function(content) {
+  if (!content || typeof content !== 'object') return content;
+  var examTitle = '';
+  var generalTitle = '';
+  var list = content.our_courses;
+  if (Array.isArray(list)) {
+    list.forEach(function(it) {
+      it = it && typeof it === 'object' ? it : {};
+      var m = String(it.link || '').match(/[?&]id=([^&"#]+)/);
+      if (!m) return;
+      if (m[1] === 'exam') examTitle = String(it.title || '').trim();
+      if (m[1] === 'general') generalTitle = String(it.title || '').trim();
+    });
+  }
+  if (!examTitle) examTitle = 'IGCSE';
+  if (!generalTitle) generalTitle = 'Pre-IGCSE';
+  var c1 = String(content.course1_title || '').trim();
+  var c2 = String(content.course2_title || '').trim();
+  var looksSwapped = (c1 === examTitle && c2 === generalTitle) ||
+    ((c1.toLowerCase().indexOf('igcse') >= 0 && c1.toLowerCase().indexOf('pre') < 0) &&
+     (c2.toLowerCase().indexOf('pre') >= 0));
+  if (!looksSwapped) return content;
+  var suffixes = ['title', 'text', 'overview', 'duration', 'schedule', 'level', 'who_join', 'focus', 'fee', 'schedule_options', 'benefits', 'ribbon_main', 'ribbon_sub'];
+  suffixes.forEach(function(s) {
+    var k1 = 'course1_' + s;
+    var k2 = 'course2_' + s;
+    if (!(k1 in content) && !(k2 in content)) return;
+    var tmp = content[k1];
+    content[k1] = content[k2];
+    content[k2] = tmp;
+  });
+  return content;
+};
+
 /** Same course list as Our Courses / Popular Courses: our_courses JSON or course1–course7_title (CMS). */
 AcademyContent.getCourseItems = function(content) {
   content = (content && typeof content === 'object') ? content : {};
@@ -353,8 +429,8 @@ AcademyContent.getCourseItems = function(content) {
       title: title || def.title,
       text: text || def.text,
       link: 'course-detail.html?id=' + slug,
-      image_key: can.image_key,
-      legacy_image_key: can.legacy_image_key,
+      image_key: String(item.image_key || '').trim() || can.image_key,
+      legacy_image_key: String(item.legacy_image_key || '').trim() || can.legacy_image_key,
       thumb_fallback: can.thumb_fallback
     };
   });
@@ -409,7 +485,6 @@ AcademyContent.syncNavCourseDropdownFromItems = function(courseItems) {
   });
 };
 
-AcademyContent.GALLERY_ALBUM_COUNT = 9;
 AcademyContent.GALLERY_SLOTS_PER_ALBUM = 12;
 AcademyContent.getDefaultGalleryAlbumTitles = function() {
   return [
@@ -424,75 +499,265 @@ AcademyContent.getDefaultGalleryAlbumTitles = function() {
     'Free Classes'
   ];
 };
+AcademyContent.normalizeGalleryAlbumTitles = function(content) {
+  content = content || {};
+  var defaults = AcademyContent.getDefaultGalleryAlbumTitles();
+  var raw = content.gallery_album_titles;
+  if (!Array.isArray(raw) || !raw.length) return defaults.slice();
+  return raw.map(function(t, i) {
+    var s = String(t != null ? t : '').trim();
+    return s || (defaults[i] || ('Category ' + (i + 1)));
+  });
+};
 AcademyContent.galleryUploadKey = function(albumIndex, slotIndex) {
   return 'gallery_a' + albumIndex + '_p' + slotIndex;
 };
+
+AcademyContent.touchGalleryUploadTime = function(key) {
+  if (!/^gallery_a\d+_p\d+$/.test(key)) return;
+  var c = AcademyContent.load() || {};
+  if (!c.gallery_upload_times || typeof c.gallery_upload_times !== 'object') c.gallery_upload_times = {};
+  c.gallery_upload_times[key] = Date.now();
+  AcademyContent.save(c);
+};
+
+AcademyContent.clearGalleryUploadTime = function(key) {
+  if (!/^gallery_a\d+_p\d+$/.test(key)) return;
+  var c = AcademyContent.load() || {};
+  if (!c.gallery_upload_times || typeof c.gallery_upload_times !== 'object') return;
+  if (c.gallery_upload_times[key] == null) return;
+  delete c.gallery_upload_times[key];
+  AcademyContent.save(c);
+};
+
+/** Move gallery image + upload timestamp when shifting slots (category delete). */
+AcademyContent.moveGalleryUpload = function(fromKey, toKey) {
+  if (!fromKey || !toKey || fromKey === toKey) return true;
+  var u = AcademyContent.loadUploads();
+  var v = u[fromKey];
+  if (v != null && v !== '') u[toKey] = v;
+  else u[toKey] = null;
+  u[fromKey] = null;
+  try { localStorage.setItem(UPLOAD_STORAGE_KEY, JSON.stringify(u)); } catch (e) { return false; }
+  var c = AcademyContent.load() || {};
+  if (!c.gallery_upload_times || typeof c.gallery_upload_times !== 'object') c.gallery_upload_times = {};
+  if (c.gallery_upload_times[fromKey] != null) {
+    c.gallery_upload_times[toKey] = c.gallery_upload_times[fromKey];
+    delete c.gallery_upload_times[fromKey];
+    AcademyContent.save(c);
+  } else if (c.gallery_upload_times[toKey] != null) {
+    delete c.gallery_upload_times[toKey];
+    AcademyContent.save(c);
+  }
+  return true;
+};
+
+AcademyContent.shiftGalleryUploadTimesAfterDelete = function(deletedIndex, albumCount) {
+  var c = AcademyContent.load() || {};
+  var times = c.gallery_upload_times;
+  if (!times || typeof times !== 'object') return;
+  var next = {};
+  Object.keys(times).forEach(function(k) {
+    var m = k.match(/^gallery_a(\d+)_p(\d+)$/);
+    if (!m) return;
+    var ai = parseInt(m[1], 10);
+    var pi = parseInt(m[2], 10);
+    if (isNaN(ai) || isNaN(pi) || ai === deletedIndex) return;
+    var newAi = ai > deletedIndex ? ai - 1 : ai;
+    if (newAi < 0 || newAi >= albumCount) return;
+    next[AcademyContent.galleryUploadKey(newAi, pi)] = times[k];
+  });
+  c.gallery_upload_times = next;
+  AcademyContent.save(c);
+};
+
+AcademyContent.galleryPhotoSortKey = function(content, key, albumIndex, slotIndex) {
+  var times = (content && content.gallery_upload_times) || {};
+  var t = times[key];
+  if (t != null && t !== '' && !isNaN(parseInt(t, 10))) return parseInt(t, 10);
+  return albumIndex * 10000 + slotIndex;
+};
+
+AcademyContent.gallerySlotCountForAlbum = function(content, uploads, albumIndex) {
+  var maxP = AcademyContent.GALLERY_SLOTS_PER_ALBUM;
+  var maxPi = -1;
+  for (var pi = 0; pi < maxP; pi++) {
+    var u = uploads[AcademyContent.galleryUploadKey(albumIndex, pi)];
+    if (u != null && u !== '') maxPi = pi;
+  }
+  var fromUploads = maxPi >= 0 ? maxPi + 1 : 3;
+  var raw = content.gallery_album_slot_counts && content.gallery_album_slot_counts[albumIndex];
+  if (raw != null && raw !== '' && !isNaN(parseInt(raw, 10))) {
+    var fromSaved = Math.max(1, Math.min(maxP, parseInt(raw, 10)));
+    return Math.max(fromSaved, fromUploads);
+  }
+  return fromUploads;
+};
+
+/** One-time style fill for legacy gallery images missing upload timestamps. */
+AcademyContent.ensureGalleryUploadTimes = function(content, uploads) {
+  content = content || {};
+  uploads = uploads || {};
+  if (!content.gallery_upload_times || typeof content.gallery_upload_times !== 'object') {
+    content.gallery_upload_times = {};
+  }
+  var times = content.gallery_upload_times;
+  var keys = [];
+  Object.keys(uploads).forEach(function(k) {
+    if (/^gallery_a\d+_p\d+$/.test(k) && uploads[k] != null && uploads[k] !== '') keys.push(k);
+  });
+  keys.sort(function(a, b) {
+    var ma = a.match(/^gallery_a(\d+)_p(\d+)$/);
+    var mb = b.match(/^gallery_a(\d+)_p(\d+)$/);
+    if (!ma || !mb) return 0;
+    var aa = parseInt(ma[1], 10);
+    var ap = parseInt(ma[2], 10);
+    var ba = parseInt(mb[1], 10);
+    var bp = parseInt(mb[2], 10);
+    if (aa !== ba) return aa - ba;
+    return ap - bp;
+  });
+  var changed = false;
+  var base = Date.now() - keys.length * 60000;
+  keys.forEach(function(k, i) {
+    if (times[k] == null || times[k] === '' || isNaN(parseInt(times[k], 10))) {
+      times[k] = base + i * 60000;
+      changed = true;
+    }
+  });
+  if (changed) {
+    content.gallery_upload_times = times;
+    try { AcademyContent.save(content); } catch (e) {}
+  }
+  return content;
+};
+
+/** Newest uploads first (All or single category). albumFilter: 'all' or album index number. */
+AcademyContent.listGalleryPhotosSorted = function(content, uploads, albumFilter) {
+  content = content || {};
+  uploads = uploads || {};
+  content = AcademyContent.ensureGalleryUploadTimes(content, uploads);
+  var titles = AcademyContent.normalizeGalleryAlbumTitles(content);
+  var items = [];
+  var indices = [];
+  if (albumFilter === 'all' || albumFilter == null) {
+    for (var i = 0; i < titles.length; i++) indices.push(i);
+  } else {
+    var one = parseInt(albumFilter, 10);
+    if (!isNaN(one) && one >= 0 && one < titles.length) indices.push(one);
+  }
+  for (var xi = 0; xi < indices.length; xi++) {
+    var ai = indices[xi];
+    var nP = AcademyContent.gallerySlotCountForAlbum(content, uploads, ai);
+    for (var pj = 0; pj < nP; pj++) {
+      var key = AcademyContent.galleryUploadKey(ai, pj);
+      var src = uploads[key];
+      if (src == null || src === '') continue;
+      var sortKey = AcademyContent.galleryPhotoSortKey(content, key, ai, pj);
+      var d = new Date(sortKey);
+      var yr = d.getFullYear();
+      var mo = d.getMonth() + 1;
+      items.push({
+        key: key,
+        src: src,
+        sortKey: sortKey,
+        uploadedAt: sortKey,
+        year: isNaN(yr) ? 0 : yr,
+        month: isNaN(mo) ? 0 : mo
+      });
+    }
+  }
+  items.sort(function(a, b) { return b.sortKey - a.sortKey; });
+  return items;
+};
+
+AcademyContent.filterGalleryPhotosByDate = function(items, year, month) {
+  items = items || [];
+  var y = year != null && year !== '' ? parseInt(year, 10) : null;
+  var m = month != null && month !== '' ? parseInt(month, 10) : null;
+  if (y == null && m == null) return items.slice();
+  return items.filter(function(p) {
+    if (y != null && !isNaN(y) && p.year !== y) return false;
+    if (m != null && !isNaN(m) && p.month !== m) return false;
+    return true;
+  });
+};
+
+AcademyContent.galleryDateFilterOptions = function(items) {
+  items = items || [];
+  var yearSet = {};
+  var monthsByYear = {};
+  items.forEach(function(p) {
+    if (!p.year) return;
+    yearSet[p.year] = true;
+    if (!monthsByYear[p.year]) monthsByYear[p.year] = {};
+    if (p.month) monthsByYear[p.year][p.month] = true;
+  });
+  var years = Object.keys(yearSet).map(function(y) { return parseInt(y, 10); }).filter(function(y) { return !isNaN(y); });
+  years.sort(function(a, b) { return b - a; });
+  return { years: years, monthsByYear: monthsByYear };
+};
+
+AcademyContent.galleryMonthLabel = function(monthNum) {
+  var names = ['', 'January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+  var m = parseInt(monthNum, 10);
+  return names[m] || String(monthNum);
+};
+
 /** Resources → Gallery page: left category list + photo grid (upload keys gallery_a{n}_p{m}). */
 AcademyContent.applyPhotoGallery = function(content, uploads) {
   var root = document.getElementById('page-gallery-root');
   if (!root) return;
   content = content || {};
   uploads = uploads || {};
+  content = AcademyContent.ensureGalleryUploadTimes(content, uploads);
   var esc = function(s) {
     return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
   };
   var escA = function(s) {
     return String(s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
   };
-  var nA = AcademyContent.GALLERY_ALBUM_COUNT;
-  var nP = AcademyContent.GALLERY_SLOTS_PER_ALBUM;
-  var titles = AcademyContent.getDefaultGalleryAlbumTitles();
-  if (content.gallery_album_titles && Array.isArray(content.gallery_album_titles)) {
-    for (var ti = 0; ti < nA; ti++) {
-      var tt = content.gallery_album_titles[ti];
-      if (tt != null && String(tt).trim()) titles[ti] = String(tt).trim();
-    }
+  var titles = AcademyContent.normalizeGalleryAlbumTitles(content);
+  var nA = titles.length;
+  function galleryCellHtml(src) {
+    return (
+      '<figure class="gallery-cell">' +
+      '<button type="button" class="gallery-cell__open" aria-label="View larger">' +
+      '<img src="' +
+      escA(src) +
+      '" alt="" loading="lazy" decoding="async">' +
+      '</button></figure>'
+    );
   }
-  var navItems = '';
+  var panelPhotos = { all: AcademyContent.listGalleryPhotosSorted(content, uploads, 'all') };
+  var navItems =
+    '<li><button type="button" class="gallery-nav-btn is-active" data-album-index="all" role="tab" aria-selected="true" data-lang-en="All" data-lang-my="All">All</button></li>';
   var panels = '';
   for (var ai = 0; ai < nA; ai++) {
+    panelPhotos[String(ai)] = AcademyContent.listGalleryPhotosSorted(content, uploads, ai);
     navItems +=
-      '<li><button type="button" class="gallery-nav-btn' +
-      (ai === 0 ? ' is-active' : '') +
-      '" data-album-index="' +
+      '<li><button type="button" class="gallery-nav-btn" data-album-index="' +
       ai +
-      '" role="tab" aria-selected="' +
-      (ai === 0 ? 'true' : 'false') +
-      '">' +
+      '" role="tab" aria-selected="false">' +
       esc(titles[ai]) +
       '</button></li>';
-    var cells = '';
-    var hasAny = false;
-    for (var pj = 0; pj < nP; pj++) {
-      var key = AcademyContent.galleryUploadKey(ai, pj);
-      var src = uploads[key] || '';
-      if (src) {
-        hasAny = true;
-        cells +=
-          '<figure class="gallery-cell">' +
-          '<button type="button" class="gallery-cell__open" aria-label="View larger">' +
-          '<img src="' +
-          escA(src) +
-          '" alt="" loading="lazy" decoding="async">' +
-          '</button></figure>';
-      }
-    }
-    if (!hasAny) {
-      cells =
-        '<p class="gallery-empty-hint">' +
-        esc('Upload photos for this album in Admin (About tab → Photo Gallery).') +
-        '</p>';
-    }
     panels +=
-      '<div class="gallery-album-panel' +
-      (ai === 0 ? ' is-active' : '') +
-      '" data-album-index="' +
+      '<div class="gallery-album-panel" data-album-index="' +
       ai +
-      '" role="tabpanel"' +
-      (ai === 0 ? '' : ' hidden') +
-      '><div class="gallery-photo-grid">' +
-      cells +
-      '</div></div>';
+      '" role="tabpanel" hidden><div class="gallery-photo-grid" aria-live="polite"></div></div>';
+  }
+  panels =
+    '<div class="gallery-album-panel is-active" data-album-index="all" role="tabpanel"><div class="gallery-photo-grid" aria-live="polite"></div></div>' +
+    panels;
+  var monthNavItems =
+    '<li><button type="button" class="gallery-nav-btn gallery-month-btn is-active" data-gallery-month="" data-lang-en="All months" data-lang-my="All months">All months</button></li>';
+  for (var mo = 1; mo <= 12; mo++) {
+    monthNavItems +=
+      '<li><button type="button" class="gallery-nav-btn gallery-month-btn" data-gallery-month="' +
+      mo +
+      '">' +
+      esc(AcademyContent.galleryMonthLabel(mo)) +
+      '</button></li>';
   }
   root.innerHTML =
     '<div class="page-gallery-layout">' +
@@ -503,24 +768,165 @@ AcademyContent.applyPhotoGallery = function(content, uploads) {
     '</ul></aside>' +
     '<div class="gallery-main">' +
     panels +
-    '</div></div>';
-  root.querySelectorAll('.gallery-nav-btn').forEach(function(btn) {
-    btn.addEventListener('click', function() {
-      var idx = parseInt(btn.getAttribute('data-album-index'), 10);
-      if (isNaN(idx)) return;
-      root.querySelectorAll('.gallery-nav-btn').forEach(function(b) {
-        var on = b === btn;
-        b.classList.toggle('is-active', on);
-        b.setAttribute('aria-selected', on ? 'true' : 'false');
-      });
-      root.querySelectorAll('.gallery-album-panel').forEach(function(p) {
-        var on = parseInt(p.getAttribute('data-album-index'), 10) === idx;
-        p.classList.toggle('is-active', on);
-        if (on) p.removeAttribute('hidden');
-        else p.setAttribute('hidden', '');
-      });
+    '</div>' +
+    '<aside class="gallery-date-sidebar" aria-label="Filter by date">' +
+    '<div class="gallery-year-dropdown" id="galleryYearDropdown">' +
+    '<button type="button" class="gallery-year-dropdown__trigger" id="galleryYearTrigger" aria-haspopup="listbox" aria-expanded="false" aria-label="Year">' +
+    '<span class="gallery-year-dropdown__label">All years</span>' +
+    '<i class="fa-solid fa-chevron-down gallery-year-dropdown__icon" aria-hidden="true"></i>' +
+    '</button>' +
+    '<ul class="gallery-year-dropdown__menu" id="galleryYearMenu" role="listbox" hidden></ul>' +
+    '</div>' +
+    '<ul class="gallery-sidebar-list gallery-month-list">' +
+    monthNavItems +
+    '</ul></aside>' +
+    '</div>';
+
+  var yearDropdown = root.querySelector('#galleryYearDropdown');
+  var yearTrigger = root.querySelector('#galleryYearTrigger');
+  var yearMenu = root.querySelector('#galleryYearMenu');
+  var yearLabelEl = root.querySelector('.gallery-year-dropdown__label');
+  var state = { album: 'all', year: '', month: '', panelPhotos: panelPhotos };
+
+  function activePanelEl() {
+    return root.querySelector('.gallery-album-panel.is-active .gallery-photo-grid');
+  }
+
+  function renderGridHtml(photos) {
+    if (!photos.length) {
+      return '<p class="gallery-empty-hint">' + esc('No photos for this period.') + '</p>';
+    }
+    return photos.map(function(p) { return galleryCellHtml(p.src); }).join('');
+  }
+
+  function syncMonthNavActive() {
+    root.querySelectorAll('.gallery-month-btn').forEach(function(btn) {
+      var m = btn.getAttribute('data-gallery-month');
+      var on = String(m || '') === String(state.month || '');
+      btn.classList.toggle('is-active', on);
+      btn.setAttribute('aria-selected', on ? 'true' : 'false');
+    });
+  }
+
+  function yearDisplayLabel() {
+    return state.year ? String(state.year) : 'All years';
+  }
+
+  function closeYearMenu() {
+    if (!yearMenu || !yearTrigger) return;
+    yearMenu.setAttribute('hidden', '');
+    yearTrigger.setAttribute('aria-expanded', 'false');
+  }
+
+  function openYearMenu() {
+    if (!yearMenu || !yearTrigger) return;
+    yearMenu.removeAttribute('hidden');
+    yearTrigger.setAttribute('aria-expanded', 'true');
+  }
+
+  function renderYearDropdown() {
+    if (!yearMenu) return;
+    var items = state.panelPhotos[state.album] || [];
+    var opts = AcademyContent.galleryDateFilterOptions(items);
+    if (state.year && opts.years.indexOf(parseInt(state.year, 10)) < 0) state.year = '';
+    if (yearLabelEl) yearLabelEl.textContent = yearDisplayLabel();
+    var menuHtml =
+      '<li><button type="button" class="gallery-year-dropdown__option' +
+      (state.year ? '' : ' is-active') +
+      '" data-gallery-year="" role="option">All years</button></li>';
+    for (var yi = 0; yi < opts.years.length; yi++) {
+      var yv = opts.years[yi];
+      var on = String(state.year) === String(yv);
+      menuHtml +=
+        '<li><button type="button" class="gallery-year-dropdown__option' +
+        (on ? ' is-active' : '') +
+        '" data-gallery-year="' +
+        yv +
+        '" role="option">' +
+        esc(String(yv)) +
+        '</button></li>';
+    }
+    yearMenu.innerHTML = menuHtml;
+    yearMenu.querySelectorAll('.gallery-year-dropdown__option').forEach(function(btn) {
+      btn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        state.year = btn.getAttribute('data-gallery-year') || '';
+        if (yearLabelEl) yearLabelEl.textContent = yearDisplayLabel();
+        closeYearMenu();
+        renderActiveGalleryPanel();
       });
     });
+  }
+
+  function renderActiveGalleryPanel() {
+    var grid = activePanelEl();
+    if (!grid) return;
+    var items = state.panelPhotos[state.album] || [];
+    var filtered = AcademyContent.filterGalleryPhotosByDate(items, state.year, state.month);
+    if (!items.length) {
+      grid.innerHTML =
+        '<p class="gallery-empty-hint">' +
+        esc('Upload photos for this category in Admin → Gallery.') +
+        '</p>';
+      return;
+    }
+    grid.innerHTML = renderGridHtml(filtered);
+  }
+
+  function setActiveAlbum(rawIdx) {
+    state.album = rawIdx === 'all' ? 'all' : String(rawIdx);
+    state.year = '';
+    state.month = '';
+    root.querySelectorAll('.gallery-sidebar .gallery-nav-btn[data-album-index]').forEach(function(b) {
+      var idx = b.getAttribute('data-album-index');
+      var on = String(idx) === String(rawIdx);
+      b.classList.toggle('is-active', on);
+      b.setAttribute('aria-selected', on ? 'true' : 'false');
+    });
+    root.querySelectorAll('.gallery-album-panel').forEach(function(p) {
+      var pIdx = p.getAttribute('data-album-index');
+      var on = rawIdx === 'all' ? pIdx === 'all' : String(pIdx) === String(rawIdx);
+      p.classList.toggle('is-active', on);
+      if (on) p.removeAttribute('hidden');
+      else p.setAttribute('hidden', '');
+    });
+    syncMonthNavActive();
+    closeYearMenu();
+    renderYearDropdown();
+    renderActiveGalleryPanel();
+  }
+
+  root.querySelectorAll('.gallery-sidebar .gallery-nav-btn[data-album-index]').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var rawIdx = btn.getAttribute('data-album-index');
+      if (rawIdx == null || rawIdx === '') return;
+      setActiveAlbum(rawIdx);
+    });
+  });
+
+  root.querySelectorAll('.gallery-month-btn').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      state.month = btn.getAttribute('data-gallery-month') || '';
+      syncMonthNavActive();
+      renderActiveGalleryPanel();
+    });
+  });
+
+  if (yearTrigger && yearMenu) {
+    yearTrigger.addEventListener('click', function(e) {
+      e.stopPropagation();
+      if (yearMenu.hasAttribute('hidden')) openYearMenu();
+      else closeYearMenu();
+    });
+    document.addEventListener('click', function(e) {
+      if (!yearDropdown || yearDropdown.contains(e.target)) return;
+      closeYearMenu();
+    });
+  }
+
+  renderYearDropdown();
+  syncMonthNavActive();
+  renderActiveGalleryPanel();
   AcademyContent.attachGalleryLightboxBehavior();
 };
 
@@ -538,15 +944,14 @@ AcademyContent.attachGalleryLightboxBehavior = function() {
     lb.innerHTML =
       '<div class="gallery-lightbox__backdrop" aria-hidden="true"></div>' +
       '<div class="gallery-lightbox__frame" tabindex="-1">' +
+      '<button type="button" class="gallery-lightbox__close" aria-label="Close"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>' +
       '<div class="gallery-lightbox__img-wrap"><img class="gallery-lightbox__img" src="" alt=""></div>' +
       '<div class="gallery-lightbox__toolbar">' +
       '<div class="gallery-lightbox__toolbar-left">' +
       '<button type="button" class="gallery-lightbox__nav gallery-lightbox__prev" aria-label="Previous"><i class="fa-solid fa-chevron-left" aria-hidden="true"></i></button>' +
       '<button type="button" class="gallery-lightbox__nav gallery-lightbox__next" aria-label="Next"><i class="fa-solid fa-chevron-right" aria-hidden="true"></i></button>' +
       '<span class="gallery-lightbox__counter" aria-live="polite"></span>' +
-      '</div>' +
-      '<button type="button" class="gallery-lightbox__close" aria-label="Close"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>' +
-      '</div></div>';
+      '</div></div></div>';
     document.body.appendChild(lb);
     lb._urls = [];
     lb._index = 0;
@@ -724,14 +1129,35 @@ AcademyContent.applyActivityVideos = function(content, uploads) {
 };
 
 AcademyContent.DEFAULT_HOME_ACTIVITIES_SLIDES = [
-  { caption_en: 'ACTIVITY 1', caption_my: ' ', image_key: 'home_activity_slide_0' },
-  { caption_en: 'ACTIVITY 2', caption_my: ' ', image_key: 'home_activity_slide_1' }
+  { caption: 'ACTIVITY 1', image_key: 'home_activity_slide_0' },
+  { caption: 'ACTIVITY 2', image_key: 'home_activity_slide_1' }
 ];
+
+/** Single caption line (legacy caption_en / caption_my merged). */
+AcademyContent.homeActivitySlideCaption = function(item) {
+  if (!item || typeof item !== 'object') return '';
+  if (item.caption != null && String(item.caption).trim() !== '') return String(item.caption).trim();
+  var en = item.caption_en != null ? String(item.caption_en).trim() : '';
+  var my = item.caption_my != null ? String(item.caption_my).trim() : '';
+  if (!my || my === '\uFFFD' || /^[\s\u00a0]+$/.test(my)) my = '';
+  return en || my;
+};
 
 /** Fallback file paths when Admin/Firebase has no upload for a slide (served from website/photo/). */
 AcademyContent.DEFAULT_HOME_ACTIVITY_IMAGE_PATHS = {
   home_activity_slide_0: '../photo/activity1.jpg',
   home_activity_slide_1: '../photo/activity1.jpg'
+};
+
+/** CMS upload, then default file path for slide key (same order as public carousel). */
+AcademyContent.resolveHomeActivitySlideImageSrc = function(key, uploads) {
+  if (!key) return null;
+  uploads = uploads || {};
+  var up = uploads[key];
+  if (up != null && up !== '' && String(up).trim() !== '') return up;
+  var paths = AcademyContent.DEFAULT_HOME_ACTIVITY_IMAGE_PATHS;
+  if (paths && paths[key]) return paths[key];
+  return null;
 };
 
 /**  upload /   classroom   placeholder  ( ➕ ) */
@@ -779,36 +1205,19 @@ AcademyContent.renderHomeActivitiesCarousel = function(content, uploads) {
     track.style.width = '100%';
     return;
   }
-  /* Keep all admin-added slides; only use defaults when list is empty. */
-  var lang = (document.body && document.body.getAttribute('data-lang')) || '';
-  try {
-    if (!lang && typeof localStorage !== 'undefined') {
-      lang = localStorage.getItem('management-ui-lang') || localStorage.getItem('site-lang') || '';
-    }
-  } catch (e0) {}
-  if (lang !== 'my' && lang !== 'both') lang = 'en';
   var n = slides.length;
   var esc = function(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); };
   var escAttr = function(s) { return String(s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;'); };
   track.style.width = (n * 100) + '%';
   track.innerHTML = slides.map(function(item, i) {
     var key = item.image_key || ('home_activity_slide_' + i);
-    var src = uploads[key]
-      || (AcademyContent.DEFAULT_HOME_ACTIVITY_IMAGE_PATHS && AcademyContent.DEFAULT_HOME_ACTIVITY_IMAGE_PATHS[key])
+    var src = AcademyContent.resolveHomeActivitySlideImageSrc(key, uploads)
       || AcademyContent.ACTIVITY_SLIDE_PLACEHOLDER_SVG;
-    var cen = item.caption_en != null ? String(item.caption_en) : '';
-    var cmy = item.caption_my != null ? String(item.caption_my) : '';
-    var captionShown;
-    if (lang === 'both') {
-      if (cmy && cmy !== cen && cmy.indexOf('\uFFFD') === -1) captionShown = cen + ' · ' + cmy;
-      else captionShown = cen || cmy;
-    } else {
-      captionShown = (lang === 'my' && cmy) ? cmy : cen;
-    }
+    var captionShown = AcademyContent.homeActivitySlideCaption(item);
     var pct = (100 / n);
     return '<article class="activities-slide' + (i === 0 ? ' is-active' : '') + '" style="flex:0 0 ' + pct + '%;box-sizing:border-box">' +
       '<img src="' + escAttr(src) + '" alt="" loading="lazy" data-upload-id="' + escAttr(key) + '">' +
-      '<p class="activities-slide-caption" data-lang-en="' + escAttr(cen) + '" data-lang-my="' + escAttr(cmy) + '">' + esc(captionShown) + '</p></article>';
+      '<p class="activities-slide-caption">' + esc(captionShown) + '</p></article>';
   }).join('');
 
   /* Prevent broken-image icon: always fall back to safe SVG placeholder. */
@@ -822,19 +1231,7 @@ AcademyContent.renderHomeActivitiesCarousel = function(content, uploads) {
 };
 
 AcademyContent.syncActivitiesSlideCaptionLang = function() {
-  var lang = (document.body && document.body.getAttribute('data-lang')) || '';
-  try {
-    if (!lang && typeof localStorage !== 'undefined') {
-      lang = localStorage.getItem('management-ui-lang') || localStorage.getItem('site-lang') || '';
-    }
-  } catch (e1) {}
-  if (lang === 'both') return;
-  if (lang !== 'my') lang = 'en';
-  var attr = lang === 'my' ? 'data-lang-my' : 'data-lang-en';
-  document.querySelectorAll('.activities-slide-caption').forEach(function(el) {
-    var t = el.getAttribute(attr) || el.getAttribute('data-lang-en');
-    if (t != null) el.textContent = t;
-  });
+  /* Public site uses a single caption per slide (no EN/MY switch). */
 };
 
 /** Set data-activities-interval (ms) on .home-activities-wrap from content.home_activities_carousel_interval_sec (seconds). */
@@ -1015,6 +1412,65 @@ AcademyContent.initHomeTeachersCarousel = function() {
   startTimer();
 };
 
+/** First non-empty CMS field from a list of keys (site-wide settings). */
+AcademyContent.pickContentField = function(content, keys) {
+  content = content || {};
+  keys = keys || [];
+  for (var i = 0; i < keys.length; i++) {
+    var v = content[keys[i]];
+    if (v != null && String(v).trim() !== '') return String(v).trim();
+  }
+  return '';
+};
+
+/** Top bar extras are applied separately; this updates footer, social links, and shared contact fields. */
+AcademyContent.applySiteGlobals = function(content) {
+  content = content || {};
+  function escHtmlLite(s) {
+    return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
+  }
+  var address = AcademyContent.pickContentField(content, ['contact_address']);
+  if (address) {
+    document.querySelectorAll('.footer-address').forEach(function(el) { el.textContent = address; });
+  }
+  var phone = AcademyContent.pickContentField(content, ['site_phone', 'contact_phone']);
+  if (phone) {
+    var parts = phone.split(/,\s*/).filter(function(p) { return String(p).trim(); });
+    document.querySelectorAll('.footer-phone span').forEach(function(span) {
+      span.innerHTML = parts.map(function(p) {
+        p = String(p).trim();
+        var digits = p.replace(/\D/g, '');
+        return '<a href="tel:+' + digits + '">' + escHtmlLite(p) + '</a>';
+      }).join(', ');
+    });
+  }
+  var email1 = AcademyContent.pickContentField(content, ['site_email', 'contact_email']);
+  var email2 = AcademyContent.pickContentField(content, ['site_email_2', 'contact_email_2']);
+  var footerEmails = document.querySelectorAll('.footer-email span');
+  if (footerEmails[0] && email1) {
+    footerEmails[0].innerHTML = '<a href="mailto:' + escHtmlLite(email1) + '">' + escHtmlLite(email1) + '</a>';
+  }
+  if (footerEmails[1] && email2) {
+    footerEmails[1].innerHTML = '<a href="mailto:' + escHtmlLite(email2) + '">' + escHtmlLite(email2) + '</a>';
+  }
+  var socialRows = [
+    ['site_social_facebook', 'contact_fb_url', 'social-icon--facebook', 'footer-contact-icon--facebook'],
+    ['site_social_youtube', null, 'social-icon--youtube', 'footer-contact-icon--youtube'],
+    ['site_social_instagram', null, 'social-icon--instagram', 'footer-contact-icon--instagram'],
+    ['site_social_tiktok', null, 'social-icon--tiktok', 'footer-contact-icon--tiktok']
+  ];
+  socialRows.forEach(function(row) {
+    var url = row[1]
+      ? AcademyContent.pickContentField(content, [row[0], row[1]])
+      : AcademyContent.pickContentField(content, [row[0]]);
+    if (!url) return;
+    document.querySelectorAll('a.' + row[2]).forEach(function(a) { a.href = url; });
+    document.querySelectorAll('a.footer-social').forEach(function(a) {
+      if (a.querySelector('.' + row[3])) a.href = url;
+    });
+  });
+};
+
 AcademyContent.initHomeProgramsCarousel = function() {
   var track = document.getElementById('home-programs-grid');
   var dotsWrap = document.getElementById('homeProgramsDots');
@@ -1159,6 +1615,7 @@ AcademyContent.apply = function() {
   function applySiteData(data) {
     var content = (data && data.content && typeof data.content === 'object' && Object.keys(data.content).length > 0) ? data.content : AcademyContent.load();
     if (!content || typeof content !== 'object') content = {};
+    if (AcademyContent.repairSwappedCourseSlots) AcademyContent.repairSwappedCourseSlots(content);
     var escCourse = function(s) {
       return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
     };
@@ -1166,6 +1623,18 @@ AcademyContent.apply = function() {
     var slidesFixed = AcademyContent.coerceHomeActivitiesSlides(content.home_activities_slides);
     if (slidesFixed != null) content.home_activities_slides = slidesFixed;
     var uploads = (data && data.uploads && typeof data.uploads === 'object') ? data.uploads : AcademyContent.loadUploads();
+    (function migrateAboutWelcomeContent(c) {
+      if (!c || typeof c !== 'object') return;
+      var lead = c.about_welcome_lead != null ? String(c.about_welcome_lead).trim() : '';
+      var body = c.about_welcome_text != null ? String(c.about_welcome_text) : '';
+      if (lead) return;
+      var plain = body.replace(/<br\s*\/?>/gi, '\n');
+      var m = plain.match(/^\s*<strong>([\s\S]*?)<\/strong>\s*(?:\n|\r\n?)?([\s\S]*)$/i);
+      if (m) {
+        c.about_welcome_lead = m[1].replace(/<[^>]+>/g, '').trim();
+        c.about_welcome_text = m[2].replace(/<[^>]+>/g, '').trim();
+      }
+    })(content);
     /** CMS may still store old hero title "📚 COURSES"; strip book emojis; map COURSES/PROGRAMS → Programs. */
     function normalizeCoursePageTitle(val) {
       var s = String(val == null ? '' : val).trim();
@@ -1261,27 +1730,75 @@ AcademyContent.apply = function() {
         }
       }
     }
-    /* About page: Our Instructors — render from content.about_instructors or legacy */
-    var aboutInstContainer = document.getElementById('about-instructors-container');
-    if (aboutInstContainer && uploads) {
-      var instItems = content.about_instructors;
-      if (!Array.isArray(instItems) || instItems.length === 0) {
-        instItems = [];
-        for (var ii = 1; ii <= 3; ii++) {
-          var nm = content['about_instructor' + ii + '_name'];
-          var dc = content['about_instructor' + ii + '_desc'];
-          if (nm != null || dc != null) instItems.push({ name: (nm != null ? nm : ''), desc: (dc != null ? dc : '') });
-        }
-        if (instItems.length === 0) instItems = [{ name: '', desc: 'MA in TESOL, 10+ years teaching experience.' }, { name: '', desc: 'BA English, teaches Business English.' }, { name: '', desc: 'Cambridge CELTA. Teaches General English.' }];
+    /* About page: Our Partners */
+    var aboutPartnersEl = document.getElementById('about-partners-list');
+    if (aboutPartnersEl) {
+      var partnerDefaults = [
+        { text: 'Pearson Edexcel is one of the UK\'s largest awarding organizations, providing academic and vocational qualifications. It offers a range of IGCSEs, A-levels, and BTEC courses recognized globally. The organization focuses on enriching the learning experience, ensuring learners are prepared for both academic and professional success.', image_key: 'about_partner_0_image', image: '../photo/pe.png' },
+        { text: 'PS Business School provides a wide range of Business & Management Programs from Foundation level to Master Degree since 2007. It is an approved centre of Pearson BTEC and ABE (UK). Then, it is also an official partner of IU International University of Applied Sciences, Germany to provide Bachelor and Master Degrees.', image_key: 'about_partner_1_image', image: '../photo/psbusinessschool.png' },
+        { text: 'Global Study Partners (GSP) is a digital platform connecting students with global educational opportunities. Through technology, GSP simplifies the application process, guiding students to suitable courses and institutions, fostering international educational collaboration.', image_key: 'about_partner_2_image', image: '../photo/gsp.png' }
+      ];
+      function aboutPartnerCombinedText(it, index) {
+        var text = it && it.text != null ? String(it.text).trim() : '';
+        var name = it && it.name != null ? String(it.name).trim() : '';
+        if (text && name && text.indexOf(name) !== 0) return (name + ' ' + text).trim();
+        if (text) return text;
+        if (name) return name;
+        var def = partnerDefaults[index % partnerDefaults.length] || {};
+        return def.text || '';
       }
-      var escInst = function(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); };
-      aboutInstContainer.innerHTML = instItems.map(function(item, i) {
-        var photoKey = content.about_instructors && content.about_instructors.length ? 'about_instructor_' + i + '_photo' : 'about_instructor' + (i + 1) + '_photo';
-        var src = uploads[photoKey] || (i === 0 ? 'photo/teacher1.png' : i === 1 ? 'photo/teacher2.png' : 'photo/teacher3.png');
-        var name = escInst(item.name || '');
-        var desc = escInst((item.desc || '').replace(/\n/g, '<br>'));
-        return '<div class="teacher-card"><div class="teacher-photo-wrap"><img src="' + src + '" alt="" class="teacher-photo"><span class="teacher-photo-placeholder" style="display:none;">Photo</span></div><h3>' + name + '</h3><p class="teacher-spec">' + desc + '</p></div>';
+      function aboutPartnerParagraphHtml(full) {
+        full = String(full || '');
+        var m = full.match(/^(.+?)\s+(is|provides|are|was|has|have|offers|connects)\s+/i);
+        if (m && m[1].length <= 80) {
+          var lead = m[1];
+          var rest = full.slice(lead.length).replace(/^\s+/, '');
+          return '<strong>' + escPartner(lead) + '</strong> ' + escPartner(rest);
+        }
+        return escPartner(full);
+      }
+      var partnerItems = content.about_partner_items;
+      if (!Array.isArray(partnerItems) || !partnerItems.length) partnerItems = partnerDefaults.slice();
+      partnerItems = partnerItems.map(function(it, i) {
+        var row = Object.assign({}, it);
+        row.text = aboutPartnerCombinedText(row, i);
+        delete row.name;
+        return row;
+      });
+      var escPartner = function(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); };
+      var partnerFallbacks = [
+        'photo/pe.png,../photo/pe.png',
+        'photo/psbusinessschool.png,../photo/psbusinessschool.png',
+        'photo/gsp.png,../photo/gsp.png'
+      ];
+      aboutPartnersEl.innerHTML = partnerItems.map(function(it, i) {
+        var def = partnerDefaults[i] || partnerDefaults[0];
+        var key = it.image_key || def.image_key || ('about_partner_' + i + '_image');
+        var src = (uploads && uploads[key]) ? uploads[key] : (it.image || def.image || '../photo/pe.png');
+        var para = aboutPartnerCombinedText(it, i);
+        var alt = para.split(/\s+/).slice(0, 3).join(' ');
+        var fb = partnerFallbacks[i % partnerFallbacks.length];
+        return '<div class="school-profile-partner" id="partner-' + i + '">' +
+          '<div class="school-profile-partner__logo"><img src="' + src + '" alt="' + escPartner(alt) + '" width="320" height="128" loading="lazy" decoding="async" data-upload-id="' + escPartner(key) + '" data-fallbacks="' + escPartner(fb) + '"></div>' +
+          '<div class="school-profile-partner__text"><p>' + aboutPartnerParagraphHtml(para) + '</p></div></div>';
       }).join('');
+      aboutPartnersEl.querySelectorAll('.school-profile-partner__logo img').forEach(function(img) {
+        img.addEventListener('error', function onPartnerImgErr() {
+          var raw = (img.getAttribute('data-fallbacks') || '').split(',');
+          var list = [];
+          for (var pi = 0; pi < raw.length; pi++) {
+            var u = String(raw[pi] || '').trim();
+            if (u && u !== img.src) list.push(u);
+          }
+          var tryIdx = parseInt(img.dataset.partnerFb || '0', 10) || 0;
+          if (tryIdx < list.length) {
+            img.dataset.partnerFb = String(tryIdx + 1);
+            img.src = list[tryIdx];
+            return;
+          }
+          img.removeEventListener('error', onPartnerImgErr);
+        });
+      });
     }
     var aboutFacEl = document.getElementById('about-facilities-grid');
     if (aboutFacEl) {
@@ -1604,22 +2121,20 @@ AcademyContent.apply = function() {
       return String(html).replace(/<br\s*\/?>/gi, '&nbsp;·&nbsp;');
     }
     var hEn = content.site_hours_en;
-    var hMy = content.site_hours_my;
-    if (hEn != null || hMy != null) {
+    if (hEn != null && String(hEn).trim() !== '') {
       var hoursEl = document.getElementById('topbarHours');
       if (hoursEl) {
-        if (hEn != null) hoursEl.setAttribute('data-lang-en-html', topBarHoursOneLine(hEn));
-        if (hMy != null) hoursEl.setAttribute('data-lang-my-html', topBarHoursOneLine(hMy));
-        var pick = (lang === 'my' && hMy != null && String(hMy).trim() !== '') ? hMy : hEn;
-        if (pick != null && String(pick).trim() !== '') {
-          hoursEl.innerHTML = topBarHoursOneLine(pick);
-        }
+        var hoursHtml = topBarHoursOneLine(hEn);
+        hoursEl.setAttribute('data-lang-en-html', hoursHtml);
+        hoursEl.setAttribute('data-lang-my-html', hoursHtml);
+        hoursEl.innerHTML = hoursHtml;
       }
     }
-    if (content.site_phone != null) {
+    var sitePhoneVal = AcademyContent.pickContentField(content, ['site_phone', 'contact_phone']);
+    if (sitePhoneVal) {
       var phoneEl = document.getElementById('topbarPhone');
       if (phoneEl) {
-        phoneEl.innerHTML = '<i class="fa-solid fa-phone top-bar-contact-icon top-bar-contact-icon--phone" aria-hidden="true"></i> ' + content.site_phone;
+        phoneEl.innerHTML = '<i class="fa-solid fa-phone top-bar-contact-icon top-bar-contact-icon--phone" aria-hidden="true"></i> ' + sitePhoneVal;
       }
     }
     if (content.site_email != null) {
@@ -1629,7 +2144,15 @@ AcademyContent.apply = function() {
         emailEl.innerHTML = '<i class="fa-solid fa-envelope top-bar-contact-icon top-bar-contact-icon--email" aria-hidden="true"></i> <a href="mailto:' + e + '" style="color:inherit">' + e + '</a>';
         emailEl.style.display = '';
       }
+    } else if (content.contact_email != null) {
+      var emailEl2 = document.getElementById('topbarEmail');
+      if (emailEl2) {
+        var e2 = content.contact_email;
+        emailEl2.innerHTML = '<i class="fa-solid fa-envelope top-bar-contact-icon top-bar-contact-icon--email" aria-hidden="true"></i> <a href="mailto:' + e2 + '" style="color:inherit">' + e2 + '</a>';
+        emailEl2.style.display = '';
+      }
     }
+    if (typeof AcademyContent.applySiteGlobals === 'function') AcademyContent.applySiteGlobals(content);
     if (!window.__academyHeaderMarqueeColors) {
       window.__academyHeaderMarqueeColors = true;
       var mqTrack = document.querySelector('.header-marquee__track');

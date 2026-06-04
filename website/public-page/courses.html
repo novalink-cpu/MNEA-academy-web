@@ -192,7 +192,7 @@
         <h2 data-content-id="course_features_title">Program Features</h2>
       </div>
       <div class="card course-features-box mb-2">
-        <ul class="course-feature-rows" role="list">
+        <ul class="course-feature-rows" id="courseFeatureRows" role="list">
           <li class="course-feature-row" role="listitem">
             <span class="course-feature-row-icon" aria-hidden="true"><img src="logo.png" alt="" width="28" height="28" loading="lazy" decoding="async"></span>
             <p class="course-feature-row-line"><strong data-content-id="course_feature1_title">Small Class Size</strong><span class="course-feature-colon"> : </span><span data-content-id="course_feature1_text">Small classes allow teachers to give more attention to every student.</span></p>
@@ -255,7 +255,6 @@
             <li><img src="logo.png" alt="" class="hero-checklist-logo" width="22" height="22" loading="lazy"><span data-content-id="course_cta_check1">60-minute test</span></li>
             <li><img src="logo.png" alt="" class="hero-checklist-logo" width="22" height="22" loading="lazy"><span data-content-id="course_cta_check2">Instant result</span></li>
           </ul>
-          <p class="programs-cta-card__actions"><a href="placement-test.html" class="btn-primary" data-content-id="course_cta_btn">Take Free Placement Test</a></p>
         </div>
       </div>
     </div>
@@ -313,7 +312,7 @@
   <script src="../assets/js/firebase-config.js"></script>
   <script src="../assets/js/auth.js"></script>
   <script src="../assets/js/content-firebase.js"></script>
-  <script src="../assets/js/content-admin.js?v=20260412-duration-60-migrate"></script>
+  <script src="../assets/js/content-admin.js?v=20260601-igcse-fix"></script>
 <script>if (window.AcademyContent) AcademyContent.apply();</script>
   <script>
   (function() {
@@ -333,6 +332,33 @@
     }
     document.querySelectorAll('.course-thumb-img').forEach(function(img) {
       img.addEventListener('error', function() { tryNextFallback(this, 'course-thumb-placeholder'); });
+    });
+  })();
+  (function renderCourseFeaturesFromCms() {
+    if (!window.AcademyContent || typeof AcademyContent.getSiteContent !== 'function') return;
+    var list = document.getElementById('courseFeatureRows');
+    if (!list) return;
+    function esc(s) {
+      return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+    function safeItem(it) {
+      it = it || {};
+      return {
+        title: String(it.title || '').trim(),
+        text: String(it.text || '').trim()
+      };
+    }
+    AcademyContent.getSiteContent(function(data) {
+      var content = (data && data.content) ? data.content : {};
+      var items = Array.isArray(content.course_feature_items) ? content.course_feature_items.map(safeItem) : [];
+      if (!items.length) return;
+      list.innerHTML = items.map(function(it) {
+        if (!it.title && !it.text) return '';
+        return '<li class="course-feature-row" role="listitem">' +
+          '<span class="course-feature-row-icon" aria-hidden="true"><img src="logo.png" alt="" width="28" height="28" loading="lazy" decoding="async"></span>' +
+          '<p class="course-feature-row-line"><strong>' + esc(it.title) + '</strong><span class="course-feature-colon"> : </span><span>' + esc(it.text) + '</span></p>' +
+        '</li>';
+      }).join('');
     });
   })();
   </script>

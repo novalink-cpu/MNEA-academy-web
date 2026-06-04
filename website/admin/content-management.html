@@ -100,8 +100,6 @@
         </div>
       </div>
 
-      <p class="text-muted" style="margin-bottom:0.35rem;">  </p>
-      <p class="text-muted" style="margin-bottom:1rem; font-size:0.9rem;">    editor  <strong>Course</strong>  website  <code>courses.html</code> (Our Courses   features )  <code>admin-content.html</code>  Course tab  </p>
       <div class="mgmt-cards">
         <a href="admin-content.html?page=home" class="mgmt-card">
           <div class="icon">&#x1F3E0;</div>
@@ -207,6 +205,7 @@
       }
 
       cards.forEach(function(card) {
+        if (!USE_INLINE_EDITOR) return;
         card.addEventListener('click', function(e) {
           e.preventDefault();
           openInline(card);

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="my">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,7 +8,6 @@
   <link rel="stylesheet" href="../assets/css/main.css">
   <link rel="stylesheet" href="../assets/css/dashboard.css">
   <style>
-    /* Page Content flow: no dashboard sidebar (same idea as admin-content.html) */
     .settings-page-wrap {
       max-width: 780px;
       margin: 0 auto;
@@ -24,100 +23,107 @@
       gap: 0.75rem;
       margin-bottom: 1.25rem;
     }
-    .settings-page-header h1 { margin: 0; font-size: 1.35rem; color: var(--primary, #1e3a5f); }
-    .settings-footer-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 0.75rem; margin-top: 1.5rem; }
-    .settings-footer-actions .btn-logout {
-      padding: 0.45rem 0.9rem; background: transparent; border: 1px solid var(--border); border-radius: var(--radius-sm, 6px);
-      color: var(--text-muted); cursor: pointer; font-size: 0.9rem;
+    .settings-page-header h1 { margin: 0; font-size: 1.35rem; color: #16a34a; }
+    .settings-intro { margin: 0 0 1.25rem; color: var(--text-muted, #64748b); font-size: 0.92rem; line-height: 1.5; }
+    .settings-footer-actions {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      margin-top: 1.5rem;
+      width: 100%;
     }
-    .settings-footer-actions .btn-logout:hover { background: var(--surface-hover); color: var(--primary); }
     .settings-form { max-width: 100%; }
     .settings-form .form-group { margin-bottom: 1rem; }
-    .settings-form label { display: block; font-weight: 600; color: var(--primary); margin-bottom: 0.35rem; }
-    .settings-form input[type="text"], .settings-form input[type="email"], .settings-form textarea { width: 100%; padding: 0.5rem 0.65rem; border: 1px solid var(--border); border-radius: 6px; font-size: 1rem; }
+    .settings-form label { display: block; font-weight: 600; color: var(--primary, #9e1818); margin-bottom: 0.35rem; }
+    .settings-form input[type="text"], .settings-form input[type="email"], .settings-form input[type="url"], .settings-form textarea {
+      width: 100%; padding: 0.5rem 0.65rem; border: 1px solid var(--border); border-radius: 6px; font-size: 1rem; box-sizing: border-box;
+    }
     .settings-form textarea { min-height: 60px; resize: vertical; }
     .settings-form .hint { font-size: 0.85rem; color: var(--text-muted); margin-top: 0.25rem; }
     .settings-section { background: #fff; border-radius: 12px; padding: 1.25rem; margin-bottom: 1.25rem; box-shadow: 0 2px 8px rgba(0,0,0,.06); border: 1px solid var(--border); }
-    .settings-section h2 { margin: 0 0 1rem 0; font-size: 1.1rem; color: var(--primary); }
-    .btn-save { padding: 0.6rem 1.5rem; background: var(--primary); color: #fff; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 1rem; }
-    .btn-save:hover { opacity: 0.9; }
-    .logo-preview-wrap { margin-top: 0.5rem; }
-    .logo-preview-wrap img { max-height: 48px; max-width: 180px; object-fit: contain; border: 1px solid var(--border); border-radius: 6px; }
+    .settings-section h2 { margin: 0 0 1rem 0; font-size: 1.1rem; color: #16a34a; }
+    .settings-footer-actions .btn-save {
+      padding: 0.6rem 2rem;
+      background: #16a34a !important;
+      color: #fff !important;
+      border: 1px solid #15803d !important;
+      border-radius: 8px;
+      font-weight: 700;
+      cursor: pointer;
+      font-size: 1rem;
+      min-width: 8rem;
+    }
+    .settings-footer-actions .btn-save:hover {
+      background: #15803d !important;
+      border-color: #166534 !important;
+    }
   </style>
 </head>
 <body class="admin-dashboard-glass">
   <div class="settings-page-wrap glass-dashboard">
-      <div class="settings-page-header">
-        <h1>Website Settings</h1>
+    <div class="settings-page-header">
+      <h1>Website Settings</h1>
+    </div>
+
+    <p class="settings-intro">Global site details used in the top bar, footer, and contact page.</p>
+
+    <form id="websiteSettingsForm" class="settings-form">
+      <div class="settings-section">
+        <h2>Operating hours (top bar)</h2>
+        <div class="form-group">
+          <label for="site_hours_en">Hours</label>
+          <input type="text" id="site_hours_en" placeholder="🕐 Mon–Fri  8:30 AM – 6:30 PM · 🕐 Sat–Sun  9:00 AM – 7:00 PM">
+        </div>
       </div>
 
-      <p class="text-muted" style="margin-bottom:1.25rem;">, , Email, Logo,     </p>
-
-      <form id="websiteSettingsForm" class="settings-form">
-        <div class="settings-section">
-          <h2>&#x1F550;   (Operating Hours)</h2>
-          <div class="form-group">
-            <label>English (e.g. Mon–Fri 8:30 AM – 6:30 PM)</label>
-            <input type="text" id="site_hours_en" placeholder="&#x1F550; Mon–Fri 8:30 AM – 6:30 PM">
-            <div class="hint">  &lt;br&gt; </div>
-          </div>
-          <div class="form-group">
-            <label> (e.g. – : – :)</label>
-            <input type="text" id="site_hours_my" placeholder="&#x1F550; – : – :">
-            <div class="hint">  &lt;br&gt; </div>
-          </div>
+      <div class="settings-section">
+        <h2>Contact (top bar &amp; footer)</h2>
+        <div class="form-group">
+          <label for="site_phone">Phone</label>
+          <input type="text" id="site_phone" placeholder="+95 9 885 511664, +95 9 885 511665">
         </div>
-
-        <div class="settings-section">
-          <h2>&#x1F4DE; </h2>
-          <div class="form-group">
-            <label>Phone Number</label>
-            <input type="text" id="site_phone" placeholder="+95 9 885 511664, +95 9 885 511665">
-          </div>
+        <div class="form-group">
+          <label for="site_email">Email (primary)</label>
+          <input type="email" id="site_email" placeholder="office@mmnea.com">
         </div>
-
-        <div class="settings-section">
-          <h2>&#x2709;&#xFE0F; Email</h2>
-          <div class="form-group">
-            <label>Email Address (top bar)</label>
-            <input type="email" id="site_email" placeholder="office@mmnea.com">
-          </div>
+        <div class="form-group">
+          <label for="site_email_2">Email (secondary)</label>
+          <input type="email" id="site_email_2" placeholder="myanmarneweraacademy@gmail.com">
         </div>
-
-        <div class="settings-section">
-          <h2>Logo (header )</h2>
-          <div class="form-group">
-            <label>Logo Image</label>
-            <div class="logo-preview-wrap" id="logoPreviewWrap">
-              <span id="logoPlaceholder" class="text-muted"> </span>
-              <img id="logoPreviewImg" src="" alt="" style="display:none;">
-            </div>
-            <input type="file" id="upload_logo" accept="image/*" style="margin-top:0.5rem;">
-          </div>
+        <div class="form-group">
+          <label for="contact_address">Address</label>
+          <input type="text" id="contact_address" placeholder="No.5311, Myat Lay Street, and Sagaing St, Ottarathiri 15015, Naypyitaw">
+          <div class="hint">Used on Contact page, footer, and home “Visit us” section.</div>
         </div>
+      </div>
 
-        <div class="settings-section">
-          <h2> (Website Title in Header)</h2>
-          <div class="form-group">
-            <label>  (e.g. Myanmar New Era International)</label>
-            <input type="text" id="site_title_line1" placeholder="Myanmar New Era">
-          </div>
-          <div class="form-group">
-            <label>  (e.g. Education Centre)</label>
-            <input type="text" id="site_title_line2" placeholder="International Education Centre">
-          </div>
-          <div class="form-group">
-            <label>  (  )</label>
-            <input type="text" id="header_marquee_text" placeholder="Create your new future with us.">
-          </div>
+      <div class="settings-section">
+        <h2>Social media links</h2>
+        <div class="form-group">
+          <label for="site_social_facebook">Facebook</label>
+          <input type="url" id="site_social_facebook" placeholder="https://www.facebook.com/mneanpt">
         </div>
+        <div class="form-group">
+          <label for="site_social_youtube">YouTube</label>
+          <input type="url" id="site_social_youtube" placeholder="https://www.youtube.com/@MNEA23">
+        </div>
+        <div class="form-group">
+          <label for="site_social_instagram">Instagram</label>
+          <input type="url" id="site_social_instagram" placeholder="https://www.instagram.com/myanmarneweraacademy/">
+        </div>
+        <div class="form-group">
+          <label for="site_social_tiktok">TikTok</label>
+          <input type="url" id="site_social_tiktok" placeholder="https://www.tiktok.com/@myanmarnewera">
+        </div>
+      </div>
 
-        <div class="settings-footer-actions">
-          <button type="submit" class="btn-save"> (Save)</button>
-          <button type="button" class="btn-logout" id="btnLogout">Logout</button>
-          <span id="saveStatus" style="color:#16a34a; font-weight:600; display:none;">Changes saved successfully</span>
-        </div>
-      </form>
+      <div class="settings-footer-actions">
+        <button type="submit" class="btn-save">Save</button>
+        <span id="saveStatus" style="color:#16a34a; font-weight:600; display:none;">Changes saved successfully</span>
+      </div>
+    </form>
   </div>
 
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
@@ -125,56 +131,71 @@
   <script src="../assets/js/firebase-config.js"></script>
   <script src="../assets/js/content-firebase.js"></script>
   <script src="../assets/js/lang-switcher.js"></script>
-  <script src="../assets/js/content-admin.js"></script>
+  <script src="../assets/js/content-admin.js?v=20260604-site-settings"></script>
   <script src="../assets/js/auth.js"></script>
   <script>
     (function() {
-      var DEFAULT_HOURS_EN = '&#x1F550; Mon–Fri&nbsp;&nbsp;8:30 AM – 6:30 PM&nbsp;·&nbsp;&#x1F550; Sat–Sun&nbsp;&nbsp;9:00 AM – 7:00 PM';
-      var DEFAULT_HOURS_MY = '&#x1F550; –&nbsp;&nbsp;: – :&nbsp;·&nbsp;&#x1F550; –&nbsp;&nbsp;: – :';
+      var SITE_DEFAULTS = {
+        site_hours_en: '\uD83D\uDD50 Mon\u2013Fri\u00a0\u00a08:30 AM \u2013 6:30 PM\u00a0\u00b7\u00a0\uD83D\uDD50 Sat\u2013Sun\u00a0\u00a09:00 AM \u2013 7:00 PM',
+        site_phone: '+95 9 885 511664, +95 9 885 511665',
+        site_email: 'office@mmnea.com',
+        site_email_2: 'myanmarneweraacademy@gmail.com',
+        contact_address: 'No.5311, Myat Lay Street, and Sagaing St, Ottarathiri 15015, Naypyitaw',
+        site_social_facebook: 'https://www.facebook.com/mneanpt',
+        site_social_youtube: 'https://www.youtube.com/@MNEA23',
+        site_social_instagram: 'https://www.instagram.com/myanmarneweraacademy/',
+        site_social_tiktok: 'https://www.tiktok.com/@myanmarnewera'
+      };
+
+      function pickContent(c, keys, fallback) {
+        for (var i = 0; i < keys.length; i++) {
+          var v = c[keys[i]];
+          if (v != null && String(v).trim() !== '') return String(v).trim();
+        }
+        return fallback;
+      }
 
       function loadSettings() {
         AcademyContent.getSiteContent(function(data) {
           var c = data.content || {};
-          document.getElementById('site_hours_en').value = c.site_hours_en || DEFAULT_HOURS_EN;
-          document.getElementById('site_hours_my').value = c.site_hours_my || DEFAULT_HOURS_MY;
-          document.getElementById('site_phone').value = c.site_phone || '+95 9 885 511664, +95 9 885 511665';
-          document.getElementById('site_email').value = c.site_email || 'office@mmnea.com';
-          document.getElementById('site_title_line1').value = c.site_title_line1 || 'Myanmar New Era';
-          document.getElementById('site_title_line2').value = c.site_title_line2 || 'International Education Centre';
-          document.getElementById('header_marquee_text').value = c.header_marquee_text || 'Create your new future with us.';
-          var logoUrl = (data.uploads && data.uploads.logo) || AcademyContent.loadUploads().logo;
-          var img = document.getElementById('logoPreviewImg');
-          var ph = document.getElementById('logoPlaceholder');
-          if (logoUrl) { img.src = logoUrl; img.style.display = 'inline-block'; if (ph) ph.style.display = 'none'; }
-          else { img.style.display = 'none'; img.src = ''; if (ph) ph.style.display = 'inline'; }
+          document.getElementById('site_hours_en').value = pickContent(c, ['site_hours_en'], SITE_DEFAULTS.site_hours_en);
+          document.getElementById('site_phone').value = pickContent(c, ['site_phone', 'contact_phone'], SITE_DEFAULTS.site_phone);
+          document.getElementById('site_email').value = pickContent(c, ['site_email', 'contact_email'], SITE_DEFAULTS.site_email);
+          document.getElementById('site_email_2').value = pickContent(c, ['site_email_2', 'contact_email_2'], SITE_DEFAULTS.site_email_2);
+          document.getElementById('contact_address').value = pickContent(c, ['contact_address'], SITE_DEFAULTS.contact_address);
+          document.getElementById('site_social_facebook').value = pickContent(c, ['site_social_facebook', 'contact_fb_url'], SITE_DEFAULTS.site_social_facebook);
+          document.getElementById('site_social_youtube').value = pickContent(c, ['site_social_youtube'], SITE_DEFAULTS.site_social_youtube);
+          document.getElementById('site_social_instagram').value = pickContent(c, ['site_social_instagram'], SITE_DEFAULTS.site_social_instagram);
+          document.getElementById('site_social_tiktok').value = pickContent(c, ['site_social_tiktok'], SITE_DEFAULTS.site_social_tiktok);
         });
       }
-
-      document.getElementById('upload_logo').addEventListener('change', function() {
-        var file = this.files && this.files[0];
-        if (!file || !file.type.match(/^image\//)) return;
-        var reader = new FileReader();
-        reader.onload = function() {
-          AcademyContent.saveUpload('logo', reader.result);
-          var img = document.getElementById('logoPreviewImg');
-          var ph = document.getElementById('logoPlaceholder');
-          img.src = reader.result; img.style.display = 'inline-block';
-          if (ph) ph.style.display = 'none';
-        };
-        reader.readAsDataURL(file);
-      });
 
       document.getElementById('websiteSettingsForm').addEventListener('submit', function(e) {
         e.preventDefault();
         AcademyContent.getSiteContent(function(data) {
           var content = data.content || {};
-          content.site_hours_en = document.getElementById('site_hours_en').value.trim() || DEFAULT_HOURS_EN;
-          content.site_hours_my = document.getElementById('site_hours_my').value.trim() || DEFAULT_HOURS_MY;
-          content.site_phone = document.getElementById('site_phone').value.trim() || '';
-          content.site_email = document.getElementById('site_email').value.trim() || '';
-          content.site_title_line1 = document.getElementById('site_title_line1').value.trim() || 'Myanmar New Era';
-          content.site_title_line2 = document.getElementById('site_title_line2').value.trim() || 'International Education Centre';
-          content.header_marquee_text = document.getElementById('header_marquee_text').value.trim() || 'Create your new future with us.';
+          var phone = document.getElementById('site_phone').value.trim() || SITE_DEFAULTS.site_phone;
+          var email = document.getElementById('site_email').value.trim() || SITE_DEFAULTS.site_email;
+          var email2 = document.getElementById('site_email_2').value.trim() || SITE_DEFAULTS.site_email_2;
+          var address = document.getElementById('contact_address').value.trim() || SITE_DEFAULTS.contact_address;
+          var fb = document.getElementById('site_social_facebook').value.trim() || SITE_DEFAULTS.site_social_facebook;
+
+          content.site_hours_en = document.getElementById('site_hours_en').value.trim() || SITE_DEFAULTS.site_hours_en;
+          delete content.site_hours_my;
+          content.site_phone = phone;
+          content.site_email = email;
+          content.site_email_2 = email2;
+          content.contact_phone = phone;
+          content.contact_email = email;
+          content.contact_email_2 = email2;
+          content.contact_address = address;
+          content.site_social_facebook = fb;
+          content.site_social_youtube = document.getElementById('site_social_youtube').value.trim() || SITE_DEFAULTS.site_social_youtube;
+          content.site_social_instagram = document.getElementById('site_social_instagram').value.trim() || SITE_DEFAULTS.site_social_instagram;
+          content.site_social_tiktok = document.getElementById('site_social_tiktok').value.trim() || SITE_DEFAULTS.site_social_tiktok;
+          content.contact_fb_url = fb;
+          delete content.header_marquee_text;
+
           AcademyContent.save(content);
           var uploads = data.uploads || AcademyContent.loadUploads();
           if (window.AcademyFirebase && AcademyFirebase.isAvailable()) {
@@ -198,7 +219,6 @@
       if (!u) window.location.href = '../public-page/login.html';
       else {
         AcademyAuth.getUserProfile(u.uid, function(p) { if ((p && p.role) !== 'admin') window.location.href = '../student/dashboard.html'; });
-        document.getElementById('btnLogout').addEventListener('click', function() { AcademyAuth.signOut(function() { window.location.href = '../public-page/index.html'; }); });
         loadSettings();
       }
     })();

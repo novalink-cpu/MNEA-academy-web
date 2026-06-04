@@ -581,6 +581,18 @@
   function applyConfig(c) {
     ptConfig = c;
     if (!c) return;
+    if (c.intro) {
+      setText('ptIntroTitle', c.intro.title);
+      setText('ptIntroSections', c.intro.sections);
+      setText('ptIntroFlow1', c.intro.flowStep1);
+      setText('ptIntroFlow2', c.intro.flowStep2);
+      setText('ptIntroFlow3', c.intro.flowStep3);
+      var introDurationEl = document.getElementById('ptIntroDurationMinutes');
+      if (introDurationEl) {
+        var introMinutes = parseInt(c.intro.durationMinutes, 10);
+        introDurationEl.textContent = isNaN(introMinutes) || introMinutes <= 0 ? String(c.intro.durationMinutes || '60') : String(introMinutes);
+      }
+    }
     setText('ptPageTitle', c.pageTitle);
     setText('ptPageCrumb', c.pageTitle);
     setText('stepperLabel', c.stepperLabel);

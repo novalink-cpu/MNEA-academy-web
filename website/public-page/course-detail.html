@@ -816,7 +816,7 @@
   <script src="../assets/js/firebase-config.js"></script>
   <script src="../assets/js/auth.js"></script>
   <script src="../assets/js/content-firebase.js"></script>
-  <script src="../assets/js/content-admin.js?v=20260404-scroll-reload"></script>
+  <script src="../assets/js/content-admin.js?v=20260601-igcse-fix"></script>
 <script>if (window.AcademyContent) AcademyContent.apply();</script>
   <script>
     (function() {
@@ -828,6 +828,7 @@
       var prefix = 'course' + num + '_';
       var content = (window.AcademyContent && AcademyContent.load) ? AcademyContent.load() : {};
       if (!content || typeof content !== 'object') content = {};
+      if (window.AcademyContent && AcademyContent.repairSwappedCourseSlots) AcademyContent.repairSwappedCourseSlots(content);
       function get(key, fallback) { return (content[prefix + key] !== undefined && content[prefix + key] !== '') ? content[prefix + key] : fallback; }
       var PEIC_INTRO_DEFAULT = 'Programmes are available for children (Young Learners), teenagers, and adults (Adult Learners). They are ideal if you want to build all four English skills from the ground up. Take a placement test first, then join the level that fits you. You can sit the exam here in Nay Pyi Taw and receive an internationally recognised certificate.';
       var PEIC_INTRO_MY = ' (Young Learners)    (Adult Learners)           placement test            ';
@@ -964,10 +965,21 @@
         level: get('level', courseDefaults.level || 'Various'),
         who_join: get('who_join', courseDefaults.who_join || ''),
         focus: get('focus', courseDefaults.focus || 'Listening\nSpeaking\nReading\nWriting'),
+        program_details: get('program_details', ''),
         fee: get('fee', courseDefaults.fee || ''),
         schedule_options: get('schedule_options', courseDefaults.schedule_options || ''),
         benefits: get('benefits', courseDefaults.benefits || '')
       };
+      if (window.AcademyContent && AcademyContent.getCourseItems) {
+        var courseItems = AcademyContent.getCourseItems(content);
+        for (var cii = 0; cii < courseItems.length; cii++) {
+          var ci = courseItems[cii];
+          if (String(ci.link || '').indexOf('id=' + id) === -1) continue;
+          if (String(ci.title || '').trim()) c.title = String(ci.title).trim();
+          if (String(ci.text || '').trim()) c.desc = String(ci.text).trim();
+          break;
+        }
+      }
       if (id === 'professional') c.title = defaultTitles.professional;
       if (id === 'chinese') c.title = defaultTitles.chinese;
       if (id === 'globalprimary') c.title = defaultTitles.globalprimary;
@@ -1051,6 +1063,42 @@
       var feeHeadingEl = document.getElementById('feeScheduleHeading');
       var feeEl = document.getElementById('feeText');
       var scheduleEl = document.getElementById('scheduleText');
+      function escHtml(s) {
+        return String(s == null ? '' : s)
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;');
+      }
+      function renderProgramDetailsFromCms(raw) {
+        var lines = String(raw || '').replace(/\r/g, '').split('\n').map(function(s) { return s.trim(); }).filter(function(s) { return s; });
+        if (!lines.length) return '';
+        var rows = [];
+        lines.forEach(function(line) {
+          var ix = line.indexOf(':');
+          if (ix <= 0) return;
+          var label = line.slice(0, ix).trim();
+          var val = line.slice(ix + 1).trim();
+          if (!label || !val) return;
+          var main = val;
+          var sub = '';
+          var pipeIx = val.indexOf('|');
+          if (pipeIx >= 0) {
+            main = val.slice(0, pipeIx).trim();
+            sub = val.slice(pipeIx + 1).trim();
+          }
+          rows.push(
+            '<div class="program-detail-row">' +
+              '<span class="program-detail-label">' + escHtml(label) + '</span>' +
+              '<span class="program-detail-sep">:</span>' +
+              '<span class="program-detail-value">' + escHtml(main) + (sub ? ('<span class="program-detail-sub">' + escHtml(sub) + '</span>') : '') + '</span>' +
+            '</div>'
+          );
+        });
+        if (!rows.length) return '';
+        return '<div class="program-detail-list">' + rows.join('') + '</div>';
+      }
+      var cmsProgramDetailsHtml = renderProgramDetailsFromCms(c.program_details);
       if (titleEl) titleEl.textContent = c.title;
       var crumbTitle = document.getElementById('courseCrumbTitle');
       if (crumbTitle) crumbTitle.textContent = c.title;
@@ -1216,7 +1264,14 @@
           programBenefitsBoxEl.hidden = true;
         }
       }
-      if (id === 'general') {
+      if (cmsProgramDetailsHtml) {
+        if (feeHeadingEl) feeHeadingEl.textContent = 'Program Details';
+        if (feeEl) feeEl.style.display = 'none';
+        if (scheduleEl) {
+          scheduleEl.style.marginTop = '0';
+          scheduleEl.innerHTML = cmsProgramDetailsHtml;
+        }
+      } else if (id === 'general') {
         if (feeHeadingEl) feeHeadingEl.textContent = 'Program Details, Fees & Promotions';
         if (feeEl) feeEl.style.display = 'none';
         if (scheduleEl) {

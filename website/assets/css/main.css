@@ -4199,6 +4199,15 @@ body.page-about .school-profile-brand__mark {
 .school-profile-welcome__body {
   min-width: 0;
 }
+body.page-about .school-profile-welcome__lead {
+  margin: 0 0 0.85rem;
+  color: var(--primary);
+  font-weight: 700;
+  font-family: var(--font-brand);
+  font-size: 1.02rem;
+  line-height: 1.65;
+  text-align: left;
+}
 body.page-about .school-profile-welcome__text > strong {
   color: var(--primary);
   font-weight: 700;
@@ -4215,26 +4224,25 @@ body.page-about .school-profile-welcome__title.about-section-heading {
   text-align: left;
 }
 body.page-about .partners-profile-card {
-  display: grid;
-  grid-template-columns: minmax(160px, 280px) 1fr;
-  column-gap: 2rem;
-  align-items: start;
-}
-body.page-about .partners-profile-heading-spacer {
-  grid-column: 1;
-  grid-row: 1;
+  padding: 1.75rem 2rem 2rem;
 }
 body.page-about .partners-profile-card .school-profile-partners-heading.about-section-heading {
-  grid-column: 2;
-  grid-row: 1;
-  margin: 0 0 1.35rem;
+  margin: 0 0 1.5rem;
   text-align: left;
+  font-family: Georgia, "Times New Roman", Times, serif;
+}
+body.page-about .about-partners-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1.85rem;
 }
 body.page-about .school-profile-partner {
-  grid-column: 1 / -1;
-  align-items: start;
-  /* Same logo column width every row so three partners stack on one visual axis */
-  grid-template-columns: min(100%, 280px) 1fr;
+  display: grid;
+  grid-template-columns: minmax(150px, 260px) minmax(0, 1fr);
+  column-gap: 2rem;
+  row-gap: 1rem;
+  align-items: center;
+  margin-bottom: 0;
 }
 .school-profile-partner {
   display: grid;
@@ -4250,11 +4258,12 @@ body.page-about .school-profile-partner {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 0.5rem;
+  padding: 0.35rem 0.5rem;
 }
 body.page-about .school-profile-partner__logo {
   justify-content: center;
   width: 100%;
+  min-height: 108px;
   box-sizing: border-box;
 }
 .school-profile-partner__logo img {
@@ -4266,14 +4275,22 @@ body.page-about .school-profile-partner__logo {
 }
 body.page-about .school-profile-partner__logo img {
   display: block;
-  margin-left: auto;
-  margin-right: auto;
+  max-width: 240px;
+  max-height: 128px;
+  margin: 0 auto;
 }
 .school-profile-partner__text p {
   margin: 0;
   font-size: 1.02rem;
   line-height: 1.62;
   text-align: left;
+}
+body.page-about .school-profile-partner__text p {
+  font-family: Georgia, "Times New Roman", Times, serif;
+  color: #0a0a0a;
+}
+body.page-about .school-profile-partner__text strong {
+  font-weight: 700;
 }
 @media (max-width: 640px) {
   .school-profile-welcome {
@@ -4296,16 +4313,16 @@ body.page-about .school-profile-partner__logo img {
   body.page-about .school-profile-partner {
     text-align: left;
     grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  body.page-about .school-profile-partner__logo {
+    min-height: 0;
   }
   body.page-about .partners-profile-card {
-    grid-template-columns: 1fr;
-  }
-  body.page-about .partners-profile-heading-spacer {
-    display: none;
+    padding: 1.35rem 1.25rem 1.5rem;
   }
   body.page-about .partners-profile-card .school-profile-partners-heading.about-section-heading {
-    grid-column: 1;
-    grid-row: 1;
+    margin-bottom: 1.15rem;
   }
   .school-profile-partner__logo img {
     max-height: 120px;
@@ -5307,8 +5324,119 @@ body.page-home .facilities-split-card-icon i {
 }
 
 .gallery-sidebar {
-  flex: 0 0 14rem;
-  max-width: 17rem;
+  flex: 0 0 12rem;
+  width: 12rem;
+  max-width: 12rem;
+}
+
+.gallery-date-sidebar {
+  flex: 0 0 6.5rem;
+  width: 6.5rem;
+  max-width: 6.5rem;
+  margin-left: auto;
+  text-align: right;
+}
+
+.gallery-date-sidebar .gallery-sidebar-title {
+  text-align: right;
+}
+
+.gallery-year-dropdown {
+  position: relative;
+  width: 100%;
+  margin: 0 0 0.15rem;
+}
+
+.gallery-year-dropdown__trigger {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.3rem;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0.45rem 0.45rem;
+  border: 1px solid rgba(30, 58, 95, 0.18);
+  border-radius: var(--radius-sm);
+  background: #fff;
+  color: var(--text);
+  font: inherit;
+  font-size: 0.88rem;
+  cursor: pointer;
+  text-align: right;
+}
+
+.gallery-year-dropdown__label {
+  flex: 0 1 auto;
+  text-align: right;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gallery-year-dropdown__icon {
+  flex: 0 0 auto;
+  font-size: 0.62rem;
+  line-height: 1;
+  opacity: 0.85;
+}
+
+.gallery-year-dropdown__menu {
+  position: absolute;
+  top: calc(100% + 0.2rem);
+  right: 0;
+  left: 0;
+  z-index: 20;
+  list-style: none;
+  margin: 0;
+  padding: 0.2rem 0;
+  background: #fff;
+  border: 1px solid rgba(30, 58, 95, 0.18);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-lg);
+  max-height: 11rem;
+  overflow-y: auto;
+}
+
+.gallery-year-dropdown__menu[hidden] {
+  display: none !important;
+}
+
+.gallery-year-dropdown__menu li {
+  margin: 0;
+}
+
+.gallery-year-dropdown__option {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  text-align: right;
+  padding: 0.4rem 0.5rem;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: 0.88rem;
+  cursor: pointer;
+}
+
+.gallery-year-dropdown__option:hover,
+.gallery-year-dropdown__option.is-active {
+  background: var(--primary);
+  color: #fff;
+}
+
+.gallery-date-sidebar .gallery-month-list {
+  width: 100%;
+  max-height: none;
+  margin-top: 0.65rem;
+}
+
+.gallery-date-sidebar .gallery-nav-btn {
+  text-align: right;
+  padding: 0.42rem 0.65rem 0.42rem 0.45rem;
+  font-size: 0.88rem;
 }
 
 .gallery-sidebar-title {
@@ -5438,8 +5566,7 @@ body.page-home .facilities-split-card-icon i {
   background: #fff;
   border-radius: var(--radius-sm);
   box-shadow: 0 24px 80px rgba(0, 0, 0, 0.35);
-  padding: clamp(0.75rem, 2vw, 1.25rem);
-  padding-bottom: 0.65rem;
+  padding: clamp(2.75rem, 5vw, 3.25rem) clamp(0.75rem, 2vw, 1.25rem) 0.65rem;
   outline: none;
 }
 
@@ -5463,19 +5590,22 @@ body.page-home .facilities-split-card-icon i {
 }
 
 .gallery-lightbox__toolbar {
+  position: relative;
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
   gap: 1rem;
   flex-shrink: 0;
   padding: 0.85rem 0.35rem 0.35rem;
-  border-top: 1px solid rgba(0, 0, 0, 0.06);
+  border-top: 1px solid rgba(214, 40, 40, 0.15);
   margin-top: 0.5rem;
+  background: linear-gradient(to bottom, #fff 0%, #fef8f8 100%);
 }
 
 .gallery-lightbox__toolbar-left {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 0.5rem;
   flex-wrap: wrap;
 }
@@ -5484,37 +5614,42 @@ body.page-home .facilities-split-card-icon i {
   width: 2.5rem;
   height: 2.5rem;
   border-radius: 50%;
-  border: 1px solid rgba(0, 0, 0, 0.12);
-  background: #fff;
-  color: var(--text);
+  border: 1px solid var(--primary);
+  background: var(--primary);
+  color: #fff;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   font-size: 0.95rem;
-  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease, transform 0.15s ease;
 }
 
 .gallery-lightbox__nav:hover {
-  background: var(--surface-hover);
-  border-color: rgba(0, 0, 0, 0.2);
-  color: var(--primary);
+  background: var(--primary-dark);
+  border-color: var(--primary-dark);
+  color: #fff;
 }
 
 .gallery-lightbox__counter {
-  font-size: 0.9rem;
-  color: var(--text-muted);
-  margin-left: 0.35rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--primary-dark);
+  margin-left: 0.15rem;
   font-variant-numeric: tabular-nums;
 }
 
 .gallery-lightbox__close {
+  position: absolute;
+  top: 0.55rem;
+  right: 0.55rem;
+  z-index: 2;
   width: 2.5rem;
   height: 2.5rem;
   border-radius: 50%;
-  border: 1px solid rgba(0, 0, 0, 0.12);
+  border: 1px solid var(--primary);
   background: #fff;
-  color: var(--text);
+  color: var(--primary);
   cursor: pointer;
   display: inline-flex;
   align-items: center;
@@ -5525,8 +5660,9 @@ body.page-home .facilities-split-card-icon i {
 }
 
 .gallery-lightbox__close:hover {
-  background: var(--surface-hover);
-  color: var(--primary);
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
 }
 
 .gallery-empty-hint {
@@ -5545,16 +5681,40 @@ body.page-home .facilities-split-card-icon i {
     align-items: stretch;
   }
 
-  .gallery-sidebar {
+  .gallery-sidebar,
+  .gallery-date-sidebar {
     flex: none;
     max-width: none;
     width: 100%;
+    margin-left: 0;
+    text-align: left;
+  }
+
+  .gallery-date-sidebar .gallery-sidebar-title,
+  .gallery-date-sidebar .gallery-nav-btn {
+    text-align: left;
+  }
+
+  .gallery-year-dropdown__trigger,
+  .gallery-year-dropdown__option {
+    text-align: left;
+    justify-content: flex-start;
   }
 
   .gallery-sidebar-list {
     display: flex;
     flex-wrap: wrap;
     gap: 0.35rem;
+  }
+
+  .gallery-month-list {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.35rem;
+  }
+
+  .gallery-date-sidebar .gallery-month-list {
+    margin-top: 0.5rem;
   }
 
   .gallery-sidebar-list li {
