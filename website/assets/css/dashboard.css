@@ -1516,10 +1516,11 @@ body.admin-dashboard-glass::before {
   transform: translate3d(0, 0, 0);
   transition: transform 0.32s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.32s ease, background 0.25s ease, border-color 0.25s ease, color 0.2s ease;
 }
-.admin-dashboard-glass .dashboard-sidebar nav a:hover {
+.admin-dashboard-glass .dashboard-sidebar nav a:hover,
+.admin-dashboard-glass .dashboard-sidebar nav a.active:hover {
   background: rgba(255, 255, 255, 0.52);
   border-color: rgba(255, 255, 255, 0.9);
-  color: var(--primary);
+  color: #d62828;
   box-shadow:
     0 14px 32px rgba(15, 23, 42, 0.1),
     0 1px 0 rgba(255, 255, 255, 0.98) inset,
@@ -1527,7 +1528,7 @@ body.admin-dashboard-glass::before {
   transform: translate3d(6px, -4px, 0) scale(1.02);
 }
 .admin-dashboard-glass .dashboard-sidebar nav a.active {
-  color: #0f766e;
+  color: #0a0a0a;
   background: rgba(92, 199, 176, 0.18);
   border: 1px solid rgba(13, 148, 136, 0.35);
   box-shadow:
@@ -1555,7 +1556,7 @@ body.admin-dashboard-glass::before {
   background: #fff;
   border-color: rgba(15, 23, 42, 0.14);
   border-left-color: #111;
-  color: var(--text);
+  color: #d62828;
 }
 .admin-dashboard-glass .dashboard-sidebar nav a[href="dashboard.html"].active,
 .admin-dashboard-glass .dashboard-sidebar nav a[href="reports.html"].active {
@@ -1578,7 +1579,15 @@ body.admin-dashboard-glass::before {
 .admin-dashboard-glass .dashboard-sidebar nav a[href="admissions.html"].active,
 .admin-dashboard-glass .dashboard-sidebar nav a[href="students.html"].active,
 .admin-dashboard-glass .dashboard-sidebar nav a[href="teachers.html"].active {
-  color: #0f766e;
+  color: #0a0a0a;
+}
+.admin-dashboard-glass .dashboard-sidebar nav a[href="admissions.html"]:hover,
+.admin-dashboard-glass .dashboard-sidebar nav a[href="students.html"]:hover,
+.admin-dashboard-glass .dashboard-sidebar nav a[href="teachers.html"]:hover,
+.admin-dashboard-glass .dashboard-sidebar nav a[href="admissions.html"].active:hover,
+.admin-dashboard-glass .dashboard-sidebar nav a[href="students.html"].active:hover,
+.admin-dashboard-glass .dashboard-sidebar nav a[href="teachers.html"].active:hover {
+  color: #d62828;
 }
 
 /* Admin glass theme - same sidebar visual grouping */

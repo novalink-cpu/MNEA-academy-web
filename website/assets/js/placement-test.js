@@ -1339,7 +1339,9 @@
           var msg = String((stat && stat.message) || '');
           if (!msg) {
             if (stat && stat.days_until_next_attempt) {
-              msg = 'You can take this test once per week (same date of birth, parent name, and phone or device). Try again in ' + stat.days_until_next_attempt + ' day(s).';
+              var rd = parseInt(stat.retake_days, 10);
+              var period = (rd === 7) ? 'once per week' : ((rd === 1) ? 'once per day' : ('once every ' + (rd || 7) + ' days'));
+              msg = 'You can take this test ' + period + ' (same date of birth, parent name, and phone or device). Try again in ' + stat.days_until_next_attempt + ' day(s).';
             } else {
               msg = 'You are not allowed to retake this test yet.';
             }

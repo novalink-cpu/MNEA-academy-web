@@ -25,7 +25,7 @@
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" id="seo-twitter-title" content="Programs | Myanmar New Era International Education Centre">
   <meta name="twitter:description" id="seo-twitter-description" content="Programme details at Myanmar New Era International Education Centre, Nay Pyi Taw — Pearson Edexcel Approved Centre. IGCSE, Pre-IGCSE, English 4 Skills (PEIC), Chinese, and more.">
-  <link rel="stylesheet" href="../assets/css/main.css?v=20260403-program-hero-all">
+  <link rel="stylesheet" href="../assets/css/main.css?v=20260604-program-hero-cta-center">
   <script src="../assets/js/public-nav-mobile.js" defer></script>
   <style>
     .syllabus-list { padding-left: 1.25rem; margin: 1rem 0; }
@@ -389,7 +389,9 @@
       margin: 0;
     }
     .program-hero-split__cta {
-      margin: 1rem 0 0;
+      margin: 1.15rem 0 0;
+      width: 100%;
+      text-align: center;
     }
     .program-hero-split__cta .btn-primary {
       display: inline-flex;
@@ -766,7 +768,6 @@
       </div>
 
       </div>
-      <a href="placement-test.html" class="btn-primary btn-accent" id="enrollBtn" data-lang-en="Take free placement test" data-lang-my="အခမဲ့ အဆင့်သတ်မှတ်မှု စစ်ဆေးရန်">Take free placement test</a>
     </div>
   </section>
 
@@ -1679,16 +1680,13 @@
       var enrollPtEn = 'Take free placement test';
       var enrollPtMy = 'အခမဲ့ အဆင့်သတ်မှတ်မှု စစ်ဆေးရန်';
       var enrollIsContact = (id === 'chinese' || id === 'coding');
-      var e1 = document.getElementById('enrollBtn');
-      var e2 = document.getElementById('enrollBtnHero');
+      var enrollBtnHero = document.getElementById('enrollBtnHero');
       function syncEnrollCtaLang() {
         var lang = (document.body && document.body.getAttribute('data-lang')) || 'en';
         var key = lang === 'my' ? 'data-lang-my' : 'data-lang-en';
-        [e1, e2].forEach(function(el) {
-          if (!el) return;
-          var txt = el.getAttribute(key) || el.getAttribute('data-lang-en') || '';
-          if (txt) el.textContent = txt;
-        });
+        if (!enrollBtnHero) return;
+        var txt = enrollBtnHero.getAttribute(key) || enrollBtnHero.getAttribute('data-lang-en') || '';
+        if (txt) enrollBtnHero.textContent = txt;
       }
       function applyEnrollCtaAttrs(el) {
         if (!el) return;
@@ -1696,8 +1694,7 @@
         el.setAttribute('data-lang-en', enrollIsContact ? enrollContactEn : enrollPtEn);
         el.setAttribute('data-lang-my', enrollIsContact ? enrollContactMy : enrollPtMy);
       }
-      applyEnrollCtaAttrs(e1);
-      applyEnrollCtaAttrs(e2);
+      applyEnrollCtaAttrs(enrollBtnHero);
       syncEnrollCtaLang();
       try {
         document.body.addEventListener('lang-switched', syncEnrollCtaLang);

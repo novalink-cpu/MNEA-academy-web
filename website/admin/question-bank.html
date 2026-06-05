@@ -11,6 +11,40 @@
     .qb-wrap { display: grid; grid-template-columns: 1fr; gap: 1rem; }
     .qb-card { background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 1rem; }
     .qb-menu-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-top: .75rem; }
+    .qb-menu-grid.qb-forms {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      width: 100%;
+      max-width: none;
+      margin-top: 0;
+      gap: 1.25rem;
+    }
+    #qbFormLanding { background: transparent; border: none; padding: 0; box-shadow: none; width: 100%; }
+    .qb-menu-grid.qb-forms .qb-menu-card { min-height: 128px; width: 100%; }
+    .qb-menu-grid.qb-forms .qb-menu-card:nth-child(1) {
+      background: linear-gradient(180deg, #fef3c7 0%, #f59e0b 100%);
+      border: 1px solid rgba(255, 255, 255, 0.75);
+      box-shadow: 0 10px 30px rgba(245, 158, 11, 0.16), inset 0 1px 0 rgba(255, 255, 255, 0.92);
+    }
+    .qb-menu-grid.qb-forms .qb-menu-card:nth-child(2) {
+      background: linear-gradient(180deg, #d1fae5 0%, #34d399 100%);
+      border: 1px solid rgba(255, 255, 255, 0.75);
+      box-shadow: 0 10px 30px rgba(16, 185, 129, 0.16), inset 0 1px 0 rgba(255, 255, 255, 0.92);
+    }
+    .qb-menu-card.qb-skill-listening { background: linear-gradient(180deg, #c4b5fd 0%, #6f76f8 100%); }
+    .qb-menu-card.qb-skill-grammar { background: linear-gradient(180deg, #f8df9f 0%, #f8b019 100%); }
+    .qb-menu-card.qb-skill-vocabulary { background: linear-gradient(180deg, #9fe7d9 0%, #37d6a9 100%); }
+    .qb-menu-card.qb-skill-reading { background: linear-gradient(180deg, #bfdbfe 0%, #3b82f6 100%); }
+    .qb-section-block { border: 1px solid #e2e8f0; border-radius: 10px; padding: .85rem; margin-bottom: 1rem; background: #f8fafc; }
+    .qb-section-block h3 { margin: 0 0 .5rem; font-size: 1rem; color: #0f172a; }
+    .qb-reading-passage-block { margin-bottom: 1rem; }
+    .qb-reading-passage-block .qb-textarea {
+      color: #2563eb;
+      min-height: 220px;
+      line-height: 1.55;
+    }
+    #qbBankAudioUrl {
+      color: #2563eb;
+    }
     .qb-menu-card {
       position: relative;
       border: 1px solid rgba(255,255,255,.65);
@@ -57,11 +91,51 @@
     .qb-grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: .6rem; }
     .qb-grid4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: .5rem; }
     .qb-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: .6rem; }
+    #qbListeningAudioHeading,
+    #qbReadingPassagesHeading { color: #d62828; }
     .qb-actions { display: flex; gap: .5rem; flex-wrap: wrap; }
+    .qb-save-bar {
+      position: sticky;
+      bottom: 0;
+      z-index: 30;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.45rem;
+      margin-top: 1rem;
+      padding: 0.85rem 1rem 1rem;
+      background: rgba(255, 255, 255, 0.97);
+      border-top: 1px solid #e5e7eb;
+      box-shadow: 0 -6px 18px rgba(15, 23, 42, 0.08);
+    }
+    .qb-save-status { min-height: 1.2rem; margin: 0; font-size: 0.85rem; color: #64748b; text-align: center; }
+    .qb-save-status.qb-save-ok { color: #16a34a; font-weight: 600; }
+    .qb-save-status.qb-save-err { color: #dc2626; font-weight: 600; }
+    .qb-save-btn {
+      cursor: pointer;
+      border: none;
+      border-radius: 8px;
+      padding: 0.55rem 1.35rem;
+      font-size: 0.9rem;
+      font-weight: 600;
+      background: #16a34a;
+      color: #fff;
+      pointer-events: auto;
+    }
+    .qb-save-btn:hover:not(:disabled) { background: #15803d; }
+    .qb-save-btn:disabled { opacity: 0.65; cursor: wait; }
     .qb-meta { color: #64748b; font-size: .85rem; }
     .qb-label { font-size: .85rem; color: #334155; display: block; margin-bottom: .2rem; }
+    .qb-label.qb-question-label { color: #d62828; font-weight: 700; }
     .qb-input, .qb-textarea, .qb-select { width: 100%; border: 1px solid #cbd5e1; border-radius: 8px; padding: .5rem; font-size: .9rem; box-sizing: border-box; }
-    .qb-textarea { min-height: 70px; resize: vertical; }
+    .qb-textarea {
+      min-height: 70px;
+      resize: vertical;
+      display: block;
+      white-space: pre-wrap;
+      overflow-wrap: break-word;
+      word-wrap: break-word;
+    }
     .qb-toggle { display: inline-flex; align-items: center; gap: .35rem; font-size: .85rem; color: #334155; }
     .btn-mini { border: none; border-radius: 7px; padding: .35rem .55rem; cursor: pointer; font-size: .8rem; }
     .btn-del { background: #fee2e2; color: #991b1b; }
@@ -78,7 +152,8 @@
       .qb-menu-grid { grid-template-columns: repeat(2, 1fr); }
     }
     @media (max-width: 620px) {
-      .qb-menu-grid { grid-template-columns: 1fr; }
+      .qb-menu-grid,
+      .qb-menu-grid.qb-forms { grid-template-columns: 1fr; }
     }
   </style>
 </head>
@@ -95,6 +170,7 @@
         <a href="attendance.html">Attendance Management</a>
         <a href="exams.html">Exam Management</a>
         <a href="gpa-transcript.html">GPA & Transcript Management</a>
+        <a href="inquiries.html">Communication <span class="nav-inquiry-badge" id="navInquiryCount"></span></a>
         <a href="content-management.html">Page Content Management</a>
         <a href="question-bank.html" class="active">Question Bank Management</a>
         <a href="reports.html">Reports & Analytics</a>
@@ -129,165 +205,72 @@
           </div>
         </div>
       </div>
-      <p class="qb-meta">Separate interface for managing the same Placement Test data used by Page Content Management.</p>
-      <div id="qbLanding" class="qb-card">
-        <h2 style="margin:0 0 .25rem;">Select Section</h2>
-        <p class="qb-meta">Card   </p>
-        <div class="qb-menu-grid">
-          <button type="button" class="qb-menu-card" data-open-panel="listening">
-            <span class="qb-menu-icon">🎧</span>
-            <h3>Listening Questions</h3>
+      <div id="qbFormLanding">
+        <div class="qb-menu-grid qb-forms">
+          <button type="button" class="qb-menu-card" data-pick-form="test1a">
+            <span class="qb-menu-icon">1A</span>
+            <h3>Test 1 Form A</h3>
+            <p>First paper (adaptive entry)</p>
           </button>
-          <button type="button" class="qb-menu-card" data-open-panel="reading">
-            <span class="qb-menu-icon">📖</span>
-            <h3>Reading Questions</h3>
-          </button>
-          <button type="button" class="qb-menu-card" data-open-panel="writing">
-            <span class="qb-menu-icon">✍️</span>
-            <h3>Writing Prompts</h3>
-          </button>
-          <button type="button" class="qb-menu-card" data-open-panel="speaking">
-            <span class="qb-menu-icon">🎤</span>
-            <h3>Speaking Questions</h3>
+          <button type="button" class="qb-menu-card" data-pick-form="test2a">
+            <span class="qb-menu-icon">2A</span>
+            <h3>Test 2 Form A</h3>
+            <p>Second paper (75+ on Test 1A)</p>
           </button>
         </div>
       </div>
 
-      <div id="qbEditorShell" class="qb-hidden">
-        <div class="sticky-toolbar">
-          <div class="qb-actions">
-            <button type="button" class="btn-mini btn-add" id="qbBackToCards">← Back to Cards</button>
-            <button type="button" class="btn-mini btn-save" id="qbSaveAllTop">Save All Changes</button>
-            <button type="button" class="btn-mini btn-add" id="qbReloadTop">Reload from Database</button>
-            <span class="qb-meta" id="qbStatusText">Loading...</span>
-          </div>
-        </div>
+      <div id="qbSectionLanding" class="qb-card qb-hidden">
+        <h2 style="margin:0 0 .25rem;"><span id="qbSectionFormLabel">Test 1 Form A</span></h2>
+        <p class="qb-meta" id="qbSectionMenuHint"></p>
+        <div class="qb-menu-grid" id="qbSectionMenuGrid" style="margin-top:1rem;"></div>
+        <span class="qb-meta" id="qbStatusText" hidden></span>
+      </div>
 
+      <div id="qbEditorShell" class="qb-hidden">
         <div class="qb-wrap">
           <section class="qb-card qb-panel" id="panel-listening">
-            <div class="qb-head">
-              <h2 style="margin:0;">Listening Questions</h2>
-              <button type="button" class="btn-mini btn-add" id="addListeningBtn">+ Add Listening</button>
-            </div>
-            <div class="qb-grid2" style="margin-bottom:.65rem;">
+            <div class="qb-head"><h2 style="margin:0;" id="qb-panel-title-listening">Listening</h2></div>
+            <div id="qb-listening-setup" class="qb-section-block qb-hidden">
+              <h3 id="qbListeningAudioHeading">Listening Audio</h3>
+              <div class="qb-grid2">
               <div>
-                <label class="qb-label">Listening Timer (minutes)</label>
-                <select class="qb-select" id="listeningTimerPreset">
-                  <option value="10">10</option>
-                  <option value="15" selected>15</option>
-                  <option value="20">20</option>
-                  <option value="25">25</option>
-                  <option value="30">30</option>
-                  <option value="35">35</option>
-                  <option value="40">40</option>
-                  <option value="custom">Custom</option>
-                </select>
-                <input class="qb-input" id="listeningTimerCustom" type="number" min="1" placeholder="Custom minutes" style="margin-top:.4rem; display:none;">
+                  <label class="qb-label">Listening audio URL</label>
+                  <input class="qb-input" id="qbBankAudioUrl" type="url" placeholder="../BRE_course_placement_test1_00.mp3">
               </div>
               <div>
-                <label class="qb-label">Listen Limit (1-3 times)</label>
-                <select class="qb-select" id="listeningListenLimit">
-                  <option value="1">1 time</option>
-                  <option value="2" selected>2 times</option>
-                  <option value="3">3 times</option>
-                </select>
-              </div>
-            </div>
-            <div class="qb-grid2" style="margin-bottom:.65rem;">
-              <div>
-                <label class="qb-label">Listening Audio URL</label>
-                <input class="qb-input" id="listeningAudioUrl" type="url" placeholder="https://.../listening.mp3">
-                <p class="qb-meta" style="margin-top:.35rem;">This URL will be saved as `step2.audioUrl` and used by student placement test audio player.</p>
-              </div>
-              <div>
-                <label class="qb-label">Upload Audio File (mp3, wav, m4a)</label>
-                <input class="qb-input" id="listeningAudioFile" type="file" accept=".mp3,.wav,.m4a,audio/mpeg,audio/wav,audio/x-wav,audio/mp4,audio/m4a">
-                <div class="qb-actions" style="margin-top:.4rem;">
-                  <button type="button" class="btn-mini btn-add" id="uploadListeningAudioBtn">Upload & Fill URL</button>
+                  <label class="qb-label">Upload audio (mp3, wav, m4a)</label>
+                  <input class="qb-input" id="listeningAudioFile" type="file" accept=".mp3,.wav,.m4a,audio/mpeg,audio/wav,audio/mp4,audio/m4a">
                 </div>
-                <p class="qb-meta" id="listeningAudioUploadHint" style="margin-top:.35rem;">If Firebase Storage is not configured, upload to your own storage and paste the URL manually.</p>
               </div>
             </div>
-            <div style="margin-bottom:.65rem;">
-              <label class="qb-label">Listening Instruction Text</label>
-              <textarea class="qb-textarea" id="listeningInstruction" rows="4" placeholder="Instruction shown to students before/inside listening section."></textarea>
-            </div>
-            <div id="listeningContainer"></div>
+            <div id="qb-listening-container"></div>
+          </section>
+
+          <section class="qb-card qb-panel" id="panel-grammar">
+            <div class="qb-head"><h2 style="margin:0;" id="qb-panel-title-grammar">Grammar</h2></div>
+            <div id="qb-grammar-container"></div>
+          </section>
+
+          <section class="qb-card qb-panel" id="panel-vocabulary">
+            <div class="qb-head"><h2 style="margin:0;" id="qb-panel-title-vocabulary">Vocabulary</h2></div>
+            <div id="qb-vocabulary-container"></div>
           </section>
 
           <section class="qb-card qb-panel" id="panel-reading">
-            <div class="qb-head">
-              <h2 style="margin:0;">Reading Questions</h2>
-              <button type="button" class="btn-mini btn-add" id="addReadingBtn">+ Add Reading</button>
+            <div class="qb-head"><h2 style="margin:0;" id="qb-panel-title-reading">Reading</h2></div>
+            <div id="qb-reading-passages-wrap" class="qb-section-block qb-hidden">
+              <h3 id="qbReadingPassagesHeading">Reading passages</h3>
+              <p class="qb-meta" style="margin:0 0 .5rem;">Edit passage texts used by Reading questions below.</p>
+              <div id="qb-passages-container"></div>
             </div>
-            <div style="max-width:320px; margin-bottom:.65rem;">
-              <label class="qb-label">Reading Timer (minutes)</label>
-              <select class="qb-select" id="readingTimerPreset">
-                <option value="10">10</option>
-                <option value="15">15</option>
-                <option value="20">20</option>
-                <option value="25" selected>25</option>
-                <option value="30">30</option>
-                <option value="35">35</option>
-                <option value="40">40</option>
-                <option value="custom">Custom</option>
-              </select>
-              <input class="qb-input" id="readingTimerCustom" type="number" min="1" placeholder="Custom minutes" style="margin-top:.4rem; display:none;">
-            </div>
-            <div id="readingContainer"></div>
-          </section>
-
-          <section class="qb-card qb-panel" id="panel-writing">
-            <div class="qb-head">
-              <h2 style="margin:0;">Writing Prompts</h2>
-              <button type="button" class="btn-mini btn-add" id="addWritingBtn">+ Add Prompt</button>
-            </div>
-            <div style="max-width:320px; margin-bottom:.65rem;">
-              <label class="qb-label">Writing Timer per Prompt (minutes)</label>
-              <select class="qb-select" id="writingTimerPreset">
-                <option value="10">10</option>
-                <option value="15">15</option>
-                <option value="20" selected>20</option>
-                <option value="25">25</option>
-                <option value="30">30</option>
-                <option value="35">35</option>
-                <option value="40">40</option>
-                <option value="custom">Custom</option>
-              </select>
-              <input class="qb-input" id="writingTimerCustom" type="number" min="1" placeholder="Custom minutes" style="margin-top:.4rem; display:none;">
-              <p class="qb-meta" style="margin-top:.35rem;">Total writing timer will be calculated as (prompts count × per-prompt minutes).</p>
-            </div>
-            <div id="writingContainer"></div>
-          </section>
-
-          <section class="qb-card qb-panel" id="panel-speaking">
-            <div class="qb-head">
-              <h2 style="margin:0;">Speaking Questions</h2>
-              <button type="button" class="btn-mini btn-add" id="addSpeakingBtn">+ Add Speaking Prompt</button>
-            </div>
-            <div class="qb-grid2" style="margin-bottom:.65rem;">
-              <div>
-                <label class="qb-toggle" style="margin-top:.2rem;"><input type="checkbox" id="speakingEnabledToggle" checked> Enable Speaking Section</label>
-                <label class="qb-label" style="margin-top:.6rem;">Recording Time (seconds)</label>
-                <select class="qb-select" id="speakingRecordSeconds">
-                  <option value="15">15 seconds</option>
-                  <option value="30">30 seconds</option>
-                  <option value="45">45 seconds</option>
-                  <option value="60">60 seconds</option>
-                </select>
-              </div>
-              <div>
-                <label class="qb-label">Speaking Instructions (what student should talk about)</label>
-                <textarea class="qb-textarea" id="speakingInstruction" rows="4" placeholder="Example: Talk about your favorite place and explain why you like it."></textarea>
-              </div>
-            </div>
-            <div id="speakingContainer"></div>
+            <div id="qb-reading-container"></div>
           </section>
         </div>
 
-        <div style="margin-top:1rem;" class="qb-actions">
-          <button type="button" class="btn-mini btn-save" id="qbSaveAllBottom">Save All Changes</button>
-          <button type="button" class="btn-mini btn-add" id="qbReloadBottom">Reload from Database</button>
+        <div class="qb-save-bar" id="qbSaveBar">
+          <p class="qb-save-status" id="qbSaveStatus" aria-live="polite" hidden></p>
+          <button type="button" class="qb-save-btn" id="qbSaveAllBottom">Save All Changes</button>
         </div>
       </div>
     </main>
@@ -299,808 +282,11 @@
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
   <script src="../assets/js/firebase-config.js"></script>
   <script src="../assets/js/auth.js"></script>
-  <script src="../assets/js/content-firebase.js"></script>
-  <script src="../assets/js/content-admin.js"></script>
-  <script src="../assets/js/school-api.js"></script>
+  <script src="../assets/js/school-api.js?v=20260604-qb-save"></script>
   <script src="../assets/js/lang-switcher.js"></script>
   <script src="../assets/js/admin-top-toolbar.js"></script>
-  <script>
-  (function() {
-    'use strict';
-
-    var FORCE_LOCAL_AUDIO_MODE = true; // Local testing mode: skip Firebase Storage upload.
-    var LISTENING_INSTRUCTION_DEFAULT = 'You will hear ten speakers. Each speaker will make a statement or ask a question. For each speaker, choose the best option for what comes next. You can play the recording TWO times.';
-    var COMMON_MINUTE_OPTIONS = [10, 15, 20, 25, 30, 35, 40];
-    var state = {
-      listening: [],
-      reading: [],
-      writing: [],
-      speaking: [],
-      settings: {
-        listeningMinutes: 15,
-        listeningListenLimit: 2,
-        listeningAudioUrl: '',
-        listeningInstruction: LISTENING_INSTRUCTION_DEFAULT,
-        readingMinutes: 25,
-        writingPerPromptMinutes: 20,
-        speakingEnabled: true,
-        speakingInstruction: '',
-        speakingRecordSeconds: 15
-      },
-      updatedAt: ''
-    };
-    var currentSiteContent = { content: {}, uploads: {}, placementTest: null, blogPosts: null };
-
-    function uid(prefix) {
-      return String(prefix || 'q') + '_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
-    }
-
-    function esc(s) {
-      if (s == null) return '';
-      return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-    }
-
-    function setStatus(msg) {
-      var el = document.getElementById('qbStatusText');
-      if (el) el.textContent = msg || '';
-    }
-
-    function normalizeOptionKey(v, fallback) {
-      var t = String(v || '').trim().toUpperCase();
-      if (!t) t = fallback || 'A';
-      return t.slice(0, 1);
-    }
-
-    function normalizeQuestionList(arr) {
-      var list = Array.isArray(arr) ? arr : [];
-      return list.map(function(item) {
-        var it = item || {};
-        var qText = it.question != null ? it.question : (it.sentence != null ? it.sentence : (it.text != null ? it.text : ''));
-        var opts = Array.isArray(it.options) ? it.options : [];
-        var normalizedOpts = [];
-        for (var i = 0; i < 4; i++) {
-          var o = opts[i] || {};
-          var fallbackKey = String.fromCharCode(65 + i);
-          normalizedOpts.push({
-            key: normalizeOptionKey(o.key, fallbackKey),
-            text: String(o.text || '')
-          });
-        }
-        return {
-          id: String(it.id || uid('q')),
-          text: String(qText || ''),
-          options: normalizedOpts,
-          correct: normalizeOptionKey(it.correct, 'A'),
-          enabled: it.enabled !== false
-        };
-      });
-    }
-
-    function normalizeWritingList(arr) {
-      var list = Array.isArray(arr) ? arr : [];
-      return list.map(function(item) {
-        var it = item || {};
-        return {
-          id: String(it.id || uid('w')),
-          text: String(it.text || it.prompt || ''),
-          targetWords: Math.max(1, parseInt(it.targetWords || it.target || 20, 10) || 20),
-          enabled: it.enabled !== false
-        };
-      });
-    }
-
-    function normalizeSpeakingList(arr) {
-      var list = Array.isArray(arr) ? arr : [];
-      return list.map(function(item) {
-        var it = item || {};
-        return {
-          id: String(it.id || uid('s')),
-          text: String(it.text || it.prompt || ''),
-          targetSeconds: Math.max(5, parseInt(it.targetSeconds || it.seconds || 15, 10) || 15),
-          enabled: it.enabled !== false
-        };
-      });
-    }
-
-    function clampInt(value, min, max, fallback) {
-      var n = parseInt(value, 10);
-      if (isNaN(n)) n = fallback;
-      if (typeof min === 'number' && n < min) n = min;
-      if (typeof max === 'number' && n > max) n = max;
-      return n;
-    }
-
-    function normalizeSpeakingRecordSeconds(value, fallback) {
-      var allowed = [15, 30, 45, 60];
-      var n = parseInt(value, 10);
-      if (isNaN(n) || allowed.indexOf(n) < 0) return fallback || 15;
-      return n;
-    }
-
-    function parseDurationMinutes(durationText, fallbackMinutes) {
-      var t = String(durationText || '').toLowerCase();
-      var n = parseInt(t, 10);
-      if (isNaN(n) || n <= 0) return fallbackMinutes;
-      if (t.indexOf('sec') >= 0 || t.indexOf('second') >= 0) return Math.max(1, Math.ceil(n / 60));
-      return n;
-    }
-
-    function readMinutesControl(selectId, customId, fallback) {
-      var sel = document.getElementById(selectId);
-      var customEl = document.getElementById(customId);
-      var selected = sel ? String(sel.value || '') : '';
-      if (selected === 'custom') {
-        return clampInt(customEl && customEl.value, 1, 300, fallback);
-      }
-      return clampInt(selected, 1, 300, fallback);
-    }
-
-    function setMinutesControl(selectId, customId, minutesValue) {
-      var sel = document.getElementById(selectId);
-      var customEl = document.getElementById(customId);
-      var m = clampInt(minutesValue, 1, 300, 20);
-      var isCommon = COMMON_MINUTE_OPTIONS.indexOf(m) >= 0;
-      if (sel) sel.value = isCommon ? String(m) : 'custom';
-      if (customEl) customEl.value = String(m);
-      toggleCustomMinuteInput(selectId, customId);
-    }
-
-    function toggleCustomMinuteInput(selectId, customId) {
-      var sel = document.getElementById(selectId);
-      var customEl = document.getElementById(customId);
-      if (!customEl) return;
-      var isCustom = !!(sel && String(sel.value) === 'custom');
-      customEl.disabled = !isCustom;
-      customEl.style.display = isCustom ? '' : 'none';
-    }
-
-    function getFirebaseStorageInstance() {
-      if (typeof firebase === 'undefined' || !firebase.storage) return null;
-      var cfg = window.FIREBASE_CONFIG;
-      if (!cfg || !cfg.projectId || !cfg.apiKey) return null;
-      try {
-        firebase.app();
-      } catch (e) {
-        try { firebase.initializeApp(cfg); } catch (err) {}
-      }
-      try { return firebase.storage(); } catch (err2) { return null; }
-    }
-
-    function sanitizeFileName(name) {
-      return String(name || 'audio_file')
-        .replace(/\s+/g, '_')
-        .replace(/[^a-zA-Z0-9._-]/g, '')
-        .toLowerCase();
-    }
-
-    function uploadListeningAudioToFirebase(file) {
-      function withTimeout(promise, timeoutMs, timeoutMessage) {
-        return new Promise(function(resolve, reject) {
-          var settled = false;
-          var tid = setTimeout(function() {
-            if (settled) return;
-            settled = true;
-            reject(new Error(timeoutMessage || 'Upload timeout'));
-          }, timeoutMs);
-          promise.then(function(v) {
-            if (settled) return;
-            settled = true;
-            clearTimeout(tid);
-            resolve(v);
-          }).catch(function(err) {
-            if (settled) return;
-            settled = true;
-            clearTimeout(tid);
-            reject(err);
-          });
-        });
-      }
-      var uploadPromise = new Promise(function(resolve, reject) {
-        if (!file) { reject(new Error('Please choose an audio file first.')); return; }
-        var storage = getFirebaseStorageInstance();
-        if (!storage) {
-          reject(new Error('Firebase Storage is not available. Please upload manually and paste URL.'));
-          return;
-        }
-        var safeName = sanitizeFileName(file.name);
-        var path = 'placement_test/audio/' + Date.now() + '_' + safeName;
-        var ref = storage.ref(path);
-        ref.put(file).then(function(snapshot) {
-          if (!snapshot || !snapshot.ref || !snapshot.ref.getDownloadURL) {
-            reject(new Error('Upload completed but download URL is unavailable.'));
-            return;
-          }
-          snapshot.ref.getDownloadURL().then(function(url) {
-            resolve(url);
-          }).catch(reject);
-        }).catch(reject);
-      });
-      return withTimeout(uploadPromise, 90000, 'Upload is taking too long. Please paste manual URL if needed.');
-    }
-
-    function fileToDataUrl(file) {
-      return new Promise(function(resolve, reject) {
-        if (!file) { reject(new Error('No file selected')); return; }
-        var reader = new FileReader();
-        reader.onload = function() {
-          resolve(typeof reader.result === 'string' ? reader.result : '');
-        };
-        reader.onerror = function() {
-          reject(new Error('Failed to read file'));
-        };
-        reader.readAsDataURL(file);
-      });
-    }
-
-    function shouldUseLocalAudioMode() {
-      if (FORCE_LOCAL_AUDIO_MODE) return true;
-      var host = '';
-      try { host = String((window.location && window.location.hostname) || '').toLowerCase(); } catch (e) {}
-      // Local/dev mode: skip Firebase upload and use data URL directly.
-      if (!host || host === 'localhost' || host === '127.0.0.1' || host === '::1') return true;
-      return false;
-    }
-
-    function loadSiteContentWithFallback(callback) {
-      AcademyContent.getSiteContent(function(localData) {
-        var localPayload = localData || {};
-        if (!window.AcademyFirebase || !AcademyFirebase.get) {
-          if (callback) callback(localPayload);
-          return;
-        }
-        AcademyFirebase.get(function(remoteData) {
-          if (remoteData && typeof remoteData === 'object' && Object.keys(remoteData).length > 0) {
-            var localUpdatedAt = '';
-            var remoteUpdatedAt = '';
-            try { localUpdatedAt = String((localPayload.placementTest && localPayload.placementTest.questionBankUpdatedAt) || ''); } catch (eL) {}
-            try { remoteUpdatedAt = String((remoteData.placementTest && remoteData.placementTest.questionBankUpdatedAt) || ''); } catch (eR) {}
-
-            // Prefer the newest payload so recent edits are not overwritten by stale remote data.
-            var useLocal = !!(localUpdatedAt && (!remoteUpdatedAt || localUpdatedAt > remoteUpdatedAt));
-            var chosen = useLocal ? localPayload : remoteData;
-
-            // Keep local cache in sync for pages that currently read local storage.
-            try { if (chosen.content) AcademyContent.save(chosen.content); } catch (e1) {}
-            try { if (chosen.uploads) localStorage.setItem('academy_uploads', JSON.stringify(chosen.uploads)); } catch (e2) {}
-            try { if (chosen.placementTest) AcademyContent.savePlacementTest(chosen.placementTest); } catch (e3) {}
-            try { if (chosen.blogPosts) AcademyContent.saveBlogPosts(chosen.blogPosts); } catch (e4) {}
-            if (callback) callback(chosen);
-            return;
-          }
-          if (callback) callback(localPayload);
-        });
-      });
-    }
-
-    function saveSiteContentWithFallback(payload, callback) {
-      AcademyContent.saveAll(payload, function(localOk) {
-        if (!localOk) {
-          if (callback) callback(false, false, false);
-          return;
-        }
-        // Local testing mode: do not block on Firebase writes.
-        if (FORCE_LOCAL_AUDIO_MODE) {
-          if (callback) callback(true, false, false);
-          return;
-        }
-        if (!window.AcademyFirebase || !AcademyFirebase.set) {
-          if (callback) callback(true, false, false);
-          return;
-        }
-        var finished = false;
-        var timer = setTimeout(function() {
-          if (finished) return;
-          finished = true;
-          if (callback) callback(true, true, false);
-        }, 8000);
-        AcademyFirebase.set(payload, function(remoteOk) {
-          if (finished) return;
-          finished = true;
-          clearTimeout(timer);
-          if (callback) callback(true, true, !!remoteOk);
-        });
-      });
-    }
-
-    function toPlacementPayload(basePlacement) {
-      var pt = basePlacement && typeof basePlacement === 'object' ? clone(basePlacement) : {};
-      if (!pt.step2) pt.step2 = {};
-      if (!pt.step3) pt.step3 = {};
-      if (!pt.step4) pt.step4 = {};
-      if (!pt.step5) pt.step5 = {};
-      var nextListening = state.listening.map(function(q) {
-        return {
-          id: q.id,
-          question: q.text,
-          options: (q.options || []).map(function(o, i) { return { key: normalizeOptionKey(o.key, String.fromCharCode(65 + i)), text: String(o.text || '') }; }),
-          correct: normalizeOptionKey(q.correct, 'A'),
-          enabled: q.enabled !== false
-        };
-      });
-      if (!nextListening.length) {
-        if (Array.isArray(pt.step2.questions) && pt.step2.questions.length) nextListening = pt.step2.questions.slice();
-        else if (window.AcademyContent && AcademyContent.DEFAULT_PLACEMENT_TEST && AcademyContent.DEFAULT_PLACEMENT_TEST.step2 && Array.isArray(AcademyContent.DEFAULT_PLACEMENT_TEST.step2.questions)) {
-          nextListening = clone(AcademyContent.DEFAULT_PLACEMENT_TEST.step2.questions);
-        }
-      }
-      pt.step2.questions = nextListening;
-
-      var nextReading = state.reading.map(function(q) {
-        return {
-          id: q.id,
-          sentence: q.text,
-          options: (q.options || []).map(function(o, i) { return { key: normalizeOptionKey(o.key, String.fromCharCode(65 + i)), text: String(o.text || '') }; }),
-          correct: normalizeOptionKey(q.correct, 'A'),
-          enabled: q.enabled !== false
-        };
-      });
-      if (!nextReading.length) {
-        if (Array.isArray(pt.step3.items) && pt.step3.items.length) nextReading = pt.step3.items.slice();
-        else if (window.AcademyContent && AcademyContent.DEFAULT_PLACEMENT_TEST && AcademyContent.DEFAULT_PLACEMENT_TEST.step3 && Array.isArray(AcademyContent.DEFAULT_PLACEMENT_TEST.step3.items)) {
-          nextReading = clone(AcademyContent.DEFAULT_PLACEMENT_TEST.step3.items);
-        }
-      }
-      pt.step3.items = nextReading;
-
-      var nextWriting = state.writing.map(function(p) {
-        return {
-          id: p.id,
-          text: String(p.text || ''),
-          targetWords: Math.max(1, parseInt(p.targetWords, 10) || 20),
-          durationMinutes: Math.max(1, parseInt(state.settings.writingPerPromptMinutes, 10) || 20),
-          enabled: p.enabled !== false
-        };
-      });
-      if (!nextWriting.length) {
-        if (Array.isArray(pt.step4.prompts) && pt.step4.prompts.length) nextWriting = pt.step4.prompts.slice();
-        else if (window.AcademyContent && AcademyContent.DEFAULT_PLACEMENT_TEST && AcademyContent.DEFAULT_PLACEMENT_TEST.step4 && Array.isArray(AcademyContent.DEFAULT_PLACEMENT_TEST.step4.prompts)) {
-          nextWriting = clone(AcademyContent.DEFAULT_PLACEMENT_TEST.step4.prompts);
-        }
-      }
-      pt.step4.prompts = nextWriting;
-
-      var nextSpeaking = state.speaking.map(function(p) {
-        return {
-          id: p.id,
-          text: String(p.text || ''),
-          targetSeconds: Math.max(5, parseInt(p.targetSeconds, 10) || 15),
-          enabled: p.enabled !== false
-        };
-      });
-      if (!nextSpeaking.length && Array.isArray(pt.step5.items) && pt.step5.items.length) {
-        nextSpeaking = pt.step5.items.slice();
-      }
-      pt.step5.items = nextSpeaking;
-      pt.step5.enabled = state.settings.speakingEnabled !== false;
-      pt.step5.instruction = String(state.settings.speakingInstruction || '').trim();
-      pt.step5.recordSeconds = normalizeSpeakingRecordSeconds(state.settings.speakingRecordSeconds, 15);
-      pt.step5.duration = String(pt.step5.recordSeconds) + ' secs';
-      pt.step2.listenLimit = clampInt(state.settings.listeningListenLimit, 1, 3, 2);
-      pt.step2.audioUrl = String(state.settings.listeningAudioUrl || '').trim();
-      pt.step2.instruction = String(state.settings.listeningInstruction || '').trim() || LISTENING_INSTRUCTION_DEFAULT;
-      pt.step2.duration = String(clampInt(state.settings.listeningMinutes, 1, 300, 15)) + ' mins';
-      pt.step3.duration = String(clampInt(state.settings.readingMinutes, 1, 300, 25)) + ' mins';
-      pt.step4.promptDurationMinutes = clampInt(state.settings.writingPerPromptMinutes, 1, 300, 20);
-      var enabledPromptCount = pt.step4.prompts.filter(function(p) { return p && p.enabled !== false; }).length;
-      var promptCount = enabledPromptCount || pt.step4.prompts.length || 1;
-      pt.step4.duration = String(promptCount * pt.step4.promptDurationMinutes) + ' mins';
-      pt.questionBankUpdatedAt = new Date().toISOString();
-      return pt;
-    }
-
-    function clone(obj) {
-      try { return JSON.parse(JSON.stringify(obj || {})); } catch (e) { return obj || {}; }
-    }
-
-    function createQuestionRow(section, item, idx) {
-      var optionsHtml = (item.options || []).map(function(opt, i) {
-        return (
-          '<div>' +
-            '<label class="qb-label">Option ' + esc(opt.key || String.fromCharCode(65 + i)) + '</label>' +
-            '<input class="qb-input" data-field="option-text" data-opt-index="' + i + '" value="' + esc(opt.text || '') + '">' +
-          '</div>'
-        );
-      }).join('');
-      return (
-        '<div class="qb-row" data-section="' + section + '" data-idx="' + idx + '">' +
-          '<div class="qb-head">' +
-            '<strong>' + esc(section === 'reading' ? 'Reading Item' : 'Listening Item') + ' #' + (idx + 1) + '</strong>' +
-            '<div class="qb-actions">' +
-              '<label class="qb-toggle"><input type="checkbox" data-field="enabled" ' + (item.enabled !== false ? 'checked' : '') + '> Enabled</label>' +
-              '<button type="button" class="btn-mini btn-del" data-action="delete" aria-label="Delete item">Delete</button>' +
-            '</div>' +
-          '</div>' +
-          '<label class="qb-label">' + esc(section === 'reading' ? 'Sentence / Question' : 'Question Text') + '</label>' +
-          '<textarea class="qb-textarea" data-field="text">' + esc(item.text || '') + '</textarea>' +
-          '<div class="qb-grid4" style="margin-top:.5rem;">' + optionsHtml + '</div>' +
-          '<div style="margin-top:.55rem; max-width:220px;">' +
-            '<label class="qb-label">Correct Answer</label>' +
-            '<select class="qb-select" data-field="correct">' +
-              ['A','B','C','D'].map(function(k) { return '<option value="' + k + '"' + (String(item.correct || '').toUpperCase() === k ? ' selected' : '') + '>' + k + '</option>'; }).join('') +
-            '</select>' +
-          '</div>' +
-        '</div>'
-      );
-    }
-
-    function createWritingRow(item, idx) {
-      return (
-        '<div class="qb-row" data-section="writing" data-idx="' + idx + '">' +
-          '<div class="qb-head">' +
-            '<strong>Prompt #' + (idx + 1) + '</strong>' +
-            '<div class="qb-actions">' +
-              '<label class="qb-toggle"><input type="checkbox" data-field="enabled" ' + (item.enabled !== false ? 'checked' : '') + '> Enabled</label>' +
-              '<button type="button" class="btn-mini btn-del" data-action="delete" aria-label="Delete item">Delete</button>' +
-            '</div>' +
-          '</div>' +
-          '<label class="qb-label">Prompt Text</label>' +
-          '<textarea class="qb-textarea" data-field="text">' + esc(item.text || '') + '</textarea>' +
-          '<div style="margin-top:.55rem; max-width:220px;">' +
-            '<label class="qb-label">Target Words</label>' +
-            '<input class="qb-input" type="number" min="1" data-field="targetWords" value="' + esc(item.targetWords || 20) + '">' +
-          '</div>' +
-        '</div>'
-      );
-    }
-
-    function createSpeakingRow(item, idx) {
-      return (
-        '<div class="qb-row" data-section="speaking" data-idx="' + idx + '">' +
-          '<div class="qb-head">' +
-            '<strong>Speaking Prompt #' + (idx + 1) + '</strong>' +
-            '<div class="qb-actions">' +
-              '<label class="qb-toggle"><input type="checkbox" data-field="enabled" ' + (item.enabled !== false ? 'checked' : '') + '> Enabled</label>' +
-              '<button type="button" class="btn-mini btn-del" data-action="delete" aria-label="Delete item">Delete</button>' +
-            '</div>' +
-          '</div>' +
-          '<label class="qb-label">Prompt Text</label>' +
-          '<textarea class="qb-textarea" data-field="text">' + esc(item.text || '') + '</textarea>' +
-          '<div style="margin-top:.55rem; max-width:220px;">' +
-            '<label class="qb-label">Target Seconds</label>' +
-            '<input class="qb-input" type="number" min="5" data-field="targetSeconds" value="' + esc(item.targetSeconds || 15) + '">' +
-          '</div>' +
-        '</div>'
-      );
-    }
-
-    function renderAll() {
-      var l = document.getElementById('listeningContainer');
-      var r = document.getElementById('readingContainer');
-      var w = document.getElementById('writingContainer');
-      var s = document.getElementById('speakingContainer');
-      if (l) l.innerHTML = state.listening.map(function(it, idx) { return createQuestionRow('listening', it, idx); }).join('') || '<p class="qb-meta">No listening questions.</p>';
-      if (r) r.innerHTML = state.reading.map(function(it, idx) { return createQuestionRow('reading', it, idx); }).join('') || '<p class="qb-meta">No reading questions.</p>';
-      if (w) w.innerHTML = state.writing.map(function(it, idx) { return createWritingRow(it, idx); }).join('') || '<p class="qb-meta">No writing prompts.</p>';
-      if (s) s.innerHTML = state.speaking.map(function(it, idx) { return createSpeakingRow(it, idx); }).join('') || '<p class="qb-meta">No speaking prompts.</p>';
-    }
-
-    function syncFromDom() {
-      state.settings.listeningMinutes = readMinutesControl('listeningTimerPreset', 'listeningTimerCustom', state.settings.listeningMinutes || 15);
-      state.settings.readingMinutes = readMinutesControl('readingTimerPreset', 'readingTimerCustom', state.settings.readingMinutes || 25);
-      state.settings.writingPerPromptMinutes = readMinutesControl('writingTimerPreset', 'writingTimerCustom', state.settings.writingPerPromptMinutes || 20);
-      var listenLimitEl = document.getElementById('listeningListenLimit');
-      state.settings.listeningListenLimit = clampInt(listenLimitEl && listenLimitEl.value, 1, 3, state.settings.listeningListenLimit || 2);
-      var listeningAudioUrlEl = document.getElementById('listeningAudioUrl');
-      state.settings.listeningAudioUrl = listeningAudioUrlEl ? String(listeningAudioUrlEl.value || '').trim() : (state.settings.listeningAudioUrl || '');
-      var listeningInstructionEl = document.getElementById('listeningInstruction');
-      state.settings.listeningInstruction = listeningInstructionEl ? String(listeningInstructionEl.value || '').trim() : (state.settings.listeningInstruction || LISTENING_INSTRUCTION_DEFAULT);
-      var speakingEnabledEl = document.getElementById('speakingEnabledToggle');
-      state.settings.speakingEnabled = speakingEnabledEl ? !!speakingEnabledEl.checked : (state.settings.speakingEnabled !== false);
-      var speakingInstructionEl = document.getElementById('speakingInstruction');
-      state.settings.speakingInstruction = speakingInstructionEl ? String(speakingInstructionEl.value || '').trim() : (state.settings.speakingInstruction || '');
-      var speakingRecordSecondsEl = document.getElementById('speakingRecordSeconds');
-      state.settings.speakingRecordSeconds = normalizeSpeakingRecordSeconds(speakingRecordSecondsEl && speakingRecordSecondsEl.value, state.settings.speakingRecordSeconds || 15);
-
-      ['listening', 'reading'].forEach(function(section) {
-        var arr = state[section] || [];
-        arr.forEach(function(item, idx) {
-          var row = document.querySelector('.qb-row[data-section="' + section + '"][data-idx="' + idx + '"]');
-          if (!row) return;
-          var textEl = row.querySelector('[data-field="text"]');
-          var correctEl = row.querySelector('[data-field="correct"]');
-          var enabledEl = row.querySelector('[data-field="enabled"]');
-          item.text = textEl ? String(textEl.value || '').trim() : item.text;
-          item.correct = correctEl ? normalizeOptionKey(correctEl.value, 'A') : item.correct;
-          item.enabled = !!(enabledEl && enabledEl.checked);
-          item.options = (item.options || []).map(function(opt, i) {
-            var optEl = row.querySelector('[data-field="option-text"][data-opt-index="' + i + '"]');
-            return { key: normalizeOptionKey(opt && opt.key, String.fromCharCode(65 + i)), text: optEl ? String(optEl.value || '').trim() : String((opt && opt.text) || '') };
-          });
-        });
-      });
-      (state.writing || []).forEach(function(item, idx) {
-        var row = document.querySelector('.qb-row[data-section="writing"][data-idx="' + idx + '"]');
-        if (!row) return;
-        var textEl = row.querySelector('[data-field="text"]');
-        var targetEl = row.querySelector('[data-field="targetWords"]');
-        var enabledEl = row.querySelector('[data-field="enabled"]');
-        item.text = textEl ? String(textEl.value || '').trim() : item.text;
-        item.targetWords = Math.max(1, parseInt(targetEl ? targetEl.value : item.targetWords, 10) || 20);
-        item.enabled = !!(enabledEl && enabledEl.checked);
-      });
-      (state.speaking || []).forEach(function(item, idx) {
-        var row = document.querySelector('.qb-row[data-section="speaking"][data-idx="' + idx + '"]');
-        if (!row) return;
-        var textEl = row.querySelector('[data-field="text"]');
-        var targetEl = row.querySelector('[data-field="targetSeconds"]');
-        var enabledEl = row.querySelector('[data-field="enabled"]');
-        item.text = textEl ? String(textEl.value || '').trim() : item.text;
-        item.targetSeconds = Math.max(5, parseInt(targetEl ? targetEl.value : item.targetSeconds, 10) || 15);
-        item.enabled = !!(enabledEl && enabledEl.checked);
-      });
-    }
-
-    function bindEvents() {
-      function showCards() {
-        var landing = document.getElementById('qbLanding');
-        var shell = document.getElementById('qbEditorShell');
-        if (landing) landing.classList.remove('qb-hidden');
-        if (shell) shell.classList.add('qb-hidden');
-        document.querySelectorAll('[data-open-panel]').forEach(function(btn) { btn.classList.remove('active'); });
-        document.querySelectorAll('.qb-panel').forEach(function(p) { p.classList.remove('active'); });
-      }
-      function showPanel(key) {
-        var landing = document.getElementById('qbLanding');
-        var shell = document.getElementById('qbEditorShell');
-        if (landing) landing.classList.remove('qb-hidden');
-        if (shell) shell.classList.remove('qb-hidden');
-        document.querySelectorAll('[data-open-panel]').forEach(function(btn) {
-          btn.classList.toggle('active', btn.getAttribute('data-open-panel') === key);
-        });
-        document.querySelectorAll('.qb-panel').forEach(function(p) { p.classList.remove('active'); });
-        var panel = document.getElementById('panel-' + key);
-        if (panel) panel.classList.add('active');
-        if (panel && panel.scrollIntoView) {
-          setTimeout(function() { panel.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 30);
-        }
-      }
-      document.querySelectorAll('[data-open-panel]').forEach(function(btn) {
-        btn.addEventListener('click', function() {
-          var key = btn.getAttribute('data-open-panel');
-          if (key) showPanel(key);
-        });
-      });
-      var backBtn = document.getElementById('qbBackToCards');
-      if (backBtn) backBtn.addEventListener('click', showCards);
-
-      function onDeleteClick(e) {
-        var btn = e.target.closest('button[data-action="delete"]');
-        if (!btn) return;
-        var row = e.target.closest('.qb-row');
-        if (!row) return;
-        var section = row.getAttribute('data-section');
-        var idx = parseInt(row.getAttribute('data-idx'), 10);
-        if (!section || isNaN(idx)) return;
-        syncFromDom();
-        state[section].splice(idx, 1);
-        renderAll();
-      }
-      document.getElementById('listeningContainer').addEventListener('click', onDeleteClick);
-      document.getElementById('readingContainer').addEventListener('click', onDeleteClick);
-      document.getElementById('writingContainer').addEventListener('click', onDeleteClick);
-      document.getElementById('speakingContainer').addEventListener('click', onDeleteClick);
-
-      document.getElementById('addListeningBtn').addEventListener('click', function() {
-        syncFromDom();
-        state.listening.push({
-          id: uid('listening'),
-          text: '',
-          options: [{ key: 'A', text: '' }, { key: 'B', text: '' }, { key: 'C', text: '' }, { key: 'D', text: '' }],
-          correct: 'A',
-          enabled: true
-        });
-        renderAll();
-      });
-
-      document.getElementById('addReadingBtn').addEventListener('click', function() {
-        syncFromDom();
-        state.reading.push({
-          id: uid('reading'),
-          text: '',
-          options: [{ key: 'A', text: '' }, { key: 'B', text: '' }, { key: 'C', text: '' }, { key: 'D', text: '' }],
-          correct: 'A',
-          enabled: true
-        });
-        renderAll();
-      });
-
-      document.getElementById('addWritingBtn').addEventListener('click', function() {
-        syncFromDom();
-        state.writing.push({ id: uid('writing'), text: '', targetWords: 20, enabled: true });
-        renderAll();
-      });
-      document.getElementById('addSpeakingBtn').addEventListener('click', function() {
-        syncFromDom();
-        state.speaking.push({ id: uid('speaking'), text: '', targetSeconds: 15, enabled: true });
-        renderAll();
-      });
-
-      [
-        ['listeningTimerPreset', 'listeningTimerCustom'],
-        ['readingTimerPreset', 'readingTimerCustom'],
-        ['writingTimerPreset', 'writingTimerCustom']
-      ].forEach(function(pair) {
-        var presetEl = document.getElementById(pair[0]);
-        var customEl = document.getElementById(pair[1]);
-        if (presetEl) {
-          presetEl.addEventListener('change', function() {
-            toggleCustomMinuteInput(pair[0], pair[1]);
-            syncFromDom();
-          });
-        }
-        if (customEl) {
-          customEl.addEventListener('input', function() { syncFromDom(); });
-        }
-      });
-      var listeningLimitEl = document.getElementById('listeningListenLimit');
-      if (listeningLimitEl) listeningLimitEl.addEventListener('change', syncFromDom);
-      var listeningAudioUrlEl = document.getElementById('listeningAudioUrl');
-      if (listeningAudioUrlEl) listeningAudioUrlEl.addEventListener('input', syncFromDom);
-      var listeningInstructionEl = document.getElementById('listeningInstruction');
-      if (listeningInstructionEl) listeningInstructionEl.addEventListener('input', syncFromDom);
-      var speakingEnabledEl = document.getElementById('speakingEnabledToggle');
-      if (speakingEnabledEl) speakingEnabledEl.addEventListener('change', syncFromDom);
-      var speakingInstructionEl = document.getElementById('speakingInstruction');
-      if (speakingInstructionEl) speakingInstructionEl.addEventListener('input', syncFromDom);
-      var speakingRecordSecondsEl = document.getElementById('speakingRecordSeconds');
-      if (speakingRecordSecondsEl) speakingRecordSecondsEl.addEventListener('change', syncFromDom);
-      var uploadListeningAudioBtn = document.getElementById('uploadListeningAudioBtn');
-      if (uploadListeningAudioBtn) {
-        uploadListeningAudioBtn.addEventListener('click', function() {
-          var fileInput = document.getElementById('listeningAudioFile');
-          var hintEl = document.getElementById('listeningAudioUploadHint');
-          var file = fileInput && fileInput.files ? fileInput.files[0] : null;
-          if (!file) {
-            setStatus('Please choose an audio file first.');
-            return;
-          }
-          var name = String(file.name || '').toLowerCase();
-          var validExt = /\.(mp3|wav|m4a)$/.test(name);
-          var validMime = String(file.type || '').indexOf('audio/') === 0;
-          if (!validExt && !validMime) {
-            setStatus('Invalid file type. Allowed: mp3, wav, m4a.');
-            return;
-          }
-
-          if (shouldUseLocalAudioMode()) {
-            setStatus('Using local audio mode...');
-            fileToDataUrl(file).then(function(dataUrl) {
-              if (!dataUrl) throw new Error('Could not generate data URL');
-              var localUrlEl = document.getElementById('listeningAudioUrl');
-              if (localUrlEl) localUrlEl.value = dataUrl;
-              if (hintEl) hintEl.textContent = 'Local mode active: audio saved as data URL (no Firebase upload).';
-              syncFromDom();
-              setStatus('Local audio URL ready. Click Save All to persist.');
-            }).catch(function(err) {
-              setStatus('Local conversion failed: ' + (err && err.message ? err.message : 'unknown error'));
-            });
-            return;
-          }
-
-          setStatus('Uploading listening audio...');
-          uploadListeningAudioToFirebase(file).then(function(url) {
-            var urlEl = document.getElementById('listeningAudioUrl');
-            if (urlEl) urlEl.value = url;
-            if (hintEl) hintEl.textContent = 'Upload successful. URL auto-filled.';
-            syncFromDom();
-            setStatus('Listening audio uploaded and URL saved in form. Click Save All to persist.');
-          }).catch(function(err) {
-            var errMsg = (err && err.message) ? err.message : 'Please paste manual URL.';
-            // Fallback: keep feature usable without Firebase Storage by using data URL.
-            fileToDataUrl(file).then(function(dataUrl) {
-              if (!dataUrl) throw new Error('Could not generate data URL');
-              var urlEl = document.getElementById('listeningAudioUrl');
-              if (urlEl) urlEl.value = dataUrl;
-              if (hintEl) hintEl.textContent = 'Firebase upload failed. Using local data URL fallback.';
-              syncFromDom();
-              setStatus('Upload fallback applied (data URL). Click Save All to persist. Reason: ' + errMsg);
-            }).catch(function() {
-              if (hintEl) hintEl.textContent = 'Firebase upload unavailable. Please upload manually and paste URL.';
-              setStatus('Upload failed: ' + errMsg);
-            });
-          });
-        });
-      }
-
-      function saveAll() {
-        syncFromDom();
-        setStatus('Saving...');
-        var placement = toPlacementPayload(currentSiteContent.placementTest || (window.AcademyContent && AcademyContent.DEFAULT_PLACEMENT_TEST) || {});
-        currentSiteContent.placementTest = placement;
-        saveSiteContentWithFallback({
-          content: currentSiteContent.content || {},
-          uploads: currentSiteContent.uploads || {},
-          placementTest: placement,
-          blogPosts: currentSiteContent.blogPosts || null
-        }, function(ok, remoteAttempted, remoteOk) {
-          if (ok) {
-            state.updatedAt = placement.questionBankUpdatedAt || new Date().toISOString();
-            if (!remoteAttempted) {
-              setStatus('Saved locally at ' + new Date().toLocaleString('en-GB'));
-            } else if (remoteOk) {
-              setStatus('Saved to local + Firebase at ' + new Date().toLocaleString('en-GB'));
-            } else {
-              setStatus('Saved locally. Firebase sync delayed/unavailable.');
-            }
-          } else {
-            setStatus(remoteAttempted ? 'Save failed on Firebase. Local saved only.' : 'Save failed.');
-          }
-        });
-      }
-
-      document.getElementById('qbSaveAllTop').addEventListener('click', saveAll);
-      document.getElementById('qbSaveAllBottom').addEventListener('click', saveAll);
-
-      function reload() {
-        loadData();
-      }
-      document.getElementById('qbReloadTop').addEventListener('click', reload);
-      document.getElementById('qbReloadBottom').addEventListener('click', reload);
-
-      showCards();
-    }
-
-    function loadData() {
-      setStatus('Loading...');
-      loadSiteContentWithFallback(function(data) {
-        currentSiteContent = data || {};
-        var pt = (currentSiteContent.placementTest && typeof currentSiteContent.placementTest === 'object')
-          ? currentSiteContent.placementTest
-          : ((window.AcademyContent && AcademyContent.DEFAULT_PLACEMENT_TEST) || {});
-        var step2 = pt.step2 || {};
-        var step3 = pt.step3 || {};
-        var step4 = pt.step4 || {};
-        var step5 = pt.step5 || {};
-        state.listening = normalizeQuestionList(step2.questions);
-        state.reading = normalizeQuestionList(step3.items);
-        state.writing = normalizeWritingList(step4.prompts);
-        state.speaking = normalizeSpeakingList(step5.items);
-        state.settings.listeningMinutes = parseDurationMinutes(step2.duration, 15);
-        state.settings.listeningListenLimit = clampInt(step2.listenLimit, 1, 3, 2);
-        state.settings.listeningAudioUrl = String(step2.audioUrl || '');
-        state.settings.listeningInstruction = String(step2.instruction || LISTENING_INSTRUCTION_DEFAULT);
-        state.settings.readingMinutes = parseDurationMinutes(step3.duration, 25);
-        state.settings.speakingEnabled = step5.enabled !== false;
-        state.settings.speakingInstruction = String(step5.instruction || step5.taskInstruction || '');
-        state.settings.speakingRecordSeconds = normalizeSpeakingRecordSeconds(step5.recordSeconds, 15);
-        var writingPerPromptRaw = parseInt(step4.promptDurationMinutes, 10);
-        state.settings.writingPerPromptMinutes = (!isNaN(writingPerPromptRaw) && writingPerPromptRaw > 0) ? clampInt(writingPerPromptRaw, 1, 300, 20) : 0;
-        if (!state.settings.writingPerPromptMinutes) {
-          var totalWritingMinutes = parseDurationMinutes(step4.duration, 0);
-          var promptCount = Math.max(1, (state.writing || []).filter(function(p) { return p && p.enabled !== false; }).length || (state.writing || []).length || 1);
-          state.settings.writingPerPromptMinutes = Math.max(1, Math.round((totalWritingMinutes || 20) / promptCount));
-        }
-        state.updatedAt = pt.questionBankUpdatedAt || '';
-        renderAll();
-        setMinutesControl('listeningTimerPreset', 'listeningTimerCustom', state.settings.listeningMinutes);
-        setMinutesControl('readingTimerPreset', 'readingTimerCustom', state.settings.readingMinutes);
-        setMinutesControl('writingTimerPreset', 'writingTimerCustom', state.settings.writingPerPromptMinutes);
-        var listeningLimitEl = document.getElementById('listeningListenLimit');
-        if (listeningLimitEl) listeningLimitEl.value = String(state.settings.listeningListenLimit || 2);
-        var listeningAudioUrlEl = document.getElementById('listeningAudioUrl');
-        if (listeningAudioUrlEl) listeningAudioUrlEl.value = state.settings.listeningAudioUrl || '';
-        var listeningInstructionEl = document.getElementById('listeningInstruction');
-        if (listeningInstructionEl) listeningInstructionEl.value = state.settings.listeningInstruction || LISTENING_INSTRUCTION_DEFAULT;
-        var speakingEnabledEl = document.getElementById('speakingEnabledToggle');
-        if (speakingEnabledEl) speakingEnabledEl.checked = state.settings.speakingEnabled !== false;
-        var speakingInstructionEl = document.getElementById('speakingInstruction');
-        if (speakingInstructionEl) speakingInstructionEl.value = state.settings.speakingInstruction || '';
-        var speakingRecordSecondsEl = document.getElementById('speakingRecordSeconds');
-        if (speakingRecordSecondsEl) speakingRecordSecondsEl.value = String(normalizeSpeakingRecordSeconds(state.settings.speakingRecordSeconds, 15));
-        setStatus(state.updatedAt ? ('Loaded. Last updated: ' + new Date(state.updatedAt).toLocaleString('en-GB')) : 'Loaded from same placement data.');
-      });
-    }
-
-    var u = window.AcademyAuth && AcademyAuth.currentUser();
-    if (!u) { window.location.href = '../public-page/login.html'; return; }
-    AcademyAuth.getUserProfile(u.uid, function(p) {
-      if ((p && p.role) !== 'admin') { window.location.href = '../student/dashboard.html'; return; }
-      if (window.AdminTopToolbar) AdminTopToolbar.init();
-      bindEvents();
-      loadData();
-    });
-  })();
-  </script>
+  <script src="../assets/js/placement-bre-bank-core.js?v=20260604-t2r1-full"></script>
+  <script src="../assets/js/question-bank-bre-admin.js?v=20260604-qb-t2r3-label"></script>
   <script src="../assets/js/admin-badge.js"></script>
   <script src="../assets/js/dashboard-sidebar.js" defer></script>
 </body>

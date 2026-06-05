@@ -270,9 +270,11 @@
     });
   };
 
-  SchoolAPI.savePlacementQuestionBank = function (bank, schoolId) {
+  SchoolAPI.savePlacementQuestionBank = function (bank, schoolId, opts) {
     var payload = (bank && typeof bank === 'object') ? bank : {};
-    return SchoolAPI.saveWebExtra('placement_question_bank', [payload], schoolId);
+    var saveOpts = opts && typeof opts === 'object' ? opts : { timeoutMs: 120000 };
+    if (typeof saveOpts.timeoutMs !== 'number') saveOpts.timeoutMs = 120000;
+    return SchoolAPI.saveWebExtra('placement_question_bank', [payload], schoolId, saveOpts);
   };
 
   /** Login: POST /api/login → { ok, role, school_id, school_name, username } */
@@ -576,10 +578,10 @@
     return request('GET', '/api/web_extra/' + encodeURIComponent(key) + q);
   };
 
-  SchoolAPI.saveWebExtra = function (key, data, schoolId) {
+  SchoolAPI.saveWebExtra = function (key, data, schoolId, opts) {
     var payload = { data: Array.isArray(data) ? data : (data ? [data] : []) };
     if (schoolId) payload.school_id = schoolId;
-    return request('POST', '/api/web_extra/' + encodeURIComponent(key), payload);
+    return request('POST', '/api/web_extra/' + encodeURIComponent(key), payload, opts);
   };
 
   /** Notices (convenience) */

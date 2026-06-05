@@ -3584,10 +3584,64 @@ def api_admission_application_add():
         return jsonify({"ok": False, "error": str(e)}), 500
 
 
-PLACEMENT_RETAKE_DAYS = 7
+PLACEMENT_RETAKE_DAYS_DEFAULT = 7
 PLACEMENT_IDENTITY_ERROR = (
     "date_of_birth, parent_name, and phone (or device_id) are required for placement retake rules"
 )
+
+
+def _placement_test_from_site_bundle(bundle):
+    """Extract placementTest dict from site_content_bundle (list or legacy shapes)."""
+    if isinstance(bundle, dict):
+        pt = bundle.get("placementTest")
+        return pt if isinstance(pt, dict) else {}
+    if isinstance(bundle, list):
+        for item in bundle:
+            if not isinstance(item, dict):
+                continue
+            pt = item.get("placementTest")
+            if isinstance(pt, dict):
+                return pt
+    return {}
+
+
+def _load_placement_retake_days(cur, school_id):
+    """CMS: placementTest.retakeDays in site_content_bundle (default 7 = once per week)."""
+    days = PLACEMENT_RETAKE_DAYS_DEFAULT
+    try:
+        cur.execute(
+            "SELECT data_json FROM web_extra WHERE school_id = ? AND data_key = ?",
+            (school_id, "site_content_bundle"),
+        )
+        row = cur.fetchone()
+        if row and row["data_json"]:
+            bundle = json.loads(row["data_json"])
+            pt = _placement_test_from_site_bundle(bundle)
+            raw = pt.get("retakeDays")
+            if raw is None:
+                raw = pt.get("retake_days")
+            if raw is not None and str(raw).strip() != "":
+                days = int(float(str(raw).strip()))
+    except Exception:
+        days = PLACEMENT_RETAKE_DAYS_DEFAULT
+    return max(1, min(365, int(days)))
+
+
+def _placement_retake_period_label(retake_days):
+    retake_days = int(retake_days or PLACEMENT_RETAKE_DAYS_DEFAULT)
+    if retake_days == 7:
+        return "once per week"
+    if retake_days == 1:
+        return "once per day"
+    return f"once every {retake_days} days"
+
+
+def _placement_retake_blocked_message(retake_days, remaining_days):
+    return (
+        f"You can take this test {_placement_retake_period_label(retake_days)} "
+        f"(same date of birth, parent name, and phone or device). "
+        f"Please try again in {remaining_days} day(s)."
+    )
 
 
 def _norm_placement_phone(phone):
@@ -3682,12 +3736,13 @@ def _parse_iso_datetime(value):
         return None
 
 
-def _retake_window_status(last_attempt_at_iso):
+def _retake_window_status(last_attempt_at_iso, retake_days=None):
+    retake_days = max(1, int(retake_days or PLACEMENT_RETAKE_DAYS_DEFAULT))
     last_dt = _parse_iso_datetime(last_attempt_at_iso)
     if not last_dt:
         return True, None, 0
     now_dt = datetime.now(last_dt.tzinfo) if last_dt.tzinfo else datetime.now()
-    next_allowed_dt = last_dt + timedelta(days=PLACEMENT_RETAKE_DAYS)
+    next_allowed_dt = last_dt + timedelta(days=retake_days)
     if now_dt >= next_allowed_dt:
         return True, next_allowed_dt, 0
     remaining_days = (next_allowed_dt - now_dt).days
@@ -3740,20 +3795,17 @@ def api_placement_attempts_check():
     try:
         conn = get_conn()
         cur = conn.cursor()
+        retake_days = _load_placement_retake_days(cur, school_id)
         attempts = _load_placement_attempts(cur, school_id)
         conn.close()
         idx = _find_attempt_index(attempts, id_info)
         rec = attempts[idx] if idx >= 0 else {}
         attempt_count = int(rec.get("attempt_count") or 0)
         has_passed = bool(rec.get("has_passed"))
-        can_take_by_window, next_allowed_dt, remaining_days = _retake_window_status(rec.get("last_attempt_at"))
+        can_take_by_window, next_allowed_dt, remaining_days = _retake_window_status(rec.get("last_attempt_at"), retake_days)
         can_take = can_take_by_window
         if not can_take_by_window:
-            message = (
-                f"You can take this test once every {PLACEMENT_RETAKE_DAYS} days "
-                f"(same date of birth, parent name, and phone or device). "
-                f"Please try again in {remaining_days} day(s)."
-            )
+            message = _placement_retake_blocked_message(retake_days, remaining_days)
         else:
             message = "Eligible to take the test."
         return jsonify({
@@ -3769,7 +3821,7 @@ def api_placement_attempts_check():
             "attempt_count": attempt_count,
             "has_passed": has_passed,
             "can_take_test": can_take,
-            "retake_days": PLACEMENT_RETAKE_DAYS,
+            "retake_days": retake_days,
             "days_until_next_attempt": remaining_days,
             "next_allowed_at": (next_allowed_dt.isoformat() if next_allowed_dt else ""),
             "message": message,
@@ -3793,6 +3845,7 @@ def api_placement_attempts_submit():
     try:
         conn = get_conn()
         cur = conn.cursor()
+        retake_days = _load_placement_retake_days(cur, school_id)
         attempts = _load_placement_attempts(cur, school_id)
         idx = _find_attempt_index(attempts, id_info)
         now_iso = datetime.now().isoformat()
@@ -3800,20 +3853,16 @@ def api_placement_attempts_submit():
             rec = attempts[idx] or {}
         else:
             rec = {"attempt_count": 0, "has_passed": False}
-        can_take_by_window, next_allowed_dt, remaining_days = _retake_window_status(rec.get("last_attempt_at"))
+        can_take_by_window, next_allowed_dt, remaining_days = _retake_window_status(rec.get("last_attempt_at"), retake_days)
         if not can_take_by_window:
             conn.close()
             return jsonify({
                 "ok": False,
                 "can_take_test": False,
-                "retake_days": PLACEMENT_RETAKE_DAYS,
+                "retake_days": retake_days,
                 "days_until_next_attempt": remaining_days,
                 "next_allowed_at": (next_allowed_dt.isoformat() if next_allowed_dt else ""),
-                "message": (
-                    f"You can take this test once every {PLACEMENT_RETAKE_DAYS} days "
-                    f"(same date of birth, parent name, and phone or device). "
-                    f"Please try again in {remaining_days} day(s)."
-                ),
+                "message": _placement_retake_blocked_message(retake_days, remaining_days),
             }), 429
         _record_identity_keys(rec, id_info.get("keys") or [])
         rec["name"] = id_info.get("name") or rec.get("name") or ""
@@ -3841,7 +3890,7 @@ def api_placement_attempts_submit():
             "attempt_count": rec["attempt_count"],
             "has_passed": rec["has_passed"],
             "can_take_test": False,
-            "retake_days": PLACEMENT_RETAKE_DAYS,
+            "retake_days": retake_days,
             "identity_key": rec.get("identity_key") or "",
         })
     except Exception as e:

@@ -39,9 +39,10 @@
     /*   */
     h2, h3, .content-card-live, .section-fixed-title { color: #16a34a; }
     /* Placement Test tab   –  bg +  */
-    #tab-placement h3 {
-      background: #22c55e;
-      color: #000;
+    #tab-placement h3,
+    .admin-dashboard-glass .dashboard-main .card #tab-placement h3 {
+      background: var(--primary, #9e1818);
+      color: #fff !important;
       padding: 0.5rem 1rem;
       border-radius: 6px;
       margin: 1.25rem 0 0.5rem 0;
@@ -1568,8 +1569,29 @@
           <div class="form-group edit-zone"><label>Flow Step 2</label><input type="text" id="pt_intro_flow2" placeholder="Step 2: Placement Questions"></div>
           <div class="form-group edit-zone"><label>Flow Step 3</label><input type="text" id="pt_intro_flow3" placeholder="Step 3: Result"></div>
           <div class="hr"></div>
+          <h3>Retake rules (admin control)</h3>
+          <div class="form-group edit-zone edit-zone--retake-days">
+            <label class="cms-field-label cms-field-label--wide">Days between attempts</label>
+            <div class="edit-zone-auto-slide-body">
+              <div class="edit-zone-auto-slide-row">
+                <input type="number" id="pt_retake_days" min="1" max="365" step="1" placeholder="7" aria-label="Days between placement test attempts">
+                <p class="edit-zone-auto-slide-desc">Default <strong>7</strong> = once per week. Same student = date of birth + parent/guardian name + phone (or same device). Click <strong>Save All</strong> on this tab after changing.</p>
+              </div>
+            </div>
+          </div>
+          <h3>Minimum score for Test 2A</h3>
+          <div class="form-group edit-zone edit-zone--retake-days">
+            <label class="cms-field-label cms-field-label--wide">Minimum score for Test 2A</label>
+            <div class="edit-zone-auto-slide-body">
+              <div class="edit-zone-auto-slide-row">
+                <input type="number" id="pt_adaptive_threshold_test2" min="1" max="80" step="1" placeholder="75" aria-label="Minimum Test 1A score to continue with Test 2A">
+                <p class="edit-zone-auto-slide-desc">Raw correct answers out of <strong>80</strong> on Test 1A. Default <strong>75</strong> = student needs 75+ to continue with Test 2A before receiving certificates. Click <strong>Save All</strong> after changing.</p>
+              </div>
+            </div>
+          </div>
+          <div class="hr"></div>
           <p class="text-muted" style="font-size:.85rem; margin:0;">
-            Listening / Reading / Writing / Speaking questions are managed in <strong>Question Bank Management</strong>.
+            Listening, Grammar, Vocabulary, and Reading questions are managed in <strong>Question Bank Management</strong>.
           </p>
         </div>
       </div>
@@ -2834,6 +2856,10 @@
       sv('pt_intro_flow1', pt.intro && pt.intro.flowStep1);
       sv('pt_intro_flow2', pt.intro && pt.intro.flowStep2);
       sv('pt_intro_flow3', pt.intro && pt.intro.flowStep3);
+      var retakeDays = pt.retakeDays != null ? pt.retakeDays : (pt.retake_days != null ? pt.retake_days : 7);
+      sv('pt_retake_days', String(retakeDays));
+      var adaptiveTh = pt.adaptiveThresholdTest2 != null ? pt.adaptiveThresholdTest2 : (pt.adaptive_threshold_test2 != null ? pt.adaptive_threshold_test2 : 75);
+      sv('pt_adaptive_threshold_test2', String(adaptiveTh));
       sv('pt_step1_title', pt.step1&&pt.step1.title); sv('pt_step1_subtitle', pt.step1&&pt.step1.subtitle);
       sv('pt_step4_instruction', pt.step4&&pt.step4.instruction);
       sv('pt_step5_instruction', pt.step5&&pt.step5.instruction); sv('pt_step5_buttonRecord', pt.step5&&pt.step5.buttonRecord);
@@ -2851,8 +2877,17 @@
       var listenN = parseInt(s2Base.listenLimit, 10);
       if (isNaN(listenN) || listenN < 1) listenN = (d2.listenLimit != null ? parseInt(d2.listenLimit, 10) : NaN);
       if (isNaN(listenN) || listenN < 1) listenN = 2;
+      var retakeDaysRaw = parseInt(gv('pt_retake_days', String((B && B.retakeDays != null) ? B.retakeDays : D.retakeDays || 7)), 10);
+      if (isNaN(retakeDaysRaw) || retakeDaysRaw < 1) retakeDaysRaw = 7;
+      if (retakeDaysRaw > 365) retakeDaysRaw = 365;
+      var adaptiveThDefault = (B && B.adaptiveThresholdTest2 != null) ? B.adaptiveThresholdTest2 : ((D && D.adaptiveThresholdTest2 != null) ? D.adaptiveThresholdTest2 : 75);
+      var adaptiveThRaw = parseInt(gv('pt_adaptive_threshold_test2', String(adaptiveThDefault)), 10);
+      if (isNaN(adaptiveThRaw) || adaptiveThRaw < 1) adaptiveThRaw = 75;
+      if (adaptiveThRaw > 80) adaptiveThRaw = 80;
       var pt = {
         pageTitle: gv('pt_pageTitle', D.pageTitle), pageSubtitle: gv('pt_pageSubtitle', D.pageSubtitle),
+        retakeDays: retakeDaysRaw,
+        adaptiveThresholdTest2: adaptiveThRaw,
         intro: {
           title: gv('pt_intro_title', (B.intro && B.intro.title) || (D.intro && D.intro.title) || 'Test Introduction'),
           durationMinutes: gv('pt_intro_duration_minutes', (B.intro && B.intro.durationMinutes) || (D.intro && D.intro.durationMinutes) || '60'),
@@ -4921,7 +4956,10 @@
           if (!used[k]) delete uploads[k];
         });
       })();
-      var placementTest = (singlePage === 'placement') ? buildPlacementTest() : AcademyContent.loadPlacementTest();
+      /* Always read Placement tab fields when present (retakeDays, intro, etc.) — not only ?page=placement */
+      var placementTest = document.getElementById('tab-placement')
+        ? buildPlacementTest()
+        : AcademyContent.loadPlacementTest();
       var postsToSave = (singlePage === 'news')
         ? blogPosts.map(mergeBlogPostDefaults)
         : (AcademyContent.loadBlogPosts() || []).map(mergeBlogPostDefaults);

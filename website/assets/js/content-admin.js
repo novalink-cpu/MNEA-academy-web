@@ -1,4 +1,4 @@
-﻿window.AcademyContent = window.AcademyContent || {};
+window.AcademyContent = window.AcademyContent || {};
 (function ensureBackToTopScript() {
   if (typeof document === 'undefined') return;
   if (document.getElementById('academyBackToTopScript')) return;
@@ -256,7 +256,9 @@ AcademyContent.DEFAULT_PLACEMENT_TEST = {
     ]
   },
   step5: { title: 'Speaking', introDesc: 'You are about to start the speaking section.', duration: '15 mins' },
-  step6: { title: ' ', message: '   Level   ', thankYou: '', buttonBack: '' }
+  step6: { title: ' ', message: '   Level   ', thankYou: '', buttonBack: '' },
+  retakeDays: 7,
+  adaptiveThresholdTest2: 75
 };
 
 AcademyContent.getPlacementTestConfig = function(callback) {
@@ -499,6 +501,29 @@ AcademyContent.getDefaultGalleryAlbumTitles = function() {
     'Free Classes'
   ];
 };
+
+/** Fallback gallery photos (website/photo/) when CMS/server has no upload — works on PythonAnywhere & mobile. */
+AcademyContent.DEFAULT_GALLERY_IMAGE_PATHS = {
+  gallery_a0_p0: '../photo/awarding1.jpg',
+  gallery_a0_p1: '../photo/awarding2.jpg',
+  gallery_a0_p2: '../photo/awarding3.jpg',
+  gallery_a1_p0: '../photo/sport1.jpg',
+  gallery_a1_p1: '../photo/sport2.jpg',
+  gallery_a1_p2: '../photo/sport3.jpg',
+  gallery_a2_p0: '../photo/festivals1.jpg',
+  gallery_a2_p1: '../photo/festivals2.jpg',
+  gallery_a2_p2: '../photo/festivals3.jpg'
+};
+
+AcademyContent.resolveGalleryImageSrc = function(key, uploads) {
+  if (!key) return null;
+  uploads = uploads || {};
+  var up = uploads[key];
+  if (up != null && up !== '' && String(up).trim() !== '') return up;
+  var paths = AcademyContent.DEFAULT_GALLERY_IMAGE_PATHS;
+  if (paths && paths[key]) return paths[key];
+  return null;
+};
 AcademyContent.normalizeGalleryAlbumTitles = function(content) {
   content = content || {};
   var defaults = AcademyContent.getDefaultGalleryAlbumTitles();
@@ -582,8 +607,8 @@ AcademyContent.gallerySlotCountForAlbum = function(content, uploads, albumIndex)
   var maxP = AcademyContent.GALLERY_SLOTS_PER_ALBUM;
   var maxPi = -1;
   for (var pi = 0; pi < maxP; pi++) {
-    var u = uploads[AcademyContent.galleryUploadKey(albumIndex, pi)];
-    if (u != null && u !== '') maxPi = pi;
+    var slotKey = AcademyContent.galleryUploadKey(albumIndex, pi);
+    if (AcademyContent.resolveGalleryImageSrc(slotKey, uploads)) maxPi = pi;
   }
   var fromUploads = maxPi >= 0 ? maxPi + 1 : 3;
   var raw = content.gallery_album_slot_counts && content.gallery_album_slot_counts[albumIndex];
@@ -651,7 +676,7 @@ AcademyContent.listGalleryPhotosSorted = function(content, uploads, albumFilter)
     var nP = AcademyContent.gallerySlotCountForAlbum(content, uploads, ai);
     for (var pj = 0; pj < nP; pj++) {
       var key = AcademyContent.galleryUploadKey(ai, pj);
-      var src = uploads[key];
+      var src = AcademyContent.resolveGalleryImageSrc(key, uploads);
       if (src == null || src === '') continue;
       var sortKey = AcademyContent.galleryPhotoSortKey(content, key, ai, pj);
       var d = new Date(sortKey);
