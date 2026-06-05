@@ -122,7 +122,112 @@ function siteContentApiGet(callback) {
     });
 }
 
-/** Get full site content from server DB (with local fallback cache). */
+function normalizeSiteContentBundle(raw) {
+  if (!raw || typeof raw !== 'object') return null;
+  return {
+    content: (raw.content && typeof raw.content === 'object') ? raw.content : {},
+    uploads: (raw.uploads && typeof raw.uploads === 'object') ? raw.uploads : {},
+    placementTest: raw.placementTest || null,
+    blogPosts: raw.blogPosts != null ? raw.blogPosts : null
+  };
+}
+
+function siteContentFirebaseGet(callback) {
+  if (!window.AcademyFirebase || typeof AcademyFirebase.get !== 'function') {
+    callback(null);
+    return;
+  }
+  AcademyFirebase.get(function(val) {
+    callback(normalizeSiteContentBundle(val));
+  });
+}
+
+function mergeRemoteSiteBundles(apiBundle, fbBundle) {
+  if (!apiBundle && !fbBundle) return null;
+  if (!apiBundle) return fbBundle;
+  if (!fbBundle) return apiBundle;
+  var merged = {
+    content: Object.assign({}, fbBundle.content || {}, apiBundle.content || {}),
+    uploads: Object.assign({}, fbBundle.uploads || {}, apiBundle.uploads || {}),
+    placementTest: apiBundle.placementTest != null ? apiBundle.placementTest : fbBundle.placementTest,
+    blogPosts: apiBundle.blogPosts != null ? apiBundle.blogPosts : fbBundle.blogPosts
+  };
+  Object.keys(fbBundle.content || {}).forEach(function(k) {
+    var apiVal = merged.content[k];
+    var fbVal = fbBundle.content[k];
+    if ((apiVal == null || String(apiVal).trim() === '') && fbVal != null && String(fbVal).trim() !== '') {
+      merged.content[k] = fbVal;
+    }
+  });
+  Object.keys(fbBundle.uploads || {}).forEach(function(k) {
+    var apiVal = merged.uploads[k];
+    var fbVal = fbBundle.uploads[k];
+    if ((apiVal == null || apiVal === '') && fbVal != null && fbVal !== '') {
+      merged.uploads[k] = fbVal;
+    }
+  });
+  return merged;
+}
+
+function mergeSiteContentWithLocal(localPayload, remotePayload) {
+  localPayload = localPayload || {};
+  remotePayload = remotePayload || {};
+  var mergedContent = Object.assign({}, localPayload.content || {}, remotePayload.content || {});
+  ['home_activity_video_1', 'home_activity_video_2'].forEach(function(k) {
+    var localV = (localPayload.content || {})[k];
+    var remoteV = (remotePayload.content || {})[k];
+    if (localV != null && String(localV).trim() !== '' && (remoteV == null || String(remoteV).trim() === '')) {
+      mergedContent[k] = localV;
+    }
+  });
+  var localTimes = (localPayload.content && localPayload.content.gallery_upload_times) || {};
+  var remoteTimes = (remotePayload.content && remotePayload.content.gallery_upload_times) || {};
+  var mergedTimes = Object.assign({}, remoteTimes, localTimes);
+  Object.keys(mergedTimes).forEach(function(k) {
+    if (!/^gallery_a\d+_p\d+$/.test(k)) {
+      delete mergedTimes[k];
+      return;
+    }
+    var lt = parseInt(localTimes[k], 10);
+    var rt = parseInt(remoteTimes[k], 10);
+    if (!isNaN(lt) && !isNaN(rt)) mergedTimes[k] = Math.max(lt, rt);
+    else if (!isNaN(lt)) mergedTimes[k] = lt;
+    else if (!isNaN(rt)) mergedTimes[k] = rt;
+  });
+  if (Object.keys(mergedTimes).length) mergedContent.gallery_upload_times = mergedTimes;
+  if (AcademyContent.repairSwappedCourseSlots) AcademyContent.repairSwappedCourseSlots(mergedContent);
+  var slideNorm = AcademyContent.coerceHomeActivitiesSlides(mergedContent.home_activities_slides);
+  if (slideNorm != null) mergedContent.home_activities_slides = slideNorm;
+  var mergedUploads = Object.assign({}, localPayload.uploads || {}, remotePayload.uploads || {});
+  Object.keys(localPayload.uploads || {}).forEach(function(k) {
+    if (!/^gallery_a\d+_p\d+$/.test(k)) return;
+    var localV = localPayload.uploads[k];
+    var remoteV = remotePayload.uploads[k];
+    if (localV != null && localV !== '' && (remoteV == null || remoteV === '')) mergedUploads[k] = localV;
+  });
+  return {
+    content: mergedContent,
+    uploads: mergedUploads,
+    placementTest: remotePayload.placementTest != null ? remotePayload.placementTest : localPayload.placementTest,
+    blogPosts: remotePayload.blogPosts != null ? remotePayload.blogPosts : localPayload.blogPosts
+  };
+}
+
+function cacheSiteContentPayload(out) {
+  try { AcademyContent.save(out.content || {}); } catch (e1) {}
+  try {
+    var upClean = {};
+    Object.keys(out.uploads || {}).forEach(function(k) {
+      var v = out.uploads[k];
+      if (v != null && v !== '') upClean[k] = v;
+    });
+    localStorage.setItem(UPLOAD_STORAGE_KEY, JSON.stringify(upClean));
+  } catch (e2) {}
+  try { if (out.placementTest) AcademyContent.savePlacementTest(out.placementTest); } catch (e3) {}
+  try { if (out.blogPosts) AcademyContent.saveBlogPosts(out.blogPosts); } catch (e4) {}
+}
+
+/** Get full site content from server DB + Firebase (with local fallback cache). */
 AcademyContent.getSiteContent = function(callback) {
   var localPayload = {
     content: AcademyContent.load(),
@@ -130,62 +235,28 @@ AcademyContent.getSiteContent = function(callback) {
     placementTest: AcademyContent.loadPlacementTest(),
     blogPosts: AcademyContent.loadBlogPosts()
   };
-  siteContentApiGet(function(remoteData) {
-    if (!remoteData || typeof remoteData !== 'object') {
+  var apiBundle = null;
+  var fbBundle = null;
+  var pending = 2;
+  function finish() {
+    pending--;
+    if (pending > 0) return;
+    var remotePayload = mergeRemoteSiteBundles(apiBundle, fbBundle);
+    if (!remotePayload) {
       callback(localPayload);
       return;
     }
-    var remotePayload = {
-      content: (remoteData.content && typeof remoteData.content === 'object') ? remoteData.content : {},
-      uploads: (remoteData.uploads && typeof remoteData.uploads === 'object') ? remoteData.uploads : {},
-      placementTest: remoteData.placementTest || null,
-      blogPosts: remoteData.blogPosts != null ? remoteData.blogPosts : null
-    };
-    var mergedContent = Object.assign({}, localPayload.content || {}, remotePayload.content || {});
-    var localTimes = (localPayload.content && localPayload.content.gallery_upload_times) || {};
-    var remoteTimes = (remotePayload.content && remotePayload.content.gallery_upload_times) || {};
-    var mergedTimes = Object.assign({}, remoteTimes, localTimes);
-    Object.keys(mergedTimes).forEach(function(k) {
-      if (!/^gallery_a\d+_p\d+$/.test(k)) {
-        delete mergedTimes[k];
-        return;
-      }
-      var lt = parseInt(localTimes[k], 10);
-      var rt = parseInt(remoteTimes[k], 10);
-      if (!isNaN(lt) && !isNaN(rt)) mergedTimes[k] = Math.max(lt, rt);
-      else if (!isNaN(lt)) mergedTimes[k] = lt;
-      else if (!isNaN(rt)) mergedTimes[k] = rt;
-    });
-    if (Object.keys(mergedTimes).length) mergedContent.gallery_upload_times = mergedTimes;
-  if (AcademyContent.repairSwappedCourseSlots) AcademyContent.repairSwappedCourseSlots(mergedContent);
-    var slideNorm = AcademyContent.coerceHomeActivitiesSlides(mergedContent.home_activities_slides);
-    if (slideNorm != null) mergedContent.home_activities_slides = slideNorm;
-    var mergedUploads = Object.assign({}, localPayload.uploads || {}, remotePayload.uploads || {});
-    /* Keep local gallery images when server bundle has no image for that slot (avoids empty overwrite). */
-    Object.keys(localPayload.uploads || {}).forEach(function(k) {
-      if (!/^gallery_a\d+_p\d+$/.test(k)) return;
-      var localV = localPayload.uploads[k];
-      var remoteV = remotePayload.uploads[k];
-      if (localV != null && localV !== '' && (remoteV == null || remoteV === '')) mergedUploads[k] = localV;
-    });
-    var out = {
-      content: mergedContent,
-      uploads: mergedUploads,
-      placementTest: remotePayload.placementTest != null ? remotePayload.placementTest : localPayload.placementTest,
-      blogPosts: remotePayload.blogPosts != null ? remotePayload.blogPosts : localPayload.blogPosts
-    };
-    try { AcademyContent.save(out.content || {}); } catch (e1) {}
-    try {
-      var upClean = {};
-      Object.keys(out.uploads || {}).forEach(function(k) {
-        var v = out.uploads[k];
-        if (v != null && v !== '') upClean[k] = v;
-      });
-      localStorage.setItem(UPLOAD_STORAGE_KEY, JSON.stringify(upClean));
-    } catch (e2) {}
-    try { if (out.placementTest) AcademyContent.savePlacementTest(out.placementTest); } catch (e3) {}
-    try { if (out.blogPosts) AcademyContent.saveBlogPosts(out.blogPosts); } catch (e4) {}
+    var out = mergeSiteContentWithLocal(localPayload, remotePayload);
+    cacheSiteContentPayload(out);
     callback(out);
+  }
+  siteContentApiGet(function(data) {
+    apiBundle = normalizeSiteContentBundle(data);
+    finish();
+  });
+  siteContentFirebaseGet(function(data) {
+    fbBundle = data;
+    finish();
   });
 };
 
@@ -292,6 +363,24 @@ AcademyContent.saveAll = function(payload, callback) {
     if (callback) callback({ local: true, firebase: false });
     return;
   }
+  var serverOk = false;
+  var firebaseOk = false;
+  var reported = false;
+  function report() {
+    if (reported) return;
+    reported = true;
+    if (callback) callback({ local: true, firebase: serverOk || firebaseOk, server: serverOk, firebaseSync: firebaseOk });
+  }
+  function syncFirebase() {
+    if (!window.AcademyFirebase || typeof AcademyFirebase.set !== 'function') {
+      report();
+      return;
+    }
+    AcademyFirebase.set(sync, function(ok) {
+      firebaseOk = !!ok;
+      report();
+    });
+  }
   fetch('/api/web_extra/' + encodeURIComponent(SITE_CONTENT_WEB_EXTRA_KEY), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -304,10 +393,11 @@ AcademyContent.saveAll = function(payload, callback) {
       return { ok: false };
     })
     .then(function(r) {
-      if (callback) callback({ local: true, firebase: !!(r && r.ok) });
+      serverOk = !!(r && r.ok);
+      syncFirebase();
     })
     .catch(function() {
-      if (callback) callback({ local: true, firebase: false });
+      syncFirebase();
     });
 };
 
@@ -1086,6 +1176,19 @@ AcademyContent.youtubeEmbedFromUrl = function(raw) {
   return null;
 };
 
+AcademyContent.youtubeVideoIdFromUrl = function(raw) {
+  var u = String(raw || '').trim();
+  if (!u) return null;
+  var m = u.match(/(?:youtube\.com\/watch\?v=|youtube\.com\/shorts\/|youtu\.be\/|youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})/);
+  return m ? m[1] : null;
+};
+
+/** Viber/Facebook/etc. in-app browsers often block YouTube iframes — use thumbnail link instead. */
+AcademyContent.isInAppBrowser = function() {
+  var ua = String(navigator.userAgent || '');
+  return /FBAN|FBAV|Instagram|Line\/|Viber|Twitter|MicroMessenger|LinkedInApp|Snapchat|BytedanceWebview|musical_ly/i.test(ua);
+};
+
 /** Home activities row: fill side video slots (YouTube URL, direct file URL, or uploaded video data URL). */
 AcademyContent.applyActivityVideos = function(content, uploads) {
   content = content || {};
@@ -1094,11 +1197,20 @@ AcademyContent.applyActivityVideos = function(content, uploads) {
     var num = slot.getAttribute('data-activity-video-slot') || '1';
     var urlKey = 'home_activity_video_' + num;
     var uploadKey = 'home_activity_video_' + num + '_upload';
+    var aspect = slot.querySelector('.activities-video-aspect');
     var iframe = slot.querySelector('.activities-video-iframe');
     var vid = slot.querySelector('.activities-video-native');
     var ph = slot.querySelector('.activities-video-placeholder');
     var textVal = content[urlKey] != null ? String(content[urlKey]).trim() : '';
     var upVal = uploads[uploadKey] != null ? String(uploads[uploadKey]).trim() : '';
+    function hideYtLink() {
+      var link = slot.querySelector('.activities-video-yt-link');
+      if (link) {
+        link.style.display = 'none';
+        link.removeAttribute('href');
+        link.innerHTML = '';
+      }
+    }
     function hideAll() {
       if (iframe) {
         iframe.style.display = 'none';
@@ -1109,9 +1221,39 @@ AcademyContent.applyActivityVideos = function(content, uploads) {
         vid.removeAttribute('src');
         try { vid.pause(); } catch (e) {}
       }
+      hideYtLink();
       if (ph) ph.style.display = '';
     }
-    function showYt(src) {
+    function showYt(src, watchUrl) {
+      var videoId = AcademyContent.youtubeVideoIdFromUrl(watchUrl || src);
+      var useThumbLink = AcademyContent.isInAppBrowser() && videoId;
+      if (useThumbLink && aspect) {
+        var link = slot.querySelector('.activities-video-yt-link');
+        if (!link) {
+          link = document.createElement('a');
+          link.className = 'activities-video-yt-link';
+          link.target = '_blank';
+          link.rel = 'noopener noreferrer';
+          link.setAttribute('aria-label', 'Watch on YouTube');
+          aspect.appendChild(link);
+        }
+        link.href = watchUrl || ('https://www.youtube.com/watch?v=' + videoId);
+        link.innerHTML =
+          '<img src="https://img.youtube.com/vi/' + videoId + '/hqdefault.jpg" alt="" loading="eager">' +
+          '<span class="activities-video-yt-play" aria-hidden="true"><i class="fa-brands fa-youtube"></i></span>';
+        link.style.display = 'block';
+        if (iframe) {
+          iframe.style.display = 'none';
+          iframe.removeAttribute('src');
+        }
+        if (vid) {
+          vid.style.display = 'none';
+          vid.removeAttribute('src');
+        }
+        if (ph) ph.style.display = 'none';
+        return;
+      }
+      hideYtLink();
       if (iframe) {
         iframe.setAttribute('loading', 'eager');
         iframe.setAttribute('src', src);
@@ -1146,11 +1288,32 @@ AcademyContent.applyActivityVideos = function(content, uploads) {
     }
     var yt = AcademyContent.youtubeEmbedFromUrl(textVal);
     if (yt) {
-      showYt(yt);
+      showYt(yt, textVal);
       return;
     }
     showFile(textVal);
   });
+  var videosAside = document.querySelector('.home-activities-videos');
+  if (!videosAside) return;
+  var anyVideo = false;
+  videosAside.querySelectorAll('[data-activity-video-slot]').forEach(function(slot) {
+    var ph = slot.querySelector('.activities-video-placeholder');
+    var iframe = slot.querySelector('.activities-video-iframe');
+    var vid = slot.querySelector('.activities-video-native');
+    var ytLink = slot.querySelector('.activities-video-yt-link');
+    var hasMedia =
+      (iframe && iframe.style.display !== 'none' && iframe.getAttribute('src')) ||
+      (vid && vid.style.display !== 'none' && vid.getAttribute('src')) ||
+      (ytLink && ytLink.style.display !== 'none' && ytLink.getAttribute('href'));
+    if (hasMedia) {
+      slot.style.display = '';
+      anyVideo = true;
+    } else {
+      slot.style.display = 'none';
+      if (ph) ph.style.display = 'none';
+    }
+  });
+  videosAside.style.display = anyVideo ? '' : 'none';
 };
 
 AcademyContent.DEFAULT_HOME_ACTIVITIES_SLIDES = [

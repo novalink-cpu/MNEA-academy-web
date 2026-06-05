@@ -4966,10 +4966,14 @@
       AcademyContent.saveAll({ content: content, uploads: uploads, placementTest: placementTest, blogPosts: postsToSave }, function(result) {
         var st = document.getElementById('saveStatus');
         if (st) {
-          var synced = result && result.firebase;
-          st.textContent = synced
+          var serverSynced = result && result.server;
+          var fbSynced = result && result.firebaseSync;
+          var synced = serverSynced || fbSynced;
+          st.textContent = serverSynced
             ? 'Saved — synced to server database (live site updated).'
-            : 'Saved in this browser only — server sync failed. Check API/DB and Save again.';
+            : (fbSynced
+              ? 'Saved — synced to Firebase. Configure MySQL on server for full database sync.'
+              : 'Saved in this browser only — server sync failed. Check API/DB and Save again.');
           st.style.color = synced ? '#16a34a' : '#dc2626';
           st.style.display = 'inline';
           st.style.visibility = 'visible';
