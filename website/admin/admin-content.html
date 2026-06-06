@@ -2021,8 +2021,8 @@
       hero_check3: 'Flexible Schedule',
       hero_btn1: 'Free Placement Test',
       hero_btn2: 'View Programs',
-      home_activity_video_1: '',
-      home_activity_video_2: '',
+      home_activity_video_1: 'https://www.youtube.com/watch?v=NoFxLEQAKfI',
+      home_activity_video_2: 'https://www.youtube.com/watch?v=d2Y4YwgyIq0',
       home_activities_carousel_interval_sec: '5',
       why_title: 'Why Choose Us',
       why_lead: 'Learn Listening, Speaking, Reading and Writing with experienced teachers.',
@@ -4966,14 +4966,10 @@
       AcademyContent.saveAll({ content: content, uploads: uploads, placementTest: placementTest, blogPosts: postsToSave }, function(result) {
         var st = document.getElementById('saveStatus');
         if (st) {
-          var serverSynced = result && result.server;
-          var fbSynced = result && result.firebaseSync;
-          var synced = serverSynced || fbSynced;
-          st.textContent = serverSynced
+          var synced = result && result.server;
+          st.textContent = synced
             ? 'Saved — synced to server database (live site updated).'
-            : (fbSynced
-              ? 'Saved — synced to Firebase. Configure MySQL on server for full database sync.'
-              : 'Saved in this browser only — server sync failed. Check API/DB and Save again.');
+            : 'Saved in this browser only — server sync failed. Check MySQL .env on PythonAnywhere and Save again.';
           st.style.color = synced ? '#16a34a' : '#dc2626';
           st.style.display = 'inline';
           st.style.visibility = 'visible';

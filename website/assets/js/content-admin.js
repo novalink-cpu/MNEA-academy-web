@@ -132,43 +132,6 @@ function normalizeSiteContentBundle(raw) {
   };
 }
 
-function siteContentFirebaseGet(callback) {
-  if (!window.AcademyFirebase || typeof AcademyFirebase.get !== 'function') {
-    callback(null);
-    return;
-  }
-  AcademyFirebase.get(function(val) {
-    callback(normalizeSiteContentBundle(val));
-  });
-}
-
-function mergeRemoteSiteBundles(apiBundle, fbBundle) {
-  if (!apiBundle && !fbBundle) return null;
-  if (!apiBundle) return fbBundle;
-  if (!fbBundle) return apiBundle;
-  var merged = {
-    content: Object.assign({}, fbBundle.content || {}, apiBundle.content || {}),
-    uploads: Object.assign({}, fbBundle.uploads || {}, apiBundle.uploads || {}),
-    placementTest: apiBundle.placementTest != null ? apiBundle.placementTest : fbBundle.placementTest,
-    blogPosts: apiBundle.blogPosts != null ? apiBundle.blogPosts : fbBundle.blogPosts
-  };
-  Object.keys(fbBundle.content || {}).forEach(function(k) {
-    var apiVal = merged.content[k];
-    var fbVal = fbBundle.content[k];
-    if ((apiVal == null || String(apiVal).trim() === '') && fbVal != null && String(fbVal).trim() !== '') {
-      merged.content[k] = fbVal;
-    }
-  });
-  Object.keys(fbBundle.uploads || {}).forEach(function(k) {
-    var apiVal = merged.uploads[k];
-    var fbVal = fbBundle.uploads[k];
-    if ((apiVal == null || apiVal === '') && fbVal != null && fbVal !== '') {
-      merged.uploads[k] = fbVal;
-    }
-  });
-  return merged;
-}
-
 function mergeSiteContentWithLocal(localPayload, remotePayload) {
   localPayload = localPayload || {};
   remotePayload = remotePayload || {};
@@ -227,7 +190,7 @@ function cacheSiteContentPayload(out) {
   try { if (out.blogPosts) AcademyContent.saveBlogPosts(out.blogPosts); } catch (e4) {}
 }
 
-/** Get full site content from server DB + Firebase (with local fallback cache). */
+/** Get full site content from server MySQL (with local fallback cache). */
 AcademyContent.getSiteContent = function(callback) {
   var localPayload = {
     content: AcademyContent.load(),
@@ -235,13 +198,8 @@ AcademyContent.getSiteContent = function(callback) {
     placementTest: AcademyContent.loadPlacementTest(),
     blogPosts: AcademyContent.loadBlogPosts()
   };
-  var apiBundle = null;
-  var fbBundle = null;
-  var pending = 2;
-  function finish() {
-    pending--;
-    if (pending > 0) return;
-    var remotePayload = mergeRemoteSiteBundles(apiBundle, fbBundle);
+  siteContentApiGet(function(data) {
+    var remotePayload = normalizeSiteContentBundle(data);
     if (!remotePayload) {
       callback(localPayload);
       return;
@@ -249,14 +207,6 @@ AcademyContent.getSiteContent = function(callback) {
     var out = mergeSiteContentWithLocal(localPayload, remotePayload);
     cacheSiteContentPayload(out);
     callback(out);
-  }
-  siteContentApiGet(function(data) {
-    apiBundle = normalizeSiteContentBundle(data);
-    finish();
-  });
-  siteContentFirebaseGet(function(data) {
-    fbBundle = data;
-    finish();
   });
 };
 
@@ -363,24 +313,6 @@ AcademyContent.saveAll = function(payload, callback) {
     if (callback) callback({ local: true, firebase: false });
     return;
   }
-  var serverOk = false;
-  var firebaseOk = false;
-  var reported = false;
-  function report() {
-    if (reported) return;
-    reported = true;
-    if (callback) callback({ local: true, firebase: serverOk || firebaseOk, server: serverOk, firebaseSync: firebaseOk });
-  }
-  function syncFirebase() {
-    if (!window.AcademyFirebase || typeof AcademyFirebase.set !== 'function') {
-      report();
-      return;
-    }
-    AcademyFirebase.set(sync, function(ok) {
-      firebaseOk = !!ok;
-      report();
-    });
-  }
   fetch('/api/web_extra/' + encodeURIComponent(SITE_CONTENT_WEB_EXTRA_KEY), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -393,11 +325,11 @@ AcademyContent.saveAll = function(payload, callback) {
       return { ok: false };
     })
     .then(function(r) {
-      serverOk = !!(r && r.ok);
-      syncFirebase();
+      var serverOk = !!(r && r.ok);
+      if (callback) callback({ local: true, firebase: serverOk, server: serverOk });
     })
     .catch(function() {
-      syncFirebase();
+      if (callback) callback({ local: true, firebase: false, server: false });
     });
 };
 
@@ -1201,7 +1133,7 @@ AcademyContent.applyActivityVideos = function(content, uploads) {
     var iframe = slot.querySelector('.activities-video-iframe');
     var vid = slot.querySelector('.activities-video-native');
     var ph = slot.querySelector('.activities-video-placeholder');
-    var textVal = content[urlKey] != null ? String(content[urlKey]).trim() : '';
+    var textVal = AcademyContent.resolveHomeActivityVideoUrl(urlKey, content);
     var upVal = uploads[uploadKey] != null ? String(uploads[uploadKey]).trim() : '';
     function hideYtLink() {
       var link = slot.querySelector('.activities-video-yt-link');
@@ -1332,6 +1264,21 @@ AcademyContent.homeActivitySlideCaption = function(item) {
 };
 
 /** Fallback file paths when Admin/Firebase has no upload for a slide (served from website/photo/). */
+/** Default MNEA YouTube URLs when CMS/DB field is empty — works on all devices without Firebase. */
+AcademyContent.DEFAULT_HOME_ACTIVITY_VIDEO_URLS = {
+  home_activity_video_1: 'https://www.youtube.com/watch?v=NoFxLEQAKfI',
+  home_activity_video_2: 'https://www.youtube.com/watch?v=d2Y4YwgyIq0'
+};
+
+AcademyContent.resolveHomeActivityVideoUrl = function(key, content) {
+  if (!key) return '';
+  content = content || {};
+  var v = content[key];
+  if (v != null && String(v).trim() !== '') return String(v).trim();
+  var defaults = AcademyContent.DEFAULT_HOME_ACTIVITY_VIDEO_URLS;
+  return (defaults && defaults[key]) ? defaults[key] : '';
+};
+
 AcademyContent.DEFAULT_HOME_ACTIVITY_IMAGE_PATHS = {
   home_activity_slide_0: '../photo/activity1.jpg',
   home_activity_slide_1: '../photo/activity1.jpg'
