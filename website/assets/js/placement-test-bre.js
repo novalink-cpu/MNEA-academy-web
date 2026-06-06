@@ -121,6 +121,39 @@
     return d.getDate() + ' ' + months[d.getMonth()] + ' ' + d.getFullYear();
   }
 
+  function formatRetakePeriodLabel(retakeDays) {
+    var rd = parseInt(retakeDays, 10);
+    if (rd === 7) return 'once per week';
+    if (rd === 1) return 'once per day';
+    if (!isNaN(rd) && rd > 0) return 'once every ' + rd + ' days';
+    return 'once per week';
+  }
+
+  /** User-facing message when retake window has not passed (always include days/date when API sends them). */
+  function formatRetakeBlockedMessage(stat) {
+    stat = stat || {};
+    var msg = String(stat.message || '').trim();
+    if (msg) return msg;
+    var period = formatRetakePeriodLabel(stat.retake_days);
+    var suffix = ' (same date of birth, parent name, and phone or device).';
+    var daysRaw = stat.days_until_next_attempt;
+    if (daysRaw != null && daysRaw !== '' && !isNaN(parseInt(daysRaw, 10))) {
+      var n = Math.max(0, parseInt(daysRaw, 10));
+      if (n > 0) {
+        return 'You can take this test ' + period + suffix + ' Try again in ' + n + ' day(s).';
+      }
+    }
+    if (stat.next_allowed_at) {
+      var when = formatAwardDate(stat.next_allowed_at);
+      if (when) return 'You can take this test ' + period + suffix + ' Try again after ' + when + '.';
+    }
+    return 'You are not allowed to retake this test yet.' + suffix;
+  }
+
+  function isRetakeBlocked(stat) {
+    return !!(stat && stat.ok !== false && stat.can_take_test === false);
+  }
+
   /** Raw online total (0–80) → band column index */
   function bandIndexFromRaw80(raw80, form) {
     var r = Math.max(0, Math.min(80, parseInt(raw80, 10) || 0));
@@ -563,6 +596,7 @@
 
   function applyCmsBanks(data) {
     if (!BreBank || !data || typeof data !== 'object') return;
+    if (BreBank.repairBreBanks) data = BreBank.repairBreBanks(data);
     ['test1a', 'test2a'].forEach(function(key) {
       var b = data[key];
       if (BreBank.isValidBreBank && BreBank.isValidBreBank(b)) {
@@ -1533,19 +1567,8 @@
         date_of_birth: dob,
         parent_name: parentName
       }).then(function(stat) {
-        var canTake = !(stat && stat.ok === false) && !(stat && stat.can_take_test === false);
-        if (!canTake) {
-          var msg = String((stat && stat.message) || '');
-          if (!msg) {
-            if (stat && stat.days_until_next_attempt) {
-              var rd = parseInt(stat.retake_days, 10);
-              var period = (rd === 7) ? 'once per week' : ((rd === 1) ? 'once per day' : ('once every ' + (rd || 7) + ' days'));
-              msg = 'You can take this test ' + period + ' (same date of birth, parent name, and phone or device). Try again in ' + stat.days_until_next_attempt + ' day(s).';
-            } else {
-              msg = 'You are not allowed to retake this test yet.';
-            }
-          }
-          alert(msg);
+        if (isRetakeBlocked(stat)) {
+          alert(formatRetakeBlockedMessage(stat));
           return;
         }
         startPlacementTestRound();

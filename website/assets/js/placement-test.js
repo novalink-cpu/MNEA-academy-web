@@ -1334,19 +1334,21 @@
       if (!dob) { alert('Date of Birth (Day, Month, Year) '); return; }
       applyCountryPrefixIfNeeded();
       checkRetakeEligibility({ name: name, phone: phone, email: email, date_of_birth: dob, parent_name: parentName }).then(function(stat) {
-        var canTake = !(stat && stat.ok === false) && !(stat && stat.can_take_test === false);
-        if (!canTake) {
-          var msg = String((stat && stat.message) || '');
-          if (!msg) {
-            if (stat && stat.days_until_next_attempt) {
-              var rd = parseInt(stat.retake_days, 10);
-              var period = (rd === 7) ? 'once per week' : ((rd === 1) ? 'once per day' : ('once every ' + (rd || 7) + ' days'));
-              msg = 'You can take this test ' + period + ' (same date of birth, parent name, and phone or device). Try again in ' + stat.days_until_next_attempt + ' day(s).';
+        if (stat && stat.ok !== false && stat.can_take_test === false) {
+          var blockedMsg = String(stat.message || '').trim();
+          if (!blockedMsg) {
+            var rd = parseInt(stat.retake_days, 10);
+            var period = (rd === 7) ? 'once per week' : ((rd === 1) ? 'once per day' : ('once every ' + (rd || 7) + ' days'));
+            var daysRaw = stat.days_until_next_attempt;
+            if (daysRaw != null && daysRaw !== '' && !isNaN(parseInt(daysRaw, 10)) && parseInt(daysRaw, 10) > 0) {
+              blockedMsg = 'You can take this test ' + period + ' (same date of birth, parent name, and phone or device). Try again in ' + parseInt(daysRaw, 10) + ' day(s).';
+            } else if (stat.next_allowed_at) {
+              blockedMsg = 'You can take this test ' + period + ' (same date of birth, parent name, and phone or device). Try again after ' + String(stat.next_allowed_at).slice(0, 10) + '.';
             } else {
-              msg = 'You are not allowed to retake this test yet.';
+              blockedMsg = 'You are not allowed to retake this test yet.';
             }
           }
-          alert(msg);
+          alert(blockedMsg);
           return;
         }
         showStep(2);

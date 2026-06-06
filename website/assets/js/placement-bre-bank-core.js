@@ -140,79 +140,79 @@
 5|Listening|What are the man and woman doing?|Listening to music|Watching videos|Talking on the phone|Shopping for a gift|D|
 6|Listening|What does the man say about the phone?|The color is great.|The color is too bright.|The screen size is just right.|The screen size is too small.|B|
 7|Listening|Why does the woman think John needs a bag?|He likes bags.|His bag is too small.|He needs a bag for work.|He doesn't have a bag.|C|
-8|Listening|What will the man do next?|Call John on the phone.|Buy the headphones.|Look for a different bag.|Help woman find a new phone.|B|
+8|Listening|What will the man do next?|Call John on the phone.|Buy the headphones.|Look for a different bag.|Help the woman find a new phone.|B|
 9|Listening|Who is Julie going to dinner with?|Her husband|Her friend|Her kids|Her team|B|
-10|Listening|Has Julie been to restaurant before?|No, never been.|No, doesn't like Italian.|Yes, many times.|Yes, with team last week.|C|
-11|Listening|What does Mark ask Julie to do at restaurant?|Talk to Antonio.|Meet his wife and kids.|Ask about lunch menu.|Make a reservation.|D|
-12|Listening|What is Julie and Mark's relationship?|Co-workers|Neighbours|Married|Friends|A|
-13|Listening|Why is the woman late?|Missed her train.|Train was late.|There was a train accident.|She was hurt in accident.|C|
-14|Listening|Why was the woman lost?|Wrong street.|Didn't know area well.|No one helped.|Took wrong bus.|B|
-15|Listening|What was wrong with woman's phone?|She lost it.|No internet.|Couldn't text.|Left it at work.|B|
-16|Listening|Why did she walk from Canal Street?|Couldn't find bus.|Thought walking was faster.|She wanted to walk.|People told her to walk.|B|
-17|Listening|What is this talk about?|How to enjoy writing|How to start writing|How to get writing jobs|How to become better writer|C|
-18|Listening|Why does speaker talk about writing presentations?|Important writing skill|Type of writing job|Way to practice writing|Way to share writing|B|
-19|Listening|Best topic to write about?|Technology topics|Topics online|Topics you like|Popular topics|C|
-20|Listening|Why should you make your own website?|Write topics you enjoy|People can find your writing online|Many writers have websites|Meet other writers online|B|
+10|Listening|Has Julie been to the restaurant before?|No, she has never been there.|No, she doesn't like Italian food.|Yes, she has been there many times.|Yes, she went there with her team last week.|C|
+11|Listening|What does Mark ask Julie to do at the restaurant?|Talk to Antonio.|Meet his wife and kids.|Ask about their lunch menu.|Make a reservation.|D|
+12|Listening|What is Julie and Mark's relationship?|They are co-workers.|They are neighbours.|They are married.|They are friends.|A|
+13|Listening|Why is the woman late?|She missed her train.|Her train was late.|There was a train accident.|She was hurt in an accident.|C|
+14|Listening|Why was the woman lost?|She went to the wrong street.|She didn't know the area well.|No one helped her.|She took the wrong bus.|B|
+15|Listening|What was wrong with the woman's phone?|She lost it.|She didn't have internet.|She couldn't text.|She left it at work.|B|
+16|Listening|Why did the woman walk from Canal Street?|She couldn't find the bus.|She thought walking was faster.|She wanted to walk.|People told her to walk.|B|
+17|Listening|What is this talk about?|How to enjoy writing|How to start writing|How to get writing jobs|How to become a better writer|C|
+18|Listening|Why does the speaker talk about writing presentations?|It's an important writing skill.|It's a type of writing job.|It's a way to practice your writing.|It's a way to share your writing with others.|B|
+19|Listening|What is the best topic to write about?|Technology topics|Topics online|Topics you like|Popular topics|C|
+20|Listening|Why should you make your own website?|You can write about topics you enjoy.|People can find your writing online.|Many writers have their own websites.|You can meet other writers online.|B|
 21|Grammar|____ me at the restaurant after work.|Meet|Meeting|Will meet|To meet|A|
 22|Grammar|A: ____ you live? B: I live in Jamestown.|Where|Where is|Where do|Where does|C|
 23|Grammar|I need to buy ____ bread.|any|some|many|much|B|
 24|Grammar|The view is beautiful ____ the evening.|on|at|in|to|C|
-25|Grammar|We enjoy ____ family dinner on Sundays.|have|had|to have|having|D|
+25|Grammar|We enjoy ____ family dinner on Sunday evenings.|have|had|to have|having|D|
 26|Grammar|I ____ TV when you called.|watch|watched|am watching|was watching|D|
-27|Grammar|I spoke to ____ hotel manager.|the|a|some|any|A|
+27|Grammar|I spoke to ____ hotel manager about the problem with our room.|the|a|some|any|A|
 28|Grammar|____ two libraries in the city.|They are|There is|It is|There are|D|
 29|Grammar|I'd ____ a cup of tea please.|like|can like|could like|would like|D|
 30|Grammar|I ____ early tomorrow morning.|am going to wake up|wake up|woke up|was waking up|A|
-31|Grammar|____ the rain, they moved concert inside.|Despite|Because of|However|Even though|B|
+31|Grammar|____ the rain, they moved the concert inside.|Despite|Because of|However|Even though|B|
 32|Grammar|The cinema is ____ Hudson Street.|on|in|between|under|B|
 33|Grammar|I ____ John at the party yesterday.|see|saw|was seeing|have seen|B|
 34|Grammar|This test is ____ than the last test.|easy|easier|easiest|the easiest|B|
-35|Grammar|Ben ____ right now. He is at library.|doesn't work|didn't work|isn't working|wasn't working|C|
-36|Grammar|I don't know anyone ____ lives here.|who|when|where|which|A|
+35|Grammar|Ben ____ right now. He is at the library.|doesn't work|didn't work|isn't working|wasn't working|C|
+36|Grammar|I don't know anyone ____ lives here. Do you?|who|when|where|which|A|
 37|Grammar|Can you bring me ____ jeans behind you?|that|this|those|these|C|
-38|Grammar|Did you ____ to football match last night?|go|went|have gone|were going|A|
-39|Grammar|All the ____ offices are on second floor.|teacher|teachers|teacher's|teachers'|D|
-40|Grammar|A: ____ you go to London? B: Last year.|Why did|When did|When were|Where were|B|
+38|Grammar|Did you ____ to the football match last night?|go|went|have gone|were going|A|
+39|Grammar|All the ____ offices are on the second floor.|teacher|teachers|teacher's|teachers'|D|
+40|Grammar|A: ____ you go to London? B: I went last year.|Why did|When did|When were|Where were|B|
 41|Grammar|You've met Jonas before, ____?|have you|haven't you|did you|didn't you|B|
-42|Grammar|I have many meetings, so let's meet ____ lunch.|on|in|after|before|C|
-43|Grammar|We have ____ food for party, need more drinks.|too|too much|too many|enough|D|
-44|Grammar|John ____ gets his coffee here.|always|never|rarely|sometimes|A|
+42|Grammar|I have a lot of meetings this morning, so let's meet ____ lunch.|on|in|after|before|C|
+43|Grammar|We have ____ food for the party, but we need more drinks.|too|too much|too many|enough|D|
+44|Grammar|He ____ gets his coffee here.|always|never|rarely|sometimes|A|
 45|Grammar|She ____ more than twenty countries.|visits|visited|has visited|is visiting|C|
-46|Grammar|I ____ drive you to airport.|may|must|could|would|C|
+46|Grammar|I ____ drive you to the airport. It's no problem at all.|may|must|could|would|C|
 47|Grammar|I want to visit ____.|South Pole|a South Pole|the South Pole|this South Pole|C|
 48|Grammar|He speaks Italian very ____.|good|well|better|best|B|
 49|Grammar|Yes! I ____ move there next month.|can|will|would|might|B|
 50|Grammar|Chinese ____ in many communities in London.|speaks|spoke|is spoken|has spoken|C|
-51|Vocabulary|I spent too much ____ at the library.|time|minute|clock|watch|A|
-52|Vocabulary|I like taking black and white ____.|notes|breaks|calls|photographs|D|
-53|Vocabulary|Cathy ____ to take the job.|thought|decided|began|completed|B|
-54|Vocabulary|There are a lot of cars and ____ is really bad.|weather|traffic|tourist|health|B|
-55|Vocabulary|Let's go home this ____.|day|hour|tomorrow|weekend|D|
+51|Vocabulary|I spent too much ____ at the library. I'm late for dinner!|time|minute|clock|watch|A|
+52|Vocabulary|I like taking black and white ____ with my camera.|notes|breaks|calls|photographs|D|
+53|Vocabulary|Cathy ____ to take the job in Boston.|thought|decided|began|completed|B|
+54|Vocabulary|There are a lot of cars downtown, and ____ is really bad around high street.|weather|traffic|tourist|health|B|
+55|Vocabulary|Let's go home this ____ so we can have Sunday dinner with mom and dad.|day|hour|tomorrow|weekend|D|
 56|Vocabulary|Food and art are part of people's ____.|culture|religion|laws|ideas|A|
-57|Vocabulary|I didn't know word meaning, so I ____.|told|wrote|moved|guessed|D|
-58|Vocabulary|I'd like to ____ you to my friend.|meet|invite|introduce|remember|C|
-59|Vocabulary|Don't walk at night in ____ areas.|unusual|familiar|exciting|dangerous|D|
-60|Vocabulary|____, website doesn't accept credit cards.|Likely|Rarely|Suddenly|Unfortunately|D|
+57|Vocabulary|I didn't know the meaning of the word, so I ____.|told|wrote|moved|guessed|D|
+58|Vocabulary|I'd like to ____ you to my friend, Phil.|meet|invite|introduce|remember|C|
+59|Vocabulary|Don't walk around at night in ____ areas.|unusual|familiar|exciting|dangerous|D|
+60|Vocabulary|____, the website doesn't accept credit card payments.|Likely|Rarely|Suddenly|Unfortunately|D|
 61|Vocabulary|It's ____ he missed his train.|early|possible|difficult|sure|B|
-62|Vocabulary|This report is full of ____.|plans|mistakes|accidents|appointments|B|
-63|Vocabulary|He wants to study ____ to work with computers.|politics|science|history|technology|D|
-64|Vocabulary|John ____ lost his job.|usually|recently|immediately|regularly|B|
-65|Vocabulary|Sue lives on the ____ end.|opposite|correct|wrong|front|A|
-66|Vocabulary|It's not ____ to bring money.|fair|normal|necessary|appropriate|C|
-67|Vocabulary|Are you ____ to go?|easy|angry|ready|busy|C|
+62|Vocabulary|This report is full of ____. We can't use it.|plans|mistakes|accidents|appointments|B|
+63|Vocabulary|He wants to study ____ so he can work with computers.|politics|science|history|technology|D|
+64|Vocabulary|John ____ lost his job, so he is looking for a new one.|usually|recently|immediately|regularly|B|
+65|Vocabulary|I live on one end of high street, and Sue lives on the ____ end.|opposite|correct|wrong|front|A|
+66|Vocabulary|It's not ____ to bring money. We paid for everything already.|fair|normal|necessary|appropriate|C|
+67|Vocabulary|Are you ____ to go? We have to leave now or we'll be late.|easy|angry|ready|busy|C|
 68|Vocabulary|I don't like driving. I ____ the train.|need|prefer|suggest|schedule|B|
 69|Vocabulary|It's so hot today! What's the ____?|season|noise|environment|temperature|D|
-70|Vocabulary|He tried to ____ five million dollars.|steal|protect|return|earn|A|
+70|Vocabulary|He tried to ____ five million dollars from his company.|steal|protect|return|earn|A|
 71|Reading|What is this message about?|A new car park|Street parking rules|Car park changes|New parking prices|C|t1r1
-72|Reading|Where can people park for next two weeks?|New office car park|High and 1st Street car park|Crowne Plaza hotel car park|High Street after 5 pm|B|t1r1
-73|Reading|How can people park for free?|Show company ID card|Park on 1st Street|Call parking office|Use Crowne Plaza car park|A|t1r1
-74|Reading|Why did writer make this website?|To help Cornwall visitors|To talk rules|To rent house|To talk personal life|A|t1r2
-75|Reading|What information can you find on website?|Art|Boats|Hotels|Weather|C|t1r2
-76|Reading|What does writer say about beaches?|Read the rules.|Some are closed.|No parking.|No swimming.|A|t1r2
-77|Reading|What made Wright brothers interested in flying?|Birds|A toy|A bicycle|Machines|B|t1r3
-78|Reading|What was one job brothers had?|Inventing technology|Working for father|Making bicycle designs|Writing about flying|C|t1r3
-79|Reading|How did brothers invent first plane?|Studied birds' wings|Used bicycle designs|Copied popular technology|Used first model plane|A|t1r3
-80|Reading|Why did brothers move to Europe?|Wanted to live there|Wanted global fame|Knew German flyer|Believed they could sell planes there|D|t1r3`;
+72|Reading|Where can people park for the next two weeks?|The new office car park|The car park on High and 1st Street|The Crowne Plaza Hotel car park|High Street after 5 pm|B|t1r1
+73|Reading|How can people park for free?|By showing a company ID card|By parking on 1st Street|By calling the parking office|By using the Crowne Plaza car park|A|t1r1
+74|Reading|Why did the writer make this website?|To help Cornwall visitors|To talk about Cornwall rules|To rent his house in Cornwall|To talk about his life in Cornwall|A|t1r2
+75|Reading|What information can you find on this website?|Art|Boats|Hotels|Weather|C|t1r2
+76|Reading|What does the writer say about beaches?|Read the rules.|Some are closed.|There is no parking.|There is no swimming.|A|t1r2
+77|Reading|What first made the Wright brothers interested in flying?|Birds|A toy|A bicycle|Machines|B|t1r3
+78|Reading|What was one job the brothers had?|Inventing new technology|Working for their father|Making bicycle designs|Writing about flying|C|t1r3
+79|Reading|How did the brothers invent their first plane?|They studied birds' wings.|They used their bicycle designs.|They copied popular technology.|They used their first model aeroplane.|A|t1r3
+80|Reading|Why did the brothers move to Europe?|They always wanted to live in Europe.|They wanted to become famous around the world.|They knew a German flyer who could help them.|They believed they could sell their planes in Europe.|D|t1r3`;
     return parseBank('British English Adult - Test 1 Form A', '../BRE_course_placement_test1_00.mp3', passages, rows);
   }
 
@@ -268,6 +268,55 @@
     return normalizeBreBank(bank).questions.length >= 80;
   }
 
+  function questionByNo(bank, no) {
+    var b = normalizeBreBank(bank);
+    for (var i = 0; i < b.questions.length; i++) {
+      if (b.questions[i].no === no) return b.questions[i];
+    }
+    return null;
+  }
+
+  /** Detect Test 1A vs Test 2A from Q1 / reading passage ids (fixes swapped DB banks). */
+  function bankVariant(bank) {
+    var q1 = questionByNo(bank, 1);
+    if (q1) {
+      var p = String(q1.prompt || '').toLowerCase();
+      if (p.indexOf('which subject does the woman') >= 0) return 'test1a';
+      if (p.indexOf('what is the woman looking for') >= 0) return 'test2a';
+    }
+    var q71 = questionByNo(bank, 71);
+    if (q71) {
+      var pid = String(q71.passageId || '');
+      if (pid.indexOf('t1r') === 0) return 'test1a';
+      if (pid.indexOf('t2r') === 0) return 'test2a';
+    }
+    var title = String(normalizeBreBank(bank).title || '').toLowerCase();
+    if (title.indexOf('test 1') >= 0) return 'test1a';
+    if (title.indexOf('test 2') >= 0) return 'test2a';
+    return '';
+  }
+
+  function repairBreBanks(data) {
+    data = data && typeof data === 'object' ? data : {};
+    var defaults = getDefaultBanks();
+    var out = {
+      test1a: data.test1a,
+      test2a: data.test2a,
+      updatedAt: data.updatedAt || ''
+    };
+    var v1 = bankVariant(data.test1a);
+    var v2 = bankVariant(data.test2a);
+    if (!isValidBreBank(data.test1a) || v1 === 'test2a') out.test1a = defaults.test1a;
+    else out.test1a = normalizeBreBank(data.test1a);
+    if (!isValidBreBank(data.test2a) || v2 === 'test1a') out.test2a = defaults.test2a;
+    else out.test2a = normalizeBreBank(data.test2a);
+    if (bankVariant(out.test1a) === bankVariant(out.test2a) && bankVariant(out.test1a)) {
+      out.test1a = defaults.test1a;
+      out.test2a = defaults.test2a;
+    }
+    return out;
+  }
+
   function getDefaultBanks() {
     return { test1a: buildTest1A(), test2a: buildTest2A() };
   }
@@ -279,6 +328,8 @@
     getDefaultBanks: getDefaultBanks,
     normalizeBreBank: normalizeBreBank,
     isValidBreBank: isValidBreBank,
+    bankVariant: bankVariant,
+    repairBreBanks: repairBreBanks,
     BRE_SECTIONS: ['Listening', 'Grammar', 'Vocabulary', 'Reading'],
     BRE_FORMS: ['test1a', 'test2a']
   };

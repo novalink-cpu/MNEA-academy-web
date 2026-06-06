@@ -473,6 +473,7 @@
   function applyLoadedData(data) {
     var defaults = defaultBanks();
     var d = data && typeof data === 'object' ? data : {};
+    if (Bre && Bre.repairBreBanks) d = Bre.repairBreBanks(d);
     ['test1a', 'test2a'].forEach(function (key) {
       var src = d[key];
       if (Bre && Bre.isValidBreBank && Bre.isValidBreBank(src)) {
