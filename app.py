@@ -3437,6 +3437,89 @@ _WEB_EXTRA_KEYS = ("notices", "contact_inquiries", "attendance", "parents", "sta
                    "student_assignments", "student_leave_requests", "student_profiles",
                    "site_content_bundle")
 
+_SITE_VISIT_DAILY_KEY = "site_visit_daily"
+
+
+def _load_site_visit_stats(cur, school_id):
+    stats = {"by_date": {}}
+    try:
+        cur.execute(
+            "SELECT data_json FROM web_extra WHERE school_id = ? AND data_key = ?",
+            (school_id, _SITE_VISIT_DAILY_KEY),
+        )
+        row = cur.fetchone()
+        if row and row["data_json"]:
+            parsed = json.loads(row["data_json"])
+            if isinstance(parsed, dict):
+                by_date = parsed.get("by_date")
+                if isinstance(by_date, dict):
+                    cleaned = {}
+                    for k, v in by_date.items():
+                        key = str(k).strip()
+                        if not key:
+                            continue
+                        try:
+                            cleaned[key] = int(v)
+                        except (TypeError, ValueError):
+                            continue
+                    stats["by_date"] = cleaned
+    except Exception:
+        pass
+    return stats
+
+
+def _save_site_visit_stats(cur, school_id, stats):
+    cur.execute(
+        "INSERT OR REPLACE INTO web_extra (school_id, data_key, data_json) VALUES (?, ?, ?)",
+        (school_id, _SITE_VISIT_DAILY_KEY, json.dumps(stats, ensure_ascii=False)),
+    )
+
+
+def _prune_site_visit_stats(stats, keep_days=90):
+    by_date = stats.get("by_date") or {}
+    if not isinstance(by_date, dict):
+        by_date = {}
+    cutoff = (date.today() - timedelta(days=keep_days)).isoformat()
+    stats["by_date"] = {k: int(v) for k, v in by_date.items() if str(k) >= cutoff}
+    return stats
+
+
+def _site_visit_today_count(stats):
+    by_date = stats.get("by_date") or {}
+    return int(by_date.get(date.today().isoformat(), 0))
+
+
+@app.route("/api/site/visits/today", methods=["GET"])
+def api_site_visits_today():
+    school_id = request.args.get("school_id") or get_school_id()
+    try:
+        conn = get_conn()
+        cur = conn.cursor()
+        stats = _load_site_visit_stats(cur, school_id)
+        conn.close()
+        return jsonify({"ok": True, "today": _site_visit_today_count(stats), "date": date.today().isoformat()})
+    except Exception as e:
+        return jsonify({"ok": False, "error": str(e)}), 500
+
+
+@app.route("/api/site/visits/hit", methods=["POST"])
+def api_site_visits_hit():
+    school_id = get_school_id()
+    try:
+        conn = get_conn()
+        cur = conn.cursor()
+        stats = _load_site_visit_stats(cur, school_id)
+        today_key = date.today().isoformat()
+        by_date = stats.setdefault("by_date", {})
+        by_date[today_key] = int(by_date.get(today_key, 0)) + 1
+        stats = _prune_site_visit_stats(stats)
+        _save_site_visit_stats(cur, school_id, stats)
+        conn.commit()
+        conn.close()
+        return jsonify({"ok": True, "today": _site_visit_today_count(stats), "date": today_key})
+    except Exception as e:
+        return jsonify({"ok": False, "error": str(e)}), 500
+
 
 @app.route("/api/web_extra/<key>", methods=["GET"])
 def api_web_extra_get(key):

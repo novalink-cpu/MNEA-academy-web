@@ -1101,6 +1101,38 @@ option {
   justify-self: end;
   flex-wrap: wrap;
 }
+.top-bar-visit-counter {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-right: 0.35rem;
+  padding: 0.22rem 0.55rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 245, 245, 0.35);
+  color: #fff5f5;
+  font-size: 0.78rem;
+  font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
+}
+.top-bar-visit-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #4ade80;
+  box-shadow: 0 0 6px rgba(74, 222, 128, 0.85);
+  flex-shrink: 0;
+  animation: top-bar-visit-pulse 2s ease-in-out infinite;
+}
+@keyframes top-bar-visit-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.55; }
+}
+.top-bar-visit-num {
+  font-weight: 800;
+  color: #bbf7d0;
+}
 .top-bar-lang-switcher {
   display: inline-flex; align-items: center; gap: 0.35rem;
   margin-right: 1rem;
