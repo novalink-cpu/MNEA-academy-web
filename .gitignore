@@ -1,4 +1,5 @@
 .env
+data/site_visit_stats.json
 __pycache__/
 *.pyc
 .venv/
